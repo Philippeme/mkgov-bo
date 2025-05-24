@@ -1,0 +1,42 @@
+{{ form_start(form) }}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+                {{ form_row(form.title) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.category) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.excerpt) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.description) }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                {{ form_row(form.imageFile) }}
+                {% if project.image %}
+                    <div class="mt-2">
+                        <p>Image actuelle :</p>
+                        <img src="{{ asset('uploads/projects/' ~ project.image) }}" alt="{{ project.title }}" class="img-fluid">
+                    </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.displayOrder) }}
+            </div>
+            <div class="form-check mb-3">
+                {{ form_widget(form.featured) }}
+                {{ form_label(form.featured) }}
+            </div>
+            <div class="form-check mb-3">
+                {{ form_widget(form.published) }}
+                {{ form_label(form.published) }}
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+    <a href="{{ path('admin_project_index') }}" class="btn btn-secondary">Annuler</a>
+{{ form_end(form) }}

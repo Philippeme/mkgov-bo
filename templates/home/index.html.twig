@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="OAG - Oversee Advising Group, cabinet de conseil spécialisé dans l'évaluation et le suivi de projets de développement international">
+    <meta name="keywords" content="OAG, conseil, évaluation, développement, international, projets, suivi">
+    <meta name="author" content="Oversee Advising Group">
+    <title>OAG - Oversee Advising Group | Excellence en Évaluation de Projets</title>
+
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ asset('images/logo/favicon.ico') }}" type="image/x-icon">
+    <link rel="apple-touch-icon" href="{{ asset('images/logo/apple-touch-icon.png') }}">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Roboto:wght@300;400;500&display=swap"
+        rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+    <!-- Slick Carousel CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css" />
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css" />
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- AOS - Animate On Scroll -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/animations.css') }}">
+</head>
+
+<body>
+    <!-- En-tête -->
+    <header>
+        <div class="top-header">
+            <div class="container-fluid">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <a href="{{ path('app_home') }}" class="logo" aria-label="OAG - Page d'accueil">
+                            <img src="{{ asset('images/logo/oag-logo.png') }}" alt="OAG - Oversee Advising Group">
+                        </a>
+                    </div>
+                    <div class="col-md-8">
+                        <nav class="main-nav" role="navigation" aria-label="Navigation principale">
+                            <ul>
+                                <li class="has-dropdown">
+                                    <a href="#" aria-haspopup="true" aria-expanded="false">À PROPOS DE NOUS</a>
+                                    <div class="dropdown-menu" role="menu">
+                                        <ul>
+                                            <li><a href="#" role="menuitem">Notre mission</a></li>
+                                            <li><a href="#" role="menuitem">Notre équipe</a></li>
+                                            <li><a href="#" role="menuitem">Notre approche</a></li>
+                                            <li><a href="#" role="menuitem">Notre histoire</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li class="has-dropdown">
+                                    <a href="#" aria-haspopup="true" aria-expanded="false">SERVICES</a>
+                                    <div class="dropdown-menu" role="menu">
+                                        <ul>
+                                            <li><a href="#" role="menuitem">Suivi évaluation</a></li>
+                                            <li><a href="#" role="menuitem">Evaluation des projets</a></li>
+                                            <li><a href="#" role="menuitem">Suivi indépendant (TPM)</a></li>
+                                            <li><a href="#" role="menuitem">Micro-évaluation SNU</a></li>
+                                            <li><a href="#" role="menuitem">Etude et recherche</a></li>
+                                        </ul>   
+                                    </div>
+                                </li>
+                                <li>
+                                    <a href="{{ path('app_projects') }}">RÉALISATIONS</a>
+                                </li>
+                                <li class="has-dropdown">
+                                    <a href="#" aria-haspopup="true" aria-expanded="false">TRAVAILLER AVEC NOUS</a>
+                                    <div class="dropdown-menu" role="menu">
+                                        <ul>
+                                            <li><a href="#" role="menuitem">Opportunités d'emploi</a></li>
+                                            <li><a href="#" role="menuitem">Devenir consultant</a></li>
+                                            <li><a href="#" role="menuitem">Stages</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li>
+                                    <a href="#">ACTUALITÉS</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                    <div class="col-md-2 text-right">
+                        <div class="header-right-section">
+                            <div class="header-top-elements">
+                                <div class="social-icons">
+                                    <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                                    <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                                    <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                                </div>
+                                <div class="lang-selector">
+                                    <a href="#" class="active">FR</a>
+                                    <span>|</span>
+                                    <a href="#">EN</a>
+                                </div>
+                            </div>
+                            <div class="header-bottom-elements">
+                                <div class="contact-btn">
+                                    <a href="#" class="btn btn-primary">CONTACTS</a>
+                                </div>
+                                <button class="mobile-menu-toggle" aria-label="Menu">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Menu mobile -->
+    <div class="mobile-menu">
+        <div class="close-menu">
+            <i class="fas fa-times"></i>
+        </div>
+        <nav>
+            <ul>
+                <li class="has-submenu">
+                    <a href="#">À PROPOS DE NOUS</a>
+                    <ul class="submenu">
+                        <li><a href="#">Notre mission</a></li>
+                        <li><a href="#">Notre équipe</a></li>
+                        <li><a href="#">Notre approche</a></li>
+                        <li><a href="#">Notre histoire</a></li>
+                    </ul>
+                </li>
+                <li class="has-submenu">
+                    <a href="#">SERVICES</a>
+                    <ul class="submenu">
+                        <li><a href="#">Suivi évaluation</a></li>
+                        <li><a href="#">Evaluation des projets</a></li>
+                        <li><a href="#">Suivi indépendant (TPM)</a></li>
+                        <li><a href="#">Micro-évaluation SNU</a></li>
+                        <li><a href="#">Etude et recherche</a></li>
+                    </ul>
+                </li>
+                <li><a href="{{ path('app_projects') }}">RÉALISATIONS</a></li>
+                <li class="has-submenu">
+                    <a href="#">TRAVAILLER AVEC NOUS</a>
+                    <ul class="submenu">
+                        <li><a href="#">Opportunités d'emploi</a></li>
+                        <li><a href="#">Devenir consultant</a></li>
+                        <li><a href="#">Stages</a></li>
+                    </ul>
+                </li>
+                <li><a href="#">ACTUALITÉS</a></li>
+                <li><a href="#">CONTACTS</a></li>
+            </ul>
+        </nav>
+        <div class="mobile-lang">
+            <a href="#" class="active">FR</a>
+            <span>|</span>
+            <a href="#">EN</a>
+        </div>
+        <div class="mobile-social">
+            <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+        </div>
+    </div>
+
+    <!-- Bannière principale / Slider -->
+    <section class="main-banner">
+        <div class="slider">
+            <div class="slide">
+                <div class="slide-image" style="background-image: url('{{ asset('images/slider/slide-1.jpg') }}');">
+                    <div class="slide-content">
+                        <h2>EXPERTISE INTERNATIONALE EN ÉVALUATION DE PROJETS</h2>
+                        <p>Nous accompagnons les organisations internationales dans le suivi et l'évaluation de leurs
+                            initiatives de développement à travers le monde.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide">
+                <div class="slide-image" style="background-image: url('{{ asset('images/slider/slide-2.jpg') }}');">
+                    <div class="slide-content">
+                        <h2>ALIQUAM IN BIBENDUM MAURIS. SED VITAE ERAT VEL</h2>
+                        <p>Mauris neque nisi, faucibus non elementum in, convallis et eros. Sed pretium sem libero, vel
+                            pellentesque purus ultrices ut. In quis leo id</p>
+                    </div>
+                </div>
+            </div>
+            <div class="slide">
+                <div class="slide-image" style="background-image: url('{{ asset('images/slider/slide-3.jpg') }}');">
+                    <div class="slide-content">
+                        <h2>DES SOLUTIONS ADAPTÉES AUX DÉFIS COMPLEXES</h2>
+                        <p>Notre équipe d'experts propose des méthodologies innovantes pour répondre aux enjeux du
+                            développement durable et de l'aide humanitaire.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="slider-controls">
+            <button class="prev" aria-label="Précédent"><i class="fas fa-chevron-left"></i></button>
+            <div class="slider-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            <button class="next" aria-label="Suivant"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </section>
+
+    <!-- Projets réalisés - SECTION DYNAMIQUE -->
+    <section class="projects-section">
+        <div class="container">
+            <h2 class="section-title">Projets réalisés</h2>
+
+            <div class="row projects-grid">
+                {% for project in projects %}
+                    <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                        <div class="project-card {% if project.featured %}featured{% endif %}">
+                            {% if not project.featured %}
+                                <div class="project-image">
+                                    {% if project.image %}
+                                        <img src="{{ asset('uploads/projects/' ~ project.image) }}" alt="{{ project.title }}">
+                                    {% else %}
+                                        <img src="{{ asset('images/projets/default.jpg') }}" alt="{{ project.title }}">
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            <div class="project-info">
+                                <div class="project-category">{{ project.category|upper }}</div>
+                                <h3 class="project-title">
+                                    <a href="{{ path('app_project_show', {'id': project.id}) }}" style="color: inherit; text-decoration: none;">
+                                        {{ project.title }}
+                                    </a>
+                                </h3>
+                                <div class="project-excerpt">{{ project.excerpt }}</div>
+                                <div class="project-description">
+                                    {{ project.description|length > 250 ? project.description|slice(0, 250) ~ '...' : project.description }}
+                                </div>
+                                {% if not project.featured %}
+                                    <a href="{{ path('app_project_show', {'id': project.id}) }}" class="btn btn-sm btn-primary mt-3">
+                                        Voir le projet <i class="fas fa-arrow-right"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="col-12 text-center">
+                        <p class="text-muted">Aucun projet disponible pour le moment.</p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="{{ path('app_projects') }}" class="btn btn-primary">VOIR PLUS</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Carte du monde et filtres -->
+    <section class="map-section">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- Filtres -->
+                <div class="col-md-3" data-aos="fade-right">
+                    <div class="filter-panel">
+                        <h3>Filtrer par</h3>
+
+                        <div class="filter-group">
+                            <label for="pays">Pays</label>
+                            <input type="text" id="pays" class="form-control" placeholder="Cameroun">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="annee">Année</label>
+                            <select id="annee" class="form-control">
+                                <option value="">Choisir</option>
+                                <option value="2025">2025</option>
+                                <option value="2024">2024</option>
+                                <option value="2023">2023</option>
+                                <option value="2022">2022</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="domaine">Domaine</label>
+                            <select id="domaine" class="form-control">
+                                <option value="">Choisir</option>
+                                <option value="sante">Santé</option>
+                                <option value="education">Éducation</option>
+                                <option value="environnement">Environnement</option>
+                                <option value="agriculture">Agriculture</option>
+                            </select>
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="bailleur">Bailleur</label>
+                            <input type="text" id="bailleur" class="form-control" placeholder="En cours">
+                        </div>
+
+                        <div class="filter-group">
+                            <label for="secteur">Secteur</label>
+                            <select id="secteur" class="form-control">
+                                <option value="">Choisir</option>
+                                <option value="public">Public</option>
+                                <option value="prive">Privé</option>
+                                <option value="ong">ONG</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary btn-block">Réinitialiser</button>
+                    </div>
+                </div>
+
+                <!-- Carte -->
+                <div class="col-md-9" data-aos="fade-left">
+                    <div id="world-map" class="world-map">
+                        <!-- La carte sera chargée via JavaScript -->
+                    </div>
+
+                    <!-- Popup d'information sur la carte -->
+                    <div class="map-info-popup" id="map-popup">
+                        <div class="country-flag">
+                            <img src="" alt="">
+                            <span></span>
+                        </div>
+                        <div class="country-stats">
+                            <div class="stat">Projets : <span></span></div>
+                            <div class="stat">Intervenants : <span></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Découvrez nos services -->
+    <section class="services-section">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Découvrez nos services</h2>
+
+            <div class="row services-grid">
+                <!-- Service 1 -->
+                <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="{{ asset('images/services/service-1.jpg') }}" alt="Suivi évaluation">
+                        </div>
+                        <div class="service-title">
+                            <h3>Suivi évaluation</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 2 -->
+                <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="{{ asset('images/services/service-2.jpg') }}" alt="Evaluation des projets et programmes">
+                        </div>
+                        <div class="service-title">
+                            <h3>Evaluation des projets et programmes</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 3 -->
+                <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="{{ asset('images/services/service-3.jpg') }}"
+                                alt="Suivi indépendant des projets et programmes (TPM)">
+                        </div>
+                        <div class="service-title">
+                            <h3>Suivi indépendant des projets et programmes (TPM)</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 4 -->
+                <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="{{ asset('images/services/service-4.jpg') }}"
+                                alt="Micro-évaluation des partenaires du SNU dans le cadre du HACT">
+                        </div>
+                        <div class="service-title">
+                            <h3>Micro-évaluation des partenaires du SNU dans le cadre du HACT</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 5 -->
+                <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="{{ asset('images/services/service-5.jpg') }}" alt="Macro évaluation">
+                        </div>
+                        <div class="service-title">
+                            <h3>Macro évaluation</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 6 -->
+                <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="300">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="{{ asset('images/services/service-6.jpg') }}" alt="Etude et recherche">
+                        </div>
+                        <div class="service-title">
+                            <h3>Etude et recherche</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 7 -->
+                <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="100">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="{{ asset('images/services/service-7.jpg') }}" alt="Renforcement des capacités">
+                        </div>
+                        <div class="service-title">
+                            <h3>Renforcement des capacités</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Service 8 -->
+                <div class="col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="200">
+                    <div class="service-card">
+                        <div class="service-image">
+                            <img src="{{ asset('images/services/service-8.jpg') }}" alt="Unité d'exécution des projets">
+                        </div>
+                        <div class="service-title">
+                            <h3>Unité d'exécution des projets</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Echo du terrain -->
+    <section class="echo-section">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Echo du terrain</h2>
+        </div>
+
+        <div class="echo-slider">
+            <!-- Slide 1 -->
+            <div class="echo-slide">
+                <div class="slide-image" style="background-image: url('{{ asset('images/terrain/terrain-1.jpg') }}');">
+                    <div class="slide-content">
+                        <h3>Duis vestibulum elit vel neque pharetra vulputate.</h3>
+                        <p>Phasellus finibus enim nulla, quis ornare odio facilisis eu. Suspendisse ornare ante sit amet
+                            arcu semper, vel eleifend tortor egestas. Aenean luctus, lorem in hendrerit interdum, leo
+                            orci egestas diam.</p>
+                        <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 -->
+            <div class="echo-slide">
+                <div class="slide-image" style="background-image: url('{{ asset('images/terrain/terrain-2.jpg') }}');">
+                    <div class="slide-content">
+                        <h3>Curabitur auctor magna vel felis venenatis ultrices.</h3>
+                        <p>Vivamus at risus sed augue auctor condimentum. Proin efficitur eros ut libero malesuada, nec
+                            rhoncus eros vestibulum. Morbi vitae elit vel justo malesuada convallis at eu mi.</p>
+                        <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 -->
+            <div class="echo-slide">
+                <div class="slide-image" style="background-image: url('{{ asset('images/terrain/terrain-3.jpg') }}');">
+                    <div class="slide-content">
+                        <h3>Nullam varius purus vitae dolor facilisis congue.</h3>
+                        <p>Maecenas convallis nulla ac enim faucibus, non tempus nunc ultrices. Morbi laoreet libero in
+                            erat tincidunt, vel viverra mi vestibulum. Suspendisse ut nulla vel libero pharetra.</p>
+                        <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slider-controls">
+            <button class="prev" aria-label="Précédent"><i class="fas fa-chevron-left"></i></button>
+            <div class="slider-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            <button class="next" aria-label="Suivant"><i class="fas fa-chevron-right"></i></button>
+        </div>
+
+        <!-- Statistiques -->
+        <div class="stats-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-item" data-aos="fade-up" data-aos-delay="100">
+                            <div class="stat-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="stat-number">300</div>
+                            <div class="stat-label">Consultants</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-item" data-aos="fade-up" data-aos-delay="200">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-number">150</div>
+                            <div class="stat-label">Partenaires</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-item" data-aos="fade-up" data-aos-delay="300">
+                            <div class="stat-icon">
+                                <i class="fas fa-folder"></i>
+                            </div>
+                            <div class="stat-number">200</div>
+                            <div class="stat-label">Projets réalisés</div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 col-sm-6">
+                        <div class="stat-item" data-aos="fade-up" data-aos-delay="400">
+                            <div class="stat-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div class="stat-number">300</div>
+                            <div class="stat-label">Pays à travers le monde</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pour aller plus loin -->
+    <section class="more-section">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Pour aller plus loin</h2>
+        </div>
+
+        <div class="topics-slider">
+            <!-- Slide 1 - Santé -->
+            <div class="topic-slide">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="topic-content">
+                            <h3>Santé</h3>
+                            <p>Fusce at nisi eget dolor rhoncus facilisis. Mauris ante nisi, consectetur et luctus et,
+                                porta ut dolor. Curabitur ultricies</p>
+                            <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                    class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="topic-image">
+                            <img src="{{ asset('images/topics/sante.jpg') }}" alt="Santé">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2 - Éducation -->
+            <div class="topic-slide">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="topic-content">
+                            <h3>Éducation</h3>
+                            <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis
+                                egestas. Cras mattis justo id magna vestibulum.</p>
+                            <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                    class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="topic-image">
+                            <img src="{{ asset('images/topics/education.jpg') }}" alt="Éducation">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3 - Agriculture -->
+            <div class="topic-slide">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="topic-content">
+                            <h3>Agriculture</h3>
+                            <p>Mauris fermentum ligula in ante tempus, ac commodo nulla porta. Sed vulputate feugiat
+                                nisl, in consectetur sapien tristique vel.</p>
+                            <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                    class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="topic-image">
+                            <img src="{{ asset('images/topics/agriculture.jpg') }}" alt="Agriculture">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4 - Environnement -->
+            <div class="topic-slide">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="topic-content">
+                            <h3>Environnement</h3>
+                            <p>Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae;
+                                Praesent vestibulum mauris in posuere ornare.</p>
+                            <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                    class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="topic-image">
+                            <img src="{{ asset('images/topics/environnement.jpg') }}" alt="Environnement">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5 - Gouvernance -->
+            <div class="topic-slide">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="topic-content">
+                            <h3>Gouvernance</h3>
+                            <p>Curabitur luctus sapien ac sem placerat, vitae pharetra diam faucibus. Nulla facilisi.
+                                Nunc pellentesque magna vel augue efficitur.</p>
+                            <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                    class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="topic-image">
+                            <img src="{{ asset('images/topics/gouvernance.jpg') }}" alt="Gouvernance">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6 - Droits humains -->
+            <div class="topic-slide">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="topic-content">
+                            <h3>Droits humains</h3>
+                            <p>Quisque euismod erat et sollicitudin finibus. Integer sit amet velit iaculis, tempus ante
+                                vel, facilisis sem. Nulla tempus enim vel.</p>
+                            <a href="#" class="btn btn-outline-light">Plus d'information <i
+                                    class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="topic-image">
+                            <img src="{{ asset('images/topics/droits-humains.jpg') }}" alt="Droits humains">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slider-controls">
+            <button class="prev" aria-label="Précédent"><i class="fas fa-chevron-left"></i></button>
+            <div class="slider-dots">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+            <button class="next" aria-label="Suivant"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </section>
+
+    <!-- Actualités -->
+    <section class="news-section">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Toute notre actualité</h2>
+
+            <div class="row">
+                <!-- Article 1 -->
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                    <div class="news-card">
+                        <div class="news-image">
+                            <img src="{{ asset('images/actualites/actu-1.jpg') }}" alt="Actualité 1">
+                        </div>
+                        <div class="news-category">
+                            <span>Catégorie</span>
+                        </div>
+                        <div class="news-date">
+                            <span>20 Avril 2025</span>
+                        </div>
+                        <h3 class="news-title">Aliquam in bibendum mauris. Sed vitae erat vel velit blandit pharetra
+                        </h3>
+                        <div class="news-excerpt">
+                            <p>Vestibulum blandit viverra convallis. Pellentesque ligula urna, fermentum ut semper in,
+                                tincidunt nec di. Morbi mauris lacus, consequat eget justo in, semper</p>
+                        </div>
+                        <a href="#" class="btn btn-primary">Voir plus</a>
+                    </div>
+                </div>
+
+                <!-- Article 2 -->
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                    <div class="news-card">
+                        <div class="news-image">
+                            <img src="{{ asset('images/actualites/actu-2.jpg') }}" alt="Actualité 2">
+                        </div>
+                        <div class="news-category">
+                            <span>Catégorie</span>
+                        </div>
+                        <div class="news-date">
+                            <span>20 Avril 2025</span>
+                        </div>
+                        <h3 class="news-title">Donec dapibus mauris id odio ornare tempus. Duis sit amet accumsan</h3>
+                        <div class="news-excerpt">
+                            <p>Praesent eu dolor eu orci vehicula euismod. Vivamus sed sollicitudin libero, vel
+                                malesuada velit. Nullam et maximus lorem. Suspendisse maximus</p>
+                        </div>
+                        <a href="#" class="btn btn-primary">Voir plus</a>
+                    </div>
+                </div>
+
+                <!-- Article 3 -->
+                <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                    <div class="news-card">
+                        <div class="news-image">
+                            <img src="{{ asset('images/actualites/actu-3.jpg') }}" alt="Actualité 3">
+                        </div>
+                        <div class="news-category">
+                            <span>Catégorie</span>
+                        </div>
+                        <div class="news-date">
+                            <span>20 Avril 2025</span>
+                        </div>
+                        <h3 class="news-title">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc quis</h3>
+                        <div class="news-excerpt">
+                            <p>Duis rhoncus dui venenatis consequat porttitor. Etiam aliquet congue consequat. In
+                                posuere, nunc sit amet laoreet blandit, urna sapien imperdiet</p>
+                        </div>
+                        <a href="#" class="btn btn-primary">Voir plus</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="#" class="btn btn-primary">VOIR PLUS</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nos experts -->
+    <section class="experts-section">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Nos experts</h2>
+
+            <div class="experts-slider">
+                <!-- Expert 1 -->
+                <div class="expert-slide">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="expert-image">
+                                <img src="{{ asset('images/experts/expert-1.jpg') }}" alt="Corine MINE PONDJA">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="expert-info">
+                                <div class="expert-header">
+                                    <h3 class="expert-name">Corine MINE PONDJA</h3>
+                                    <div class="expert-social">
+                                        <a href="#" class="linkedin" aria-label="LinkedIn"><i
+                                                class="fab fa-linkedin-in"></i></a>
+                                    </div>
+                                </div>
+                                <p class="expert-position">Lorem ipsum dolor sit amet, consetstur sadipscing elitr, sed
+                                    diam nonumy</p>
+                                <p class="expert-company">Oversee Advising Group (OAG)</p>
+                                <div class="expert-description">
+                                    <p>Lorem ipsum dolor sit amet, consetstur sadipscing elitr, sed diam nonumy eirmod
+                                        tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At
+                                        vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren,
+                                        no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit
+                                        amet, consetstur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut
+                                        labore et dolore magna aliquyam erat, sed diam</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expert 2 -->
+                <div class="expert-slide">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="expert-image">
+                                <img src="{{ asset('images/experts/expert-2.jpg') }}" alt="Jean DUPONT">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="expert-info">
+                                <div class="expert-header">
+                                    <h3 class="expert-name">Jean DUPONT</h3>
+                                    <div class="expert-social">
+                                        <a href="#" class="linkedin" aria-label="LinkedIn"><i
+                                                class="fab fa-linkedin-in"></i></a>
+                                    </div>
+                                </div>
+                                <p class="expert-position">Directeur des Opérations</p>
+                                <p class="expert-company">Oversee Advising Group (OAG)</p>
+                                <div class="expert-description">
+                                    <p>Nullam at odio in sem varius tempor sit amet vel lorem. Etiam eu hendrerit nisl.
+                                        Fusce nibh mauris, vulputate sit amet ex vitae, congue rhoncus nisl. Sed eget
+                                        tellus purus. Nullam tellus felis, vulputate a maximus eget, volutpat non dui.
+                                        Morbi congue feugiat blandit. Aliquam erat volutpat. Quisque pharetra eros at
+                                        velit facilisis, quis elementum ipsum efficitur.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expert 3 -->
+                <div class="expert-slide">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="expert-image">
+                                <img src="{{ asset('images/experts/expert-3.jpg') }}" alt="Aminata DIALLO">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="expert-info">
+                                <div class="expert-header">
+                                    <h3 class="expert-name">Aminata DIALLO</h3>
+                                    <div class="expert-social">
+                                        <a href="#" class="linkedin" aria-label="LinkedIn"><i
+                                                class="fab fa-linkedin-in"></i></a>
+                                    </div>
+                                </div>
+                                <p class="expert-position">Responsable Suivi et Évaluation</p>
+                                <p class="expert-company">Oversee Advising Group (OAG)</p>
+                                <div class="expert-description">
+                                    <p>Cras auctor, tortor ut venenatis varius, dui arcu efficitur nisi, ac finibus sem
+                                        augue vel arcu. Maecenas porttitor vestibulum arcu eu vestibulum. Donec feugiat
+                                        venenatis facilisis. Nulla facilisi. Sed sollicitudin risus et nibh consectetur,
+                                        sit amet feugiat nulla convallis. Nunc tempus euismod consequat. Nam dui ligula,
+                                        gravida ac accumsan semper, volutpat nec magna.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expert 4 -->
+                <div class="expert-slide">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="expert-image">
+                                <img src="{{ asset('images/experts/expert-4.jpg') }}" alt="Mathieu LEFEBVRE">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="expert-info">
+                                <div class="expert-header">
+                                    <h3 class="expert-name">Mathieu LEFEBVRE</h3>
+                                    <div class="expert-social">
+                                        <a href="#" class="linkedin" aria-label="LinkedIn"><i
+                                                class="fab fa-linkedin-in"></i></a>
+                                    </div>
+                                </div>
+                                <p class="expert-position">Expert Environnement et Changement Climatique</p>
+                                <p class="expert-company">Oversee Advising Group (OAG)</p>
+                                <div class="expert-description">
+                                    <p>Proin ullamcorper pretium orci. Donec nec scelerisque leo. Aenean id augue a eros
+                                        eleifend condimentum vitae quis lectus. Sed imperdiet vestibulum risus eu
+                                        viverra. Phasellus ut lectus mauris. Praesent quis tincidunt nisl. Aenean id
+                                        felis lectus. Praesent bibendum diam ut diam vehicula accumsan. Vivamus
+                                        dignissim justo vitae libero laoreet, in tempor lacus interdum.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expert 5 -->
+                <div class="expert-slide">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="expert-image">
+                                <img src="{{ asset('images/experts/expert-5.jpg') }}" alt="Fatou NDIAYE">
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="expert-info">
+                                <div class="expert-header">
+                                    <h3 class="expert-name">Fatou NDIAYE</h3>
+                                    <div class="expert-social">
+                                        <a href="#" class="linkedin" aria-label="LinkedIn"><i
+                                                class="fab fa-linkedin-in"></i></a>
+                                    </div>
+                                </div>
+                                <p class="expert-position">Spécialiste en Santé Publique</p>
+                                <p class="expert-company">Oversee Advising Group (OAG)</p>
+                                <div class="expert-description">
+                                    <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac
+                                        turpis egestas. Integer nec augue a risus hendrerit pellentesque. Sed lobortis
+                                        erat sed mauris tempor, ac sollicitudin eros pulvinar. In hac habitasse platea
+                                        dictumst. Aliquam vulputate metus et nibh consequat, et mollis lorem rutrum.
+                                        Cras interdum risus et arcu fermentum, eget feugiat lectus iaculis.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="slider-controls">
+                <button class="prev" aria-label="Précédent"><i class="fas fa-chevron-left"></i></button>
+                <div class="slider-dots">
+                    <span class="dot active"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                <button class="next" aria-label="Suivant"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ils nous font confiance -->
+    <section class="partners-section">
+        <div class="container">
+            <h2 class="section-title" data-aos="fade-up">Ils nous font confiance</h2>
+
+            <div class="partners-logos" data-aos="fade-up">
+                <div class="row">
+                    <div class="col-md-2 col-4">
+                        <div class="partner-logo">
+                            <img src="{{ asset('images/partners/cordaid.png') }}" alt="Cordaid">
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4">
+                        <div class="partner-logo">
+                            <img src="{{ asset('images/partners/cfi.png') }}" alt="CFI">
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4">
+                        <div class="partner-logo">
+                            <img src="{{ asset('images/partners/invisible-children.png') }}" alt="Invisible Children">
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4">
+                        <div class="partner-logo">
+                            <img src="{{ asset('images/partners/solidarites.png') }}" alt="Solidarités International">
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4">
+                        <div class="partner-logo">
+                            <img src="{{ asset('images/partners/oxfam.png') }}" alt="Oxfam">
+                        </div>
+                    </div>
+                    <div class="col-md-2 col-4">
+                        <div class="partner-logo">
+                            <img src="{{ asset('images/partners/world-vision.png') }}" alt="World Vision">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pied de page -->
+    <footer>
+        <div class="footer-top">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6 text-left">
+                        <ul class="footer-nav">
+                            <li><a href="#">Contacts</a></li>
+                            <li class="separator">|</li>
+                            <li><a href="#">Travailler avec nous</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <div class="lang-selector">
+                            <a href="#" class="active">FR</a>
+                            <span>|</span>
+                            <a href="#">EN</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-main">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="footer-logo">
+                            <img src="{{ asset('images/logo/oag-logo-gray.png') }}" alt="OAG - Oversee Advising Group">
+                        </div>
+                        <div class="footer-social">
+                            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                            <a href="#" aria-label="YouTube"><i class="fab fa-youtube"></i></a>
+                            <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-2">
+                        <div class="footer-menu">
+                            <h3>Menu</h3>
+                            <ul>
+                                <li><a href="{{ path('app_home') }}">Accueil</a></li>
+                                <li><a href="#">À propos de nous</a></li>
+                                <li><a href="#">Services</a></li>
+                                <li><a href="{{ path('app_projects') }}">Réalisations</a></li>
+                                <li><a href="#">Travailler avec nous</a></li>
+                                <li><a href="#">Actualités</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="footer-menu footer-column-separator">
+                            <h3>Services</h3>
+                            <ul>
+                                <li><a href="#">Suivi évaluation</a></li>
+                                <li><a href="#">Evaluation des projets et programmes</a></li>
+                                <li><a href="#">Suivi indépendant des projets et programmes (TPM)</a></li>
+                                <li><a href="#">Micro-évaluation des partenaires du SNU dans le cadre du HACT</a></li>
+                                <li><a href="#">Macro évaluation</a></li>
+                                <li><a href="#">Etude et recherche</a></li>
+                                <li><a href="#">Renforcement des capacités</a></li>
+                                <li><a href="#">Unité d'exécution des projets</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="footer-menu footer-column-separator">
+                            <h3>Secteurs</h3>
+                            <div class="row">
+                                <div class="col-md-6 col-6">
+                                    <ul>
+                                        <li><a href="#">Education</a></li>
+                                        <li><a href="#">Santé</a></li>
+                                        <li><a href="#">Protection de l'enfance</a></li>
+                                        <li><a href="#">Paix et conflits</a></li>
+                                        <li><a href="#">Environnement et changement climatique</a></li>
+                                        <li><a href="#">Finance climatique</a></li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6 col-6">
+                                    <ul>
+                                        <li><a href="#">Agriculture et sécurité alimentaire</a></li>
+                                        <li><a href="#">Démocratie et gouvernance</a></li>
+                                        <li><a href="#">Eau et assainissement</a></li>
+                                        <li><a href="#">Etat civil</a></li>
+                                        <li><a href="#">Droit de l'homme</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6 text-left">
+                        <ul class="footer-links">
+                            <li><a href="#">Mentions légales</a></li>
+                            <li class="separator">|</li>
+                            <li><a href="#">Politique de Confidentialité</a></li>
+                            <li class="separator">|</li>
+                            <li><a href="#">Termes et conditions</a></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <div class="footer-copyright">
+                            <p>Copyright © 2025. Tous droits réservés.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-credits">
+                    <p>Powered by MK BA</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+
+    <!-- Slick Carousel JS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- AOS - Animate On Scroll -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <!-- Custom JS -->
+    <script src="{{ asset('js/main.js') }}"></script>
+    <script src="{{ asset('js/sliders.js') }}"></script>
+    <script src="{{ asset('js/map.js') }}"></script>
+</body>
+
+</html>
