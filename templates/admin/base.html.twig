@@ -280,12 +280,12 @@
             <div class="user-info">
                 <strong>{{ app.user.userIdentifier|default('Admin') }}</strong>
                 <small>Administrateur</small>
-                <form method="post" action="{{ path('app_logout') }}">
-                    <button type="submit" class="btn logout-btn">
-                        <i class="fas fa-sign-out-alt"></i>
-                        Déconnexion
-                    </button>
-                </form>
+                <!-- CORRECTION PRINCIPALE: Utilisation d'un lien au lieu d'un formulaire -->
+                <a href="{{ path('app_logout') }}" class="btn logout-btn" 
+                   onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?');">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Déconnexion
+                </a>
             </div>
         </div>
 

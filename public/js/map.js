@@ -16,7 +16,7 @@ const countriesData = [
         projects: 20,
         interveners: 70,
         highlighted: true,
-        flag: 'assets/images/flags/cameroon.png'
+        flag: 'images/flags/cameroon.png'
     },
     {
         name: 'Vietnam',
@@ -25,7 +25,7 @@ const countriesData = [
         projects: 18,
         interveners: 55,
         highlighted: true,
-        flag: 'assets/images/flags/vietnam.png'
+        flag: 'images/flags/vietnam.png'
     },
     {
         name: 'République Démocratique du Congo',
@@ -34,7 +34,7 @@ const countriesData = [
         projects: 25,
         interveners: 80,
         highlighted: true,
-        flag: 'assets/images/flags/drc.png'
+        flag: 'images/flags/drc.png'
     },
     {
         name: 'Sénégal',
@@ -43,7 +43,7 @@ const countriesData = [
         projects: 12,
         interveners: 35,
         highlighted: true,
-        flag: 'assets/images/flags/senegal.png'
+        flag: 'images/flags/senegal.png'
     },
     {
         name: 'Mali',
@@ -52,7 +52,7 @@ const countriesData = [
         projects: 8,
         interveners: 25,
         highlighted: true,
-        flag: 'assets/images/flags/mali.png'
+        flag: 'images/flags/mali.png'
     },
     {
         name: 'Bangladesh',
@@ -61,7 +61,7 @@ const countriesData = [
         projects: 15,
         interveners: 45,
         highlighted: true,
-        flag: 'assets/images/flags/bangladesh.png'
+        flag: 'images/flags/bangladesh.png'
     },
     {
         name: 'Niger',
@@ -70,7 +70,7 @@ const countriesData = [
         projects: 6,
         interveners: 18,
         highlighted: true,
-        flag: 'assets/images/flags/niger.png'
+        flag: 'images/flags/niger.png'
     },
     {
         name: 'Tchad',
@@ -79,7 +79,7 @@ const countriesData = [
         projects: 10,
         interveners: 30,
         highlighted: true,
-        flag: 'assets/images/flags/tchad.png'
+        flag: 'images/flags/tchad.png'
     }
 ];
 

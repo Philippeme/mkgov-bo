@@ -34,10 +34,12 @@ security:
                 password_parameter: _password
                 enable_csrf: true
                 
-            # Configuration de la déconnexion
+            # Configuration de la déconnexion - CORRECTION PRINCIPALE
             logout:
                 path: app_logout
                 target: app_home
+                invalidate_session: true
+                delete_cookies: []
 
     # Contrôle d'accès
     access_control:
