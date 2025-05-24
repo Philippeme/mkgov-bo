@@ -1,20 +1,45 @@
 security:
+    # Configuration des encodeurs de mots de passe
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
     
+    # Fournisseurs d'utilisateurs
     providers:
         users_in_memory:
             memory:
                 users:
-                    admin: { password: '$2y$13$rBZocz0MCeUfc4x1YKN1OuqD0a6gRG9NPrnfp.D2wqCXKKh4zD3Oy', roles: ['ROLE_ADMIN'] }
+                    admin: 
+                        password: '$2y$13$39JE9yPAfG2lBIjskuP1peYiRVo4OR8cuy7HiaNufAcqnLhCx4F4y'
+                        roles: ['ROLE_ADMIN']
+              
 
+    # Configuration des firewalls
     firewalls:
+        # Firewall pour les outils de développement
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+            
+        # Firewall principal
         main:
             lazy: true
             provider: users_in_memory
+            
+            # Configuration du formulaire de connexion
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                default_target_path: admin_project_index
+                username_parameter: _username
+                password_parameter: _password
+                enable_csrf: true
+                
+            # Configuration de la déconnexion
+            logout:
+                path: app_logout
+                target: app_home
 
+    # Contrôle d'accès
     access_control:
+        - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
