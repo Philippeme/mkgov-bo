@@ -9,7 +9,7 @@ security:
             memory:
                 users:
                     admin: 
-                        password: '$2y$13$39JE9yPAfG2lBIjskuP1peYiRVo4OR8cuy7HiaNufAcqnLhCx4F4y'
+                        password: '$2y$13$NtDROl4iyw/zJol2el27k.9O/78XAfVGIYQIzj6WLa.McU8rir62e'
                         roles: ['ROLE_ADMIN']
               
 
@@ -20,7 +20,7 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
             
-        # Firewall principal
+        # Firewall principal avec protection renforcée
         main:
             lazy: true
             provider: users_in_memory
@@ -30,6 +30,7 @@ security:
                 login_path: app_login
                 check_path: app_login
                 default_target_path: admin_project_index
+                always_use_default_target_path: true
                 username_parameter: _username
                 password_parameter: _password
                 enable_csrf: true
@@ -37,11 +38,17 @@ security:
             # Configuration de la déconnexion - CORRECTION PRINCIPALE
             logout:
                 path: app_logout
-                target: app_home
+                target: app_login  # Redirection vers la page de connexion
                 invalidate_session: true
                 delete_cookies: []
+                # CORRECTION: Désactivation du CSRF pour éviter les erreurs de token
+                enable_csrf: false
 
-    # Contrôle d'accès
+    # Contrôle d'accès renforcé
     access_control:
-        - { path: ^/login, roles: PUBLIC_ACCESS }
+        # Page de connexion accessible publiquement
+        - { path: ^/login$, roles: PUBLIC_ACCESS }
+        # Protection stricte de toutes les routes d'administration
         - { path: ^/admin, roles: ROLE_ADMIN }
+        # Redirection forcée vers login pour les utilisateurs non authentifiés tentant d'accéder à /admin
+        - { path: ^/admin, roles: IS_AUTHENTICATED_FULLY }

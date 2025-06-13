@@ -1,0 +1,84 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Persons Management{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Persons Management</h1>
+    <a href="{{ path('admin_person_new') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> New person
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Photo</th>
+                    <th>First name</th>
+                    <th>Last name</th>
+                    <th>Middle Name</th>
+                    <th>Gender</th>
+                    <th>Date of birth</th>
+                    <th>Place of birth</th>
+                    <th>National ID</th>
+                    <th>Email</th>
+                    <th>Phone number</th>
+                    <th>Marital status</th>
+                    <th>Region</th>
+                    <th>Address</th>
+                    <th>Profession</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for person in persons %}
+                <tr>
+                    <td>{{ person.id }}</td>
+                    <td>
+                        {% if person.image %}
+                            <img src="{{ asset('uploads/procedures/' ~ procedure.image) }}" alt="{{ person.firstName }}" style="height: 50px;">
+                        {% else %}
+                            <span class="text-muted">No photo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ person.firstName }}</td>
+                    <td>{{ person.lastName }}</td>
+                    <td>{{ person.middleName }}</td>
+                    <td>{{ person.gender }}</td>
+                    <td>{{ person.dateOfBirth|date('d/m/Y') }}</td>
+                    <td>{{ person.placeOfBirth }}</td>
+                    <td>{{ person.nationalId }}</td>
+                    <td>{{ person.email }}</td>
+                    <td>{{ person.phoneNumber }}</td>
+                    <td>{{ person.maritalStatus }}</td>
+                    <td>{{ person.region }}</td>
+                    <td>{{ person.address }}</td>
+                    <td>{{ person.profession }}</td>
+                    <td>
+                        <a href="{{ path('admin_person_show', {'id': person.id}) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ path('admin_person_edit', {'id': person.id}) }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="post" action="{{ path('admin_person_delete', {'id': person.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette procedure ?');" style="display: inline-block;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ person.id) }}">
+                            <button class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="8" class="text-center">No person found</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

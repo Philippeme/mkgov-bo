@@ -1,0 +1,62 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Institutions Management{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Institutions Management</h1>
+    <a href="{{ path('admin_institution_new') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> New family
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Heardquarters</th>
+                    <th>Department</th>
+                    <th>Phone number</th>
+                    <th>Email</th>
+                    <th>Contact person</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for institution in institutions %}
+                <tr>
+                    <td>{{ institution.id }}</td>
+                    <td>{{ institution.iname }}</td>
+                    <td>{{ institution.hq }}</td>
+                    <td>{{ institution.department }}</td>
+                    <td>{{ institution.phonenumber }}</td>
+                    <td>{{ institution.email }}</td>
+                    <td>{{ institution.contactperson }}</td>
+                    <td>
+                        <a href="{{ path('admin_institution_show', {'id': institution.id}) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ path('admin_institution_edit', {'id': institution.id}) }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="post" action="{{ path('admin_institution_delete', {'id': institution.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette institution ?');" style="display: inline-block;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ institution.id) }}">
+                            <button class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="8" class="text-center">No institution found</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

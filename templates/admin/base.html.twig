@@ -9,6 +9,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet"href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
+
     
     <style>
         :root {
@@ -44,6 +46,104 @@
             flex: 1;
             margin-left: var(--sidebar-width);
             min-height: 100vh;
+        }
+
+        /* Styles pour les accordéons cliquables */
+        .admin-sidebar .nav-item.dropdown {
+            position: relative;
+        }
+
+        .admin-sidebar .nav-item.dropdown .nav-link {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .admin-sidebar .nav-item.dropdown .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            padding-left: 2rem;
+        }
+
+        /* Accordéon fermé par défaut (horizontal/caché) */
+        .admin-sidebar .dropdown-menu {
+            position: static;
+            float: none;
+            display: none;
+            margin: 0;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            transform: scaleY(0);
+            transform-origin: top;
+        }
+
+        /* Accordéon ouvert (vertical) */
+        .admin-sidebar .dropdown-menu.show {
+            display: block;
+            opacity: 1;
+            max-height: 300px;
+            transform: scaleY(1);
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            margin-top: 5px;
+            padding: 5px 0;
+        }
+
+        /* Styles pour les éléments des sous-menus */
+        .admin-sidebar .dropdown-item {
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            color: rgba(255,255,255,0.8);
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            margin: 2px 8px;
+        }
+
+        .admin-sidebar .dropdown-item:hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        /* Rotation de l'icône chevron */
+        .admin-sidebar .nav-item.dropdown .bi-chevron-down {
+            transition: transform 0.3s ease;
+        }
+
+        .admin-sidebar .nav-item.dropdown.open .bi-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        /* Effet d'ouverture progressif des éléments du menu */
+        .admin-sidebar .dropdown-menu.show .dropdown-item {
+            animation: slideInLeft 0.3s ease forwards;
+            opacity: 0;
+        }
+
+        .admin-sidebar .dropdown-menu.show .dropdown-item:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .admin-sidebar .dropdown-menu.show .dropdown-item:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .admin-sidebar .dropdown-menu.show .dropdown-item:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .admin-header {
@@ -129,11 +229,16 @@
             padding: 8px 16px;
             border-radius: 4px;
             transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
         }
 
         .logout-btn:hover {
             background: rgba(255,255,255,0.1);
             color: white;
+            text-decoration: none;
         }
 
         .breadcrumb {
@@ -236,6 +341,370 @@
             color: var(--primary-color);
             font-size: 1.5rem;
         }
+
+        /* Styles pour le header et profil utilisateur */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-left-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .search-container {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 40px 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(26, 75, 143, 0.25);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .search-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .breadcrumb-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .breadcrumb-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: white;
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .breadcrumb-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb-btn.primary {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .breadcrumb-btn.primary:hover {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .breadcrumb-path {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .breadcrumb-separator {
+            color: #adb5bd;
+        }
+
+        .breadcrumb-item {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb-item.current {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .header-timestamp {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #6c757d;
+            font-size: 14px;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            background: #f8f9fa;
+        }
+
+        .language-selector {
+            position: relative;
+        }
+
+        .language-selector .dropdown-toggle {
+            background: none;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #6c757d;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .language-selector .dropdown-toggle:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .language-selector .dropdown-menu {
+            min-width: 120px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid #e9ecef;
+        }
+
+        .notifications-container {
+            position: relative;
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            color: #6c757d;
+            font-size: 18px;
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .notification-btn:hover {
+            background-color: #f8f9fa;
+            color: var(--primary-color);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .user-profile {
+            position: relative;
+        }
+
+        .profile-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .profile-toggle:hover {
+            background-color: #f8f9fa;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #228B22 0%, #006400 50%, #FFD700 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .user-info-header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 0;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid #e9ecef;
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+        }
+
+        .profile-dropdown.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .profile-dropdown-header {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-dropdown-header .user-avatar {
+            width: 48px;
+            height: 48px;
+            font-size: 18px;
+        }
+
+        .profile-dropdown-items {
+            padding: 8px 0;
+        }
+
+        .profile-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: #333;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .profile-dropdown-item:hover {
+            background-color: #f8f9fa;
+            color: var(--primary-color);
+        }
+
+        .profile-dropdown-item i {
+            width: 18px;
+            color: #6c757d;
+        }
+
+        .profile-dropdown-divider {
+            border-top: 1px solid #e9ecef;
+            margin: 8px 0;
+        }
+
+        @media (max-width: 992px) {
+            .search-container {
+                min-width: 200px;
+            }
+            
+            .breadcrumb-actions {
+                gap: 4px;
+            }
+            
+            .breadcrumb-btn {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+            
+            .user-info-header {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-left-section {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .search-container {
+                min-width: 100%;
+            }
+            
+            .breadcrumb-nav {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .breadcrumb-path {
+                display: none;
+            }
+        }
     </style>
 
     {% block stylesheets %}{% endblock %}
@@ -258,55 +727,280 @@
         <!-- Sidebar -->
         <div class="admin-sidebar" id="adminSidebar">
             <div class="sidebar-header">
-                <img src="{{ asset('images/logo/oag-logo.png') }}" alt="OAG">
-                <h4>Administration</h4>
+            <h3><b>MK Gov</b></h3>
             </div>
 
             <ul class="sidebar-nav">
+
+            {# — Dashboard (pas de sous-menu) — #}
+            <li class="nav-item">
+                <a href="{{ path('admin_project_index') }}"
+                class="nav-link {{ app.request.get('_route') starts with 'admin_project' ? 'active' : '' }}">
+                <i class="bi-speedometer2 me-2"></i>
+                Dashboard
+                </a>
+            </li>
+
+            {# — Procedures Management — #}
+            <li class="nav-item dropdown">
+            <a href="#"
+                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
+                data-dropdown="procedures">
+                <span>
+                <i class="bi-file-earmark-text me-2"></i>
+                Procedures 
+                </span>
+                <i class="bi-chevron-down"></i>
+            </a>
+            <ul class="dropdown-menu">
                 <li>
-                    <a href="{{ path('admin_project_index') }}" class="{{ app.request.get('_route') starts with 'admin_project' ? 'active' : '' }}">
-                        <i class="fas fa-folder"></i>
-                        Gestion des projets
-                    </a>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-plus-circle me-2"></i>
+                    <span class="ms-2">New</span>
+                </a>
                 </li>
                 <li>
-                    <a href="{{ path('app_home') }}">
-                        <i class="fas fa-eye"></i>
-                        Voir le site
-                    </a>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-list-ul me-2"></i>
+                    <span class="ms-2">List</span>
+                </a>
                 </li>
             </ul>
+            </li>
 
-            <div class="user-info">
-                <strong>{{ app.user.userIdentifier|default('Admin') }}</strong>
-                <small>Administrateur</small>
-                <!-- CORRECTION PRINCIPALE: Utilisation d'un lien au lieu d'un formulaire -->
-                <a href="{{ path('app_logout') }}" class="btn logout-btn" 
-                   onclick="return confirm('Êtes-vous sûr de vouloir vous déconnecter ?');">
-                    <i class="fas fa-sign-out-alt"></i>
-                    Déconnexion
+            {# — Institutions Management — #}
+            <li class="nav-item dropdown">
+            <a href="#"
+                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
+                data-dropdown="institutions">
+                <span>
+                <i class="bi-building me-2"></i>
+                Institutions 
+                </span>
+                <i class="bi-chevron-down"></i>
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-plus-circle me-2"></i>
+                    <span class="ms-2">New</span>
                 </a>
-            </div>
+                </li>
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-list-ul me-2"></i>
+                    <span class="ms-2">List</span>
+                </a>
+                </li>
+            </ul>
+            </li>
+
+            {# — Requests Management — #}
+            <li class="nav-item dropdown">
+            <a href="#"
+                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
+                data-dropdown="requests">
+                <span>
+                <i class="bi-journal-text me-2"></i>
+                Requests 
+                </span>
+                <i class="bi-chevron-down"></i>
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-list-ul me-2"></i>
+                    <span class="ms-2">List</span>
+                </a>
+                </li>
+            </ul>
+            </li>
+
+            {# — Users Management — #}
+            <li class="nav-item dropdown">
+            <a href="#"
+                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
+                data-dropdown="users">
+                <span>
+                <i class="bi-people me-2"></i>
+                Users 
+                </span>
+                <i class="bi-chevron-down"></i>
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-person me-2"></i>
+                    <span class="ms-2">Users</span>
+                </a>
+                </li>
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-person-badge me-2"></i>
+                    <span class="ms-2">Roles</span>
+                </a>
+                </li>
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-key me-2"></i>
+                    <span class="ms-2">Permissions</span>
+                </a>
+                </li>
+            </ul>
+            </li>
+
+            {# — System — #}
+            <li class="nav-item dropdown">
+            <a href="#"
+                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
+                data-dropdown="system">
+                <span>
+                <i class="bi-gear me-2"></i>
+                System
+                </span>
+                <i class="bi-chevron-down"></i>
+            </a>
+            <ul class="dropdown-menu">
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-sliders2 me-2"></i>
+                    <span class="ms-2">Settings</span>
+                </a>
+                </li>
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-database me-2"></i>
+                    <span class="ms-2">References Data</span>
+                </a>
+                </li>
+                <li>
+                <a class="dropdown-item" href="#">
+                    <i class="bi-clock-history me-2"></i>
+                    <span class="ms-2">Logs</span>
+                </a>
+                </li>
+            </ul>
+            </li>
+
+            </ul>
         </div>
+
 
         <!-- Contenu principal -->
         <div class="admin-content">
             <div class="admin-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex align-items-center">
-                        <button class="mobile-menu-toggle me-3" id="mobileMenuToggle">
+                    <div class="header-left-section">
+                        <button class="mobile-menu-toggle me-3 d-md-none" id="mobileMenuToggle">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <nav aria-label="breadcrumb">
-                            <ol class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="{{ path('admin_project_index') }}">Administration</a></li>
-                                {% block breadcrumb %}{% endblock %}
-                            </ol>
-                        </nav>
+                        
+                        <!-- Search Container -->
+                        <div class="search-container">
+                            <input type="text" class="search-input" placeholder="Search procedures, institutions, requests..." id="headerSearch">
+                            <button class="search-btn" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Breadcrumb Navigation -->
+                        <div class="breadcrumb-nav">
+                            <div class="breadcrumb-path">
+                                <a href="#" class="breadcrumb-item">Dashboard</a>
+                                <span class="breadcrumb-separator">/</span>
+                                <a href="#" class="breadcrumb-item">Procedures Management</a>
+
+                            </div>
+                            
+                            <div class="breadcrumb-actions">
+                                <a href="#" class="breadcrumb-btn">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    <span class="d-none d-lg-inline">Dashboard</span>
+                                </a>
+                                <a href="#" class="breadcrumb-btn">
+                                    <i class="fas fa-arrow-left"></i>
+                                    <span class="d-none d-lg-inline">Back to List</span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-muted">
-                        <i class="fas fa-clock"></i>
-                        {{ "now"|date("d/m/Y H:i") }}
+                    
+                    <div class="header-actions">
+                        <!-- Timestamp -->
+                        <div class="header-timestamp">
+                            <i class="fas fa-clock"></i>
+                            <span>{{ "now"|date("d/m/Y H:i") }}</span>
+                        </div>
+                        
+                        <!-- Language Selector -->
+                        <div class="language-selector dropdown">
+                            <button class="dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-globe"></i>
+                                <span>EN</span>
+                                <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="languageDropdown">
+                                <li><a class="dropdown-item" href="#" data-lang="en">
+                                    <i class="fas fa-flag-usa me-2"></i>English
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-lang="fr">
+                                    <i class="fas fa-flag me-2"></i>Français
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" data-lang="pt">
+                                    <i class="fas fa-flag me-2"></i>Português
+                                </a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div class="notifications-container">
+                            <button class="notification-btn" id="notificationBtn">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge">1</span>
+                            </button>
+                        </div>
+
+                        <!-- User Profile -->
+                        <div class="user-profile">
+                            <button class="profile-toggle" id="profileToggle">
+                                <div class="user-avatar">GB</div>
+                                <div class="user-info-header d-none d-md-block">
+                                    <div class="user-name">Admin User</div>
+                                    <div class="user-role">Administrator</div>
+                                </div>
+                                <i class="fas fa-chevron-down" style="font-size: 10px; color: #6c757d;"></i>
+                            </button>
+                            
+                            <div class="profile-dropdown" id="profileDropdown">
+                                <div class="profile-dropdown-header">
+                                    <div>
+                                        <div class="user-name">Admin User</div>
+                                        <div class="user-role">System Administrator</div>
+                                        <small class="text-muted">Guinea-Bissau Government</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="profile-dropdown-items">
+                                    <a href="#" class="profile-dropdown-item">
+                                        <i class="fas fa-user"></i>
+                                        <span>My Profile</span>
+                                    </a>
+                                    <a href="#" class="profile-dropdown-item">
+                                        <i class="fas fa-cog"></i>
+                                        <span>Settings</span>
+                                    </a>
+                                    <a href="#" class="profile-dropdown-item">
+                                        <i class="fas fa-sliders-h"></i>
+                                        <span>Preferences</span>
+                                    </a>
+                                    <div class="profile-dropdown-divider"></div>
+                                    <button class="profile-dropdown-item" onclick="logout()">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -321,6 +1015,148 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // Gestion de la recherche dans le header
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('headerSearch');
+            const searchBtn = document.querySelector('.search-btn');
+            
+            if (searchInput && searchBtn) {
+                // Fonction de recherche
+                function performSearch() {
+                    const query = searchInput.value.trim();
+                    if (query.length > 0) {
+                        console.log('Searching for:', query);
+                        // Ici vous pouvez ajouter la logique de recherche
+                        // Par exemple : window.location.href = '/search?q=' + encodeURIComponent(query);
+                    }
+                }
+                
+                // Recherche au clic sur le bouton
+                searchBtn.addEventListener('click', performSearch);
+                
+                // Recherche à l'appui sur Entrée
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        performSearch();
+                    }
+                });
+                
+                // Autocomplete basique (optionnel)
+                searchInput.addEventListener('input', function() {
+                    const query = this.value.trim();
+                    if (query.length >= 2) {
+                        // Ici vous pouvez ajouter la logique d'autocomplétion
+                        console.log('Autocomplete for:', query);
+                    }
+                });
+            }
+        });
+
+        // Gestion des accordéons dans la sidebar
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle-custom');
+            
+            dropdownToggles.forEach(function(toggle) {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    const parentLi = this.closest('.nav-item.dropdown');
+                    const dropdownMenu = parentLi.querySelector('.dropdown-menu');
+                    const isCurrentlyOpen = parentLi.classList.contains('open');
+                    
+                    // Fermer tous les autres accordéons
+                    document.querySelectorAll('.nav-item.dropdown.open').forEach(function(openItem) {
+                        if (openItem !== parentLi) {
+                            openItem.classList.remove('open');
+                            openItem.querySelector('.dropdown-menu').classList.remove('show');
+                        }
+                    });
+                    
+                    // Toggle l'accordéon actuel
+                    if (isCurrentlyOpen) {
+                        parentLi.classList.remove('open');
+                        dropdownMenu.classList.remove('show');
+                    } else {
+                        parentLi.classList.add('open');
+                        dropdownMenu.classList.add('show');
+                    }
+                });
+            });
+            
+            // Fermer les accordéons si on clique ailleurs
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.nav-item.dropdown')) {
+                    document.querySelectorAll('.nav-item.dropdown.open').forEach(function(openItem) {
+                        openItem.classList.remove('open');
+                        openItem.querySelector('.dropdown-menu').classList.remove('show');
+                    });
+                }
+            });
+        });
+
+        // Gestion du profil utilisateur dans le header
+        document.addEventListener('DOMContentLoaded', function() {
+            const profileToggle = document.getElementById('profileToggle');
+            const profileDropdown = document.getElementById('profileDropdown');
+            
+            if (profileToggle && profileDropdown) {
+                profileToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
+                
+                // Fermer le dropdown si on clique ailleurs
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.user-profile')) {
+                        profileDropdown.classList.remove('show');
+                    }
+                });
+            }
+        });
+
+        // Gestion du sélecteur de langue
+        document.addEventListener('DOMContentLoaded', function() {
+            const languageLinks = document.querySelectorAll('[data-lang]');
+            const currentLangDisplay = document.querySelector('#languageDropdown span');
+            
+            languageLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const selectedLang = this.getAttribute('data-lang').toUpperCase();
+                    if (currentLangDisplay) {
+                        currentLangDisplay.textContent = selectedLang;
+                    }
+                    
+                    // Ici vous pouvez ajouter la logique pour changer réellement la langue
+                    console.log('Language changed to:', selectedLang);
+                });
+            });
+        });
+
+        // Gestion des notifications
+        document.addEventListener('DOMContentLoaded', function() {
+            const notificationBtn = document.getElementById('notificationBtn');
+            
+            if (notificationBtn) {
+                notificationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    // Ici vous pouvez ajouter la logique pour afficher les notifications
+                    console.log('Notifications clicked');
+                });
+            }
+        });
+
+        // Fonction de déconnexion
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                // Ici vous pouvez ajouter la logique de déconnexion
+                console.log('User logged out');
+                // window.location.href = '/logout';
+            }
+        }
+
         // Gestion du menu mobile
         document.getElementById('mobileMenuToggle')?.addEventListener('click', function() {
             document.getElementById('adminSidebar').classList.toggle('show');

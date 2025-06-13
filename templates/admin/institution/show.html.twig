@@ -1,0 +1,67 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ institution.iname }}{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ institution.iname }}</h1>
+    <div>
+        <a href="{{ path('admin_institution_edit', {'id': institution.id}) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Update
+        </a>
+        <a href="{{ path('admin_institution_index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to the list
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Institutions information</h5>
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <td>{{ institution.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Heardquarters</th>
+                            <td>{{ institution.hq }}</td>
+                        </tr>
+                        <tr>
+                            <th>Department</th>
+                            <td>{{ institution.department }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone number</th>
+                            <td>{{ institution.phonenumber }}</td>
+                        </tr> 
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ institution.email }}</td>
+                        </tr>     
+                        <tr>
+                            <th>Contact person</th>
+                            <td>{{ institution.contactperson }}</td>
+                        </tr> 
+                        <tr>
+                            <th>Ordre d'affichage</th>
+                            <td>{{ institution.displayOrder }}</td>
+                        </tr>
+                        <tr>
+                            <th>Créé le</th>
+                            <td>{{ institution.createdAt ? institution.createdAt|date('d/m/Y H:i') : '' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Modifié le</th>
+                            <td>{{ institution.updatedAt ? institution.updatedAt|date('d/m/Y H:i') : '' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

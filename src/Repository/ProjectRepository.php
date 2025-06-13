@@ -60,8 +60,14 @@ class ProjectRepository extends ServiceEntityRepository
         }
 
         if (!empty($filters['year'])) {
-            $qb->andWhere('YEAR(p.createdAt) = :year')
-               ->setParameter('year', $filters['year']);
+            // CORRECTION : Utilisation d'une approche compatible avec DQL pour filtrer par année
+            $startDate = new \DateTime($filters['year'] . '-01-01');
+            $endDate = new \DateTime($filters['year'] . '-12-31 23:59:59');
+            
+            $qb->andWhere('p.createdAt >= :startDate')
+               ->andWhere('p.createdAt <= :endDate')
+               ->setParameter('startDate', $startDate)
+               ->setParameter('endDate', $endDate);
         }
 
         if (!empty($filters['search'])) {
@@ -92,18 +98,20 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les années uniques des projets publiés
+     * CORRECTION PRINCIPALE : Récupère les années uniques des projets publiés
+     * Utilisation d'une requête SQL native pour éviter les problèmes avec la fonction YEAR()
      */
     public function findUniqueYears(): array
     {
-        $result = $this->createQueryBuilder('p')
-            ->select('DISTINCT YEAR(p.createdAt) as year')
-            ->where('p.published = :published')
-            ->setParameter('published', true)
-            ->orderBy('year', 'DESC')
-            ->getQuery()
-            ->getResult();
-
+        $connection = $this->getEntityManager()->getConnection();
+        
+        $sql = 'SELECT DISTINCT YEAR(created_at) as year 
+                FROM projects 
+                WHERE published = :published 
+                ORDER BY year DESC';
+        
+        $result = $connection->executeQuery($sql, ['published' => 1])->fetchAllAssociative();
+        
         return array_column($result, 'year');
     }
 
@@ -140,20 +148,110 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les projets similaires (même catégorie)
+     * CORRECTION PRINCIPALE : Récupère les projets similaires (même catégorie)
+     * Remplacement de RAND() par une approche compatible avec Doctrine
      */
     public function findSimilarProjects(Project $project, int $limit = 3): array
     {
-        return $this->createQueryBuilder('p')
+        // Première approche : récupérer tous les projets similaires
+        $allSimilarProjects = $this->createQueryBuilder('p')
             ->where('p.published = :published')
             ->andWhere('p.category = :category')
             ->andWhere('p.id != :currentId')
             ->setParameter('published', true)
             ->setParameter('category', $project->getCategory())
             ->setParameter('currentId', $project->getId())
-            ->orderBy('RAND()')
-            ->setMaxResults($limit)
+            ->orderBy('p.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
+
+        // Si nous avons plus de projets que la limite demandée, mélanger aléatoirement
+        if (count($allSimilarProjects) > $limit) {
+            shuffle($allSimilarProjects);
+            return array_slice($allSimilarProjects, 0, $limit);
+        }
+
+        return $allSimilarProjects;
+    }
+
+    /**
+     * Alternative pour les projets similaires utilisant une requête SQL native avec RAND()
+     * Cette méthode peut être utilisée si vous préférez l'ordre vraiment aléatoire de la base de données
+     */
+    public function findSimilarProjectsWithRandomOrder(Project $project, int $limit = 3): array
+    {
+        $connection = $this->getEntityManager()->getConnection();
+        
+        $sql = 'SELECT p.* FROM projects p 
+                WHERE p.published = :published 
+                AND p.category = :category 
+                AND p.id != :currentId 
+                ORDER BY RAND() 
+                LIMIT :limit';
+        
+        $result = $connection->executeQuery($sql, [
+            'published' => 1,
+            'category' => $project->getCategory(),
+            'currentId' => $project->getId(),
+            'limit' => $limit
+        ])->fetchAllAssociative();
+
+        // Convertir les résultats en entités Project
+        $projects = [];
+        foreach ($result as $row) {
+            $projectEntity = $this->find($row['id']);
+            if ($projectEntity) {
+                $projects[] = $projectEntity;
+            }
+        }
+
+        return $projects;
+    }
+
+    /**
+     * Méthode alternative pour récupérer les années en utilisant uniquement PHP
+     * Cette approche évite complètement les fonctions SQL
+     */
+    public function findUniqueYearsAlternative(): array
+    {
+        $projects = $this->createQueryBuilder('p')
+            ->select('p.createdAt')
+            ->where('p.published = :published')
+            ->setParameter('published', true)
+            ->getQuery()
+            ->getResult();
+
+        $years = [];
+        foreach ($projects as $project) {
+            $year = $project['createdAt']->format('Y');
+            if (!in_array($year, $years)) {
+                $years[] = $year;
+            }
+        }
+
+        rsort($years); // Tri décroissant
+        return $years;
+    }
+
+    /**
+     * Méthode utilitaire pour compter les projets par année
+     */
+    public function countProjectsByYear(): array
+    {
+        $projects = $this->createQueryBuilder('p')
+            ->select('p.createdAt')
+            ->where('p.published = :published')
+            ->setParameter('published', true)
+            ->getQuery()
+            ->getResult();
+
+        $yearCounts = [];
+        foreach ($projects as $project) {
+            $year = $project['createdAt']->format('Y');
+            $yearCounts[$year] = ($yearCounts[$year] ?? 0) + 1;
+        }
+
+        krsort($yearCounts); // Tri par année décroissante
+        return $yearCounts;
     }
 }

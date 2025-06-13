@@ -1,0 +1,45 @@
+{{ form_start(form) }}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+                {{ form_row(form.pname) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.family) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.shortdesc) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.longdesc) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.processtime) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.servicecost) }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                {{ form_row(form.imageFile) }}
+                {% if procedure.image %}
+                    <div class="mt-2">
+                        <p>Image actuelle :</p>
+                        <img src="{{ asset('uploads/procedures/' ~ procedure.image) }}" alt="{{ procedure.pname }}" class="img-fluid">
+                    </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.displayOrder) }}
+            </div>
+            <div class="form-check mb-3">
+                {{ form_widget(form.published) }}
+                {{ form_label(form.published) }}
+            </div>
+            
+        </div>
+    </div>
+    <button class="btn btn-primary">{{ button_label|default('Save') }}</button>
+    <a href="{{ path('admin_procedure_index') }}" class="btn btn-secondary">Cancel</a>
+{{ form_end(form) }}

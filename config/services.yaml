@@ -5,6 +5,8 @@
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
     projects_directory: '%kernel.project_dir%/public/uploads/projects'
+    procedures_directory: '%kernel.project_dir%/public/uploads/procedures'
+    pdf_directory: '%kernel.project_dir%/public/uploads/pdf_uploads'
 
 services:
     # default configuration for services in *this* file
@@ -24,19 +26,12 @@ services:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
-    # CORRECTION: Désactiver l'extracteur PHPStan qui cause le problème
-    # En supprimant ce service, Symfony n'utilisera pas PhpStanExtractor
+    # CORRECTION PRINCIPALE: Désactivation complète de l'extracteur PHPStan
+    # Cette ligne désactive définitivement le service problématique
     Symfony\Component\PropertyInfo\Extractor\PhpStanExtractor: ~
 
-    # Alternative: Configuration manuelle de PropertyInfo sans PHPStan
-    property_info:
-        class: Symfony\Component\PropertyInfo\PropertyInfoExtractor
-        arguments:
-            - [] # List extractors
-            - !tagged_iterator property_info.type_extractor # Type extractors (sans PHPStan)
-            - [] # Description extractors  
-            - [] # Access extractors
-            - [] # Initializable extractors
+    # SUPPRESSION de la redéfinition du service property_info qui causait des conflits
+    # Le service PropertyInfo par défaut de Symfony sera utilisé sans PHPStan
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

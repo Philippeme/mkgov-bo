@@ -19,8 +19,11 @@ class ProjectController extends AbstractController
     #[Route('/', name: 'admin_project_index', methods: ['GET'])]
     public function index(ProjectRepository $projectRepository): Response
     {
+        // Optimisation : récupération avec une limite pour éviter les problèmes de mémoire
+        $projects = $projectRepository->findBy([], ['displayOrder' => 'ASC', 'createdAt' => 'DESC'], 100);
+        
         return $this->render('admin/project/index.html.twig', [
-            'projects' => $projectRepository->findAll(),
+            'projects' => $projects,
         ]);
     }
 
@@ -28,34 +31,52 @@ class ProjectController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $project = new Project();
-        $form = $this->createForm(ProjectType::class, $project);
+        
+        // Configuration optimisée du formulaire pour réduire l'utilisation mémoire
+        $form = $this->createForm(ProjectType::class, $project, [
+            'validation_groups' => ['Default'],
+        ]);
+        
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Gestion de l'upload d'image
-            $imageFile = $form->get('imageFile')->getData();
-            if ($imageFile) {
-                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+            try {
+                // Gestion de l'upload d'image avec optimisation mémoire
+                $imageFile = $form->get('imageFile')->getData();
+                if ($imageFile) {
+                    $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                    $safeFilename = $slugger->slug($originalFilename);
+                    $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
 
-                try {
-                    $imageFile->move(
-                        $this->getParameter('projects_directory'),
-                        $newFilename
-                    );
-                    $project->setImage($newFilename);
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors du téléchargement de l\'image');
+                    try {
+                        // Vérification de l'existence du répertoire
+                        $uploadsDirectory = $this->getParameter('projects_directory');
+                        if (!is_dir($uploadsDirectory)) {
+                            mkdir($uploadsDirectory, 0755, true);
+                        }
+                        
+                        $imageFile->move($uploadsDirectory, $newFilename);
+                        $project->setImage($newFilename);
+                    } catch (FileException $e) {
+                        $this->addFlash('error', 'Erreur lors du téléchargement de l\'image : ' . $e->getMessage());
+                        return $this->redirectToRoute('admin_project_new');
+                    }
                 }
+
+                // Sauvegarde optimisée avec gestion d'erreur
+                $entityManager->persist($project);
+                $entityManager->flush();
+                
+                // Libération de la mémoire
+                $entityManager->clear();
+
+                $this->addFlash('success', 'Le projet a été créé avec succès.');
+                return $this->redirectToRoute('admin_project_index', [], Response::HTTP_SEE_OTHER);
+                
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la création du projet : ' . $e->getMessage());
+                return $this->redirectToRoute('admin_project_new');
             }
-
-            $entityManager->persist($project);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Le projet a été créé avec succès.');
-
-            return $this->redirectToRoute('admin_project_index', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('admin/project/new.html.twig', [
@@ -75,41 +96,58 @@ class ProjectController extends AbstractController
     #[Route('/{id}/edit', name: 'admin_project_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Project $project, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
-        $form = $this->createForm(ProjectType::class, $project);
+        // Configuration optimisée du formulaire
+        $form = $this->createForm(ProjectType::class, $project, [
+            'validation_groups' => ['Default'],
+        ]);
+        
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Gestion de l'upload d'image
-            $imageFile = $form->get('imageFile')->getData();
-            if ($imageFile) {
-                // Supprimer l'ancienne image si elle existe
-                if ($project->getImage()) {
-                    $oldImagePath = $this->getParameter('projects_directory').'/'.$project->getImage();
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
+            try {
+                // Gestion de l'upload d'image avec optimisation mémoire
+                $imageFile = $form->get('imageFile')->getData();
+                if ($imageFile) {
+                    // Supprimer l'ancienne image si elle existe
+                    if ($project->getImage()) {
+                        $oldImagePath = $this->getParameter('projects_directory').'/'.$project->getImage();
+                        if (file_exists($oldImagePath)) {
+                            unlink($oldImagePath);
+                        }
+                    }
+
+                    $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                    $safeFilename = $slugger->slug($originalFilename);
+                    $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+
+                    try {
+                        // Vérification de l'existence du répertoire
+                        $uploadsDirectory = $this->getParameter('projects_directory');
+                        if (!is_dir($uploadsDirectory)) {
+                            mkdir($uploadsDirectory, 0755, true);
+                        }
+                        
+                        $imageFile->move($uploadsDirectory, $newFilename);
+                        $project->setImage($newFilename);
+                    } catch (FileException $e) {
+                        $this->addFlash('error', 'Erreur lors du téléchargement de l\'image : ' . $e->getMessage());
+                        return $this->redirectToRoute('admin_project_edit', ['id' => $project->getId()]);
                     }
                 }
 
-                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$imageFile->guessExtension();
+                // Sauvegarde optimisée
+                $entityManager->flush();
+                
+                // Libération de la mémoire
+                $entityManager->clear();
 
-                try {
-                    $imageFile->move(
-                        $this->getParameter('projects_directory'),
-                        $newFilename
-                    );
-                    $project->setImage($newFilename);
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors du téléchargement de l\'image');
-                }
+                $this->addFlash('success', 'Le projet a été modifié avec succès.');
+                return $this->redirectToRoute('admin_project_index', [], Response::HTTP_SEE_OTHER);
+                
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la modification du projet : ' . $e->getMessage());
+                return $this->redirectToRoute('admin_project_edit', ['id' => $project->getId()]);
             }
-
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Le projet a été modifié avec succès.');
-
-            return $this->redirectToRoute('admin_project_index', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('admin/project/edit.html.twig', [
@@ -122,18 +160,25 @@ class ProjectController extends AbstractController
     public function delete(Request $request, Project $project, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$project->getId(), $request->request->get('_token'))) {
-            // Supprimer l'image si elle existe
-            if ($project->getImage()) {
-                $imagePath = $this->getParameter('projects_directory').'/'.$project->getImage();
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
+            try {
+                // Supprimer l'image si elle existe
+                if ($project->getImage()) {
+                    $imagePath = $this->getParameter('projects_directory').'/'.$project->getImage();
+                    if (file_exists($imagePath)) {
+                        unlink($imagePath);
+                    }
                 }
+
+                $entityManager->remove($project);
+                $entityManager->flush();
+                
+                // Libération de la mémoire
+                $entityManager->clear();
+
+                $this->addFlash('success', 'Le projet a été supprimé avec succès.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la suppression du projet : ' . $e->getMessage());
             }
-
-            $entityManager->remove($project);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Le projet a été supprimé avec succès.');
         }
 
         return $this->redirectToRoute('admin_project_index', [], Response::HTTP_SEE_OTHER);

@@ -1,0 +1,13 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Update the family{% endblock %}
+
+{% block body %}
+<h1>Update the family</h1>
+
+<div class="card">
+    <div class="card-body">
+        {{ include('admin/family/_form.html.twig', {'button_label': 'Update'}) }}
+    </div>
+</div>
+{% endblock %}

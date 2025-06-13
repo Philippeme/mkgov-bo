@@ -1,0 +1,31 @@
+{{ form_start(form) }}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+                {{ form_row(form.dname) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.description) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.category) }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                {{ form_row(form.pdfFile) }}
+                {% if document.pdf %}
+                    <div class="mt-2">
+                        <p>Actual file PDF :</p>
+                        <embed src="{{ asset('uploads/pdf_uploads/' ~ document.pdf) }}" type="application/pdf" width="100%" height="600px">
+                    </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.displayOrder) }}
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-primary">{{ button_label|default('Save') }}</button>
+    <a href="{{ path('admin_document_index') }}" class="btn btn-secondary">Cancel</a>
+{{ form_end(form) }}

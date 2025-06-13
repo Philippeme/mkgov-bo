@@ -1,0 +1,54 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Families Management{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Families Management</h1>
+    <a href="{{ path('admin_family_new') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> New family
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for family in families %}
+                <tr>
+                    <td>{{ family.id }}</td>
+                    <td>{{ family.fname }}</td>
+                    <td>{{ family.description }}</td>
+                    <td>
+                        <a href="{{ path('admin_family_show', {'id': family.id}) }}" class="btn btn-sm btn-info">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ path('admin_family_edit', {'id': family.id}) }}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <form method="post" action="{{ path('admin_family_delete', {'id': family.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette procedure ?');" style="display: inline-block;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ family.id) }}">
+                            <button class="btn btn-sm btn-danger">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="8" class="text-center">No family found</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

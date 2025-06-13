@@ -1,0 +1,13 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}New project{% endblock %}
+
+{% block body %}
+<h1>Create a new procedure</h1>
+
+<div class="card">
+    <div class="card-body">
+        {{ include('admin/procedure/_form.html.twig') }}
+    </div>
+</div>
+{% endblock %}

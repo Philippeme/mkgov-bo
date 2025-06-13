@@ -1,0 +1,65 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ document.dname }}{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>{{ document.dname }}</h1>
+    <div>
+        <a href="{{ path('admin_document_edit', {'id': document.id}) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Update
+        </a>
+        <a href="{{ path('admin_document_index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to the list
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Documents information</h5>
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th>ID</th>
+                            <td>{{ document.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ document.description }}</td>
+                        </tr>
+                        <tr>
+                            <th>Category</th>
+                            <td>{{ document.category }}</td>
+                        </tr>     
+                        <tr>
+                            <th>Ordre d'affichage</th>
+                            <td>{{ document.displayOrder }}</td>
+                        </tr>
+                        <tr>
+                            <th>Créé le</th>
+                            <td>{{ document.createdAt ? document.createdAt|date('d/m/Y H:i') : '' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Modifié le</th>
+                            <td>{{ document.updatedAt ? document.updatedAt|date('d/m/Y H:i') : '' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        {% if document.pdf %}
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">PDF file</h5>
+                    <embed src="{{ asset('uploads/pdf_uploads/' ~ document.pdf) }}" type="application/pdf" width="100%" height="500px">
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

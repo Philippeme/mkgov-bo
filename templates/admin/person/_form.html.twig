@@ -1,0 +1,62 @@
+{{ form_start(form) }}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="mb-3">
+                {{ form_row(form.firstName) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.lastName) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.middleName) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.nationalId) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.email) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.phoneNumber) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.dateOfBirth) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.placeOfBirth) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.gender) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.maritalStatus) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.region ) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.address) }}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.profession) }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                {{ form_row(form.photoFile) }}
+                {% if person.image %}
+                    <div class="mt-2">
+                        <p>Image actuelle :</p>
+                        <img src="{{ asset('uploads/procedures/' ~ person.image) }}" alt="{{ person.firstName }}" class="img-fluid">
+                    </div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                {{ form_row(form.displayOrder) }}
+            </div>
+            
+        </div>
+    </div>
+    <button class="btn btn-primary">{{ button_label|default('Save') }}</button>
+    <a href="{{ path('admin_person_index') }}" class="btn btn-secondary">Cancel</a>
+{{ form_end(form) }}
