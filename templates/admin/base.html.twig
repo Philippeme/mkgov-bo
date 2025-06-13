@@ -96,7 +96,6 @@
         /* Styles pour les éléments des sous-menus */
         .admin-sidebar .dropdown-item {
             padding: 0.5rem 1rem 0.5rem 2.5rem;
-            color: rgba(255,255,255,0.8);
             transition: all 0.3s ease;
             border-radius: 4px;
             margin: 2px 8px;
@@ -754,13 +753,13 @@
             </a>
             <ul class="dropdown-menu">
                 <li>
-                <a class="dropdown-item" href="#">
+                <a class="dropdown-item" href="{{ path('admin_procedure_new') }}">
                     <i class="bi-plus-circle me-2"></i>
                     <span class="ms-2">New</span>
                 </a>
                 </li>
                 <li>
-                <a class="dropdown-item" href="#">
+                <a class="dropdown-item" href="{{ path('admin_procedure_index') }}">
                     <i class="bi-list-ul me-2"></i>
                     <span class="ms-2">List</span>
                 </a>
@@ -781,13 +780,13 @@
             </a>
             <ul class="dropdown-menu">
                 <li>
-                <a class="dropdown-item" href="#">
+                <a class="dropdown-item" href="{{ path('admin_institution_new') }}">
                     <i class="bi-plus-circle me-2"></i>
                     <span class="ms-2">New</span>
                 </a>
                 </li>
                 <li>
-                <a class="dropdown-item" href="#">
+                <a class="dropdown-item" href="{{ path('admin_institution_index') }}">
                     <i class="bi-list-ul me-2"></i>
                     <span class="ms-2">List</span>
                 </a>
