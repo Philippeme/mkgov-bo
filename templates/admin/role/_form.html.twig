@@ -1,0 +1,340 @@
+{{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'needs-validation'}}) }}
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Basic Information -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Role Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.name) }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.label) }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form_row(form.description) }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.badgeColor) }}
+                            <div class="badge-preview mt-2">
+                                <span class="badge bg-primary" id="badgePreview">{{ role.label|default('Sample Role') }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form_row(form.displayOrder) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permissions -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-key me-2"></i>Permissions
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllPermissions()">
+                            <i class="fas fa-check-double me-1"></i> Select All
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAllPermissions()">
+                            <i class="fas fa-times me-1"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if form.permissions is defined %}
+                        <div class="permissions-container">
+                            {{ form_widget(form.permissions) }}
+                        </div>
+                        {% if form.permissions.vars.help %}
+                            <div class="form-text mt-3">{{ form.permissions.vars.help }}</div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Permissions will be available after creating the role. You can assign permissions by editing the role or using the "Manage Permissions" option.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>Settings
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check mb-3">
+                        {{ form_widget(form.isActive) }}
+                        {{ form_label(form.isActive) }}
+                        {% if form.isActive.vars.help %}
+                            <div class="form-text">{{ form.isActive.vars.help }}</div>
+                        {% endif %}
+                    </div>
+                    {% if form.isSystem is defined %}
+                        <div class="form-check mb-3">
+                            {{ form_widget(form.isSystem) }}
+                            {{ form_label(form.isSystem) }}
+                            {% if form.isSystem.vars.help %}
+                                <div class="form-text">{{ form.isSystem.vars.help }}</div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Role Information (for edit mode) -->
+            {% if role.id %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>Role Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Created:</strong></td>
+                                <td>{{ role.createdAt|date('d/m/Y H:i') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Updated:</strong></td>
+                                <td>{{ role.updatedAt|date('d/m/Y H:i') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Users:</strong></td>
+                                <td>{{ role.usersCount }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Permissions:</strong></td>
+                                <td>{{ role.permissionsCount }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    {% if role.isActive %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                    {% if role.isSystem %}
+                                        <span class="badge bg-secondary">System</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Help -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>Help
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <h6>Role Naming Convention:</h6>
+                    <ul class="small">
+                        <li>Role names must start with "ROLE_"</li>
+                        <li>Use uppercase letters and underscores only</li>
+                        <li>Examples: ROLE_ADMIN, ROLE_USER, ROLE_MANAGER</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">Badge Colors:</h6>
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-primary">Primary</span>
+                        <span class="badge bg-secondary">Secondary</span>
+                        <span class="badge bg-success">Success</span>
+                        <span class="badge bg-danger">Danger</span>
+                        <span class="badge bg-warning text-dark">Warning</span>
+                        <span class="badge bg-info">Info</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        {{ button_label|default(role.id ? 'Update Role' : 'Create Role') }}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary ms-2" onclick="history.back()">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                </div>
+                <div>
+                    {% if role.id %}
+                        <a href="{{ path('admin_role_show', {'id': role.id}) }}" class="btn btn-outline-info">
+                            <i class="fas fa-eye me-1"></i> View Role
+                        </a>
+                    {% endif %}
+                    <a href="{{ path('admin_role_index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-1"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{{ form_end(form) }}
+
+<style>
+.permissions-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+}
+
+.permissions-container .form-check {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    background-color: #f8f9fa;
+}
+
+.permissions-container .form-check:hover {
+    background-color: #e9ecef;
+}
+
+.permissions-container .form-check-input:checked + .form-check-label {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.badge-preview {
+    padding: 0.5rem;
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+}
+
+.badge-preview .badge {
+    font-size: 0.875rem;
+}
+
+/* Group permissions by category */
+.permissions-container > div {
+    margin-bottom: 1.5rem;
+}
+
+.permissions-container > div > label {
+    font-weight: bold;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: block;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.25rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Badge color preview
+    const badgeColorSelect = document.querySelector('select[name*="badgeColor"]');
+    const badgePreview = document.getElementById('badgePreview');
+    
+    if (badgeColorSelect && badgePreview) {
+        badgeColorSelect.addEventListener('change', function() {
+            const color = this.value;
+            badgePreview.className = `badge bg-${color}`;
+            if (color === 'warning' || color === 'light') {
+                badgePreview.classList.add('text-dark');
+            }
+        });
+    }
+
+    // Role name validation and auto-formatting
+    const roleNameInput = document.querySelector('input[name*="name"]');
+    if (roleNameInput) {
+        roleNameInput.addEventListener('input', function() {
+            let value = this.value.toUpperCase();
+            if (value && !value.startsWith('ROLE_')) {
+                value = 'ROLE_' + value.replace(/^ROLE_/, '');
+            }
+            // Remove invalid characters
+            value = value.replace(/[^A-Z_]/g, '');
+            this.value = value;
+        });
+    }
+
+    // Permission counter
+    const permissionCheckboxes = document.querySelectorAll('input[name*="permissions"]');
+    if (permissionCheckboxes.length > 0) {
+        const updatePermissionCount = () => {
+            const checkedCount = document.querySelectorAll('input[name*="permissions"]:checked').length;
+            const totalCount = permissionCheckboxes.length;
+            
+            // Update header text if it exists
+            const permissionHeader = document.querySelector('.card-title');
+            if (permissionHeader && permissionHeader.textContent.includes('Permissions')) {
+                permissionHeader.innerHTML = `<i class="fas fa-key me-2"></i>Permissions (${checkedCount}/${totalCount})`;
+            }
+        };
+
+        permissionCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updatePermissionCount);
+        });
+
+        // Initial count
+        updatePermissionCount();
+    }
+
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    }
+});
+
+function selectAllPermissions() {
+    const checkboxes = document.querySelectorAll('input[name*="permissions"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change'));
+    });
+}
+
+function clearAllPermissions() {
+    const checkboxes = document.querySelectorAll('input[name*="permissions"]');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+        checkbox.dispatchEvent(new Event('change'));
+    });
+}
+
+function toggleCategoryPermissions(categoryElement) {
+    const checkboxes = categoryElement.parentNode.querySelectorAll('input[type="checkbox"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+        checkbox.dispatchEvent(new Event('change'));
+    });
+}
+</script>

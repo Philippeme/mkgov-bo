@@ -19,6 +19,7 @@ final class Version20250602200237 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
+        
         // this up() migration is auto-generated, please modify it to your needs
         $this->addSql(<<<'SQL'
             CREATE TABLE procedures (id INT AUTO_INCREMENT NOT NULL, pname VARCHAR(255) NOT NULL, family VARCHAR(100) NOT NULL, excerpt LONGTEXT NOT NULL, shortdesc LONGTEXT NOT NULL, longdesc LONGTEXT NOT NULL, processtime LONGTEXT NOT NULL, servicecost NUMERIC(10, 0) NOT NULL, image VARCHAR(255) DEFAULT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL, published TINYINT(1) NOT NULL, display_order INT NOT NULL, PRIMARY KEY(id)) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
