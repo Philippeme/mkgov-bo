@@ -1,0 +1,23 @@
+{# templates/admin/role/edit.html.twig #}
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Edit Role: {{ role.label }}{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1><i class="fas fa-shield-alt me-2"></i>Edit Role</h1>
+        <p class="text-muted mb-0">Update role information and permissions</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ path('admin_role_show', {'id': role.id}) }}" class="btn btn-outline-info">
+            <i class="fas fa-eye me-1"></i> View Role
+        </a>
+        <a href="{{ path('admin_role_index') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Back to Roles
+        </a>
+    </div>
+</div>
+
+{{ include('admin/role/_form.html.twig') }}
+{% endblock %}
