@@ -767,6 +767,33 @@
             </ul>
             </li>
 
+            {# — Family Management — #}
+            <li class="nav-item dropdown">
+                <a href="#"
+                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
+                data-dropdown="family">
+                <span>
+                    <i class="bi-people-fill me-2"></i>
+                    Family
+                </span>
+                <i class="bi-chevron-down"></i>
+                </a>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="{{ path('admin_family_new') }}">
+                            <i class="bi-plus-circle me-2"></i>
+                            <span class="ms-2">New</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{{ path('admin_family_index') }}">
+                            <i class="bi-list-ul me-2"></i>
+                            <span class="ms-2">List</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
             {# — Institutions Management — #}
             <li class="nav-item dropdown">
             <a href="#"

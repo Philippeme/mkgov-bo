@@ -14,7 +14,7 @@ class SecurityController extends AbstractController
     {
         // CORRECTION: Redirection systématique vers l'administration si déjà connecté
         if ($this->getUser() && $this->isGranted('ROLE_ADMIN')) {
-            return $this->redirectToRoute('admin_project_index');
+            return $this->redirectToRoute('admin_procedure_index');
         }
 
         // Récupérer l'erreur de connexion si elle existe
@@ -51,6 +51,6 @@ class SecurityController extends AbstractController
         }
         
         // Redirection vers la page principale d'administration
-        return $this->redirectToRoute('admin_project_index');
+        return $this->redirectToRoute('admin_procedure_index');
     }
 }
