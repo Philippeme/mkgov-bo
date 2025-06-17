@@ -7,7 +7,7 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Permission>
+ * @extends ServiceEntityRepository<Project>
  */
 class PermissionRepository extends ServiceEntityRepository
 {
@@ -17,116 +17,69 @@ class PermissionRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les permissions actives triées par catégorie et ordre d'affichage
+     * Récupère les projets publiés triés par ordre d'affichage
      */
-    public function findActivePermissions(): array
+    public function findPublishedProcedures(): array
     {
         return $this->createQueryBuilder('p')
-            ->andWhere('p.isActive = :active')
-            ->setParameter('active', true)
-            ->orderBy('p.category', 'ASC')
-            ->addOrderBy('p.displayOrder', 'ASC')
+            ->andWhere('p.published = :published')
+            ->setParameter('published', true)
+            ->orderBy('p.displayOrder', 'ASC')
             ->addOrderBy('p.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
     }
 
     /**
-     * Récupère les permissions groupées par catégorie
+     * Récupère les projets publiés pour la page d'accueil (limite à 3)
      */
-    public function findPermissionsByCategory(): array
-    {
-        $permissions = $this->createQueryBuilder('p')
-            ->andWhere('p.isActive = :active')
-            ->setParameter('active', true)
-            ->orderBy('p.category', 'ASC')
-            ->addOrderBy('p.displayOrder', 'ASC')
-            ->getQuery()
-            ->getResult();
-
-        $grouped = [];
-        foreach ($permissions as $permission) {
-            $category = $permission->getCategory();
-            if (!isset($grouped[$category])) {
-                $grouped[$category] = [];
-            }
-            $grouped[$category][] = $permission;
-        }
-
-        return $grouped;
-    }
-
-    /**
-     * Récupère les permissions non système (modifiables)
-     */
-    public function findNonSystemPermissions(): array
+    public function findHomePageProjects(): array
     {
         return $this->createQueryBuilder('p')
-            ->andWhere('p.isSystem = :system')
-            ->setParameter('system', false)
-            ->orderBy('p.category', 'ASC')
-            ->addOrderBy('p.displayOrder', 'ASC')
+            ->andWhere('p.published = :published')
+            ->setParameter('published', true)
+            ->orderBy('p.displayOrder', 'ASC')
+            ->addOrderBy('p.createdAt', 'DESC')
+            ->setMaxResults(3)
             ->getQuery()
             ->getResult();
     }
 
     /**
-     * Récupère les permissions avec filtres
+     * Récupère les projets publiés avec filtres
      */
-    public function findPermissionsWithFilters(array $filters): array
+    public function findPublishedPermissionsWithFilters(array $filters): array
     {
-        $qb = $this->createQueryBuilder('p');
+        $qb = $this->createQueryBuilder('p')
+            ->andWhere('p.published = :published')
+            ->setParameter('published', true);
 
+        if (!empty($filters['procedure'])) {
+            $qb->andWhere('p.procedure = :procedure')
+               ->setParameter('procedure', $filters['procedure']);
+        }
+
+        
         if (!empty($filters['search'])) {
-            $qb->andWhere($qb->expr()->orX(
-                $qb->expr()->like('p.name', ':search'),
-                $qb->expr()->like('p.label', ':search'),
-                $qb->expr()->like('p.description', ':search')
-            ))
-            ->setParameter('search', '%' . $filters['search'] . '%');
+            $qb->andWhere('p.name LIKE :search OR p.description LIKE :search')
+               ->setParameter('search', '%' . $filters['search'] . '%');
         }
 
-        if (!empty($filters['category'])) {
-            $qb->andWhere('p.category = :category')
-               ->setParameter('category', $filters['category']);
-        }
-
-        if (!empty($filters['action'])) {
-            $qb->andWhere('p.action = :action')
-               ->setParameter('action', $filters['action']);
-        }
-
-        if (!empty($filters['resource'])) {
-            $qb->andWhere('p.resource = :resource')
-               ->setParameter('resource', $filters['resource']);
-        }
-
-        if (isset($filters['active'])) {
-            $qb->andWhere('p.isActive = :active')
-               ->setParameter('active', $filters['active']);
-        }
-
-        if (isset($filters['system'])) {
-            $qb->andWhere('p.isSystem = :system')
-               ->setParameter('system', $filters['system']);
-        }
-
-        return $qb->orderBy('p.category', 'ASC')
-                  ->addOrderBy('p.displayOrder', 'ASC')
+        return $qb->orderBy('p.displayOrder', 'ASC')
                   ->addOrderBy('p.createdAt', 'DESC')
                   ->getQuery()
                   ->getResult();
     }
 
     /**
-     * Récupère les catégories uniques des permissions
+     * Récupère les catégories uniques des projets publiés
      */
-    public function findUniqueCategories(): array
+    public function findUniquePermissions(): array
     {
         $result = $this->createQueryBuilder('p')
-            ->select('DISTINCT p.category')
-            ->where('p.isActive = :active')
-            ->setParameter('active', true)
+            ->select('DISTINCT p.procedure')
+            ->where('p.published = :published')
+            ->setParameter('published', true)
             ->orderBy('p.category', 'ASC')
             ->getQuery()
             ->getResult();
@@ -135,246 +88,160 @@ class PermissionRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les actions uniques des permissions
+     * CORRECTION PRINCIPALE : Récupère les années uniques des projets publiés
+     * Utilisation d'une requête SQL native pour éviter les problèmes avec la fonction YEAR()
      */
-    public function findUniqueActions(): array
+    public function findUniqueYears(): array
     {
-        $result = $this->createQueryBuilder('p')
-            ->select('DISTINCT p.action')
-            ->where('p.action IS NOT NULL')
-            ->orderBy('p.action', 'ASC')
-            ->getQuery()
-            ->getResult();
-
-        return array_column($result, 'action');
+        $connection = $this->getEntityManager()->getConnection();
+        
+        $sql = 'SELECT DISTINCT YEAR(created_at) as year 
+                FROM users 
+                WHERE published = :published 
+                ORDER BY year DESC';
+        
+        $result = $connection->executeQuery($sql, ['published' => 1])->fetchAllAssociative();
+        
+        return array_column($result, 'year');
     }
 
     /**
-     * Récupère les ressources uniques des permissions
+     * Récupère le projet précédent
      */
-    public function findUniqueResources(): array
-    {
-        $result = $this->createQueryBuilder('p')
-            ->select('DISTINCT p.resource')
-            ->where('p.resource IS NOT NULL')
-            ->orderBy('p.resource', 'ASC')
-            ->getQuery()
-            ->getResult();
-
-        return array_column($result, 'resource');
-    }
-
-    /**
-     * Récupère une permission par son nom
-     */
-    public function findByName(string $name): ?Permission
+    public function findPreviousProcedure(Permission $permission): ?Permission 
     {
         return $this->createQueryBuilder('p')
-            ->andWhere('p.name = :name')
-            ->setParameter('name', $name)
+            ->where('p.published = :published')
+            ->andWhere('p.id < :currentId')
+            ->setParameter('published', true)
+            ->setParameter('currentId', $user->getId())
+            ->orderBy('p.id', 'DESC')
+            ->setMaxResults(1)
             ->getQuery()
             ->getOneOrNullResult();
     }
 
     /**
-     * Récupère les permissions avec leurs statistiques d'utilisation
+     * Récupère le projet suivant
      */
-    public function findPermissionsWithStats(): array
+    public function findNextPermission(Permission $permission): ?Permission 
     {
         return $this->createQueryBuilder('p')
-            ->select('p', 'COUNT(r.id) as roleCount')
-            ->leftJoin('p.roles', 'r')
-            ->groupBy('p.id')
-            ->orderBy('p.category', 'ASC')
-            ->addOrderBy('p.displayOrder', 'ASC')
+            ->where('p.published = :published')
+            ->andWhere('p.id > :currentId')
+            ->setParameter('published', true)
+            ->setParameter('currentId', $permission->getId())
+            ->orderBy('p.id', 'ASC')
+            ->setMaxResults(1)
             ->getQuery()
-            ->getResult();
+            ->getOneOrNullResult();
     }
 
     /**
-     * Compte les permissions par statut
+     * Récupère les projets similaires (même catégorie)
+     * Remplacement de RAND() par une approche compatible avec Doctrine
      */
-    public function countPermissionsByStatus(): array
+    public function findSimilarPermissions(Permission $permission, int $limit = 3): array
     {
-        $total = $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $active = $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->andWhere('p.isActive = :active')
-            ->setParameter('active', true)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $system = $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->andWhere('p.isSystem = :system')
-            ->setParameter('system', true)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        return [
-            'total' => $total,
-            'active' => $active,
-            'inactive' => $total - $active,
-            'system' => $system,
-            'custom' => $total - $system
-        ];
-    }
-
-    /**
-     * Compte les permissions par catégorie
-     */
-    public function countPermissionsByCategory(): array
-    {
-        $result = $this->createQueryBuilder('p')
-            ->select('p.category', 'COUNT(p.id) as count')
-            ->groupBy('p.category')
-            ->orderBy('p.category', 'ASC')
+        // Première approche : récupérer tous les projets similaires
+        $allSimilarFamilies = $this->createQueryBuilder('p')
+            ->where('p.published = :published')
+            ->andWhere('p.category = :category')
+            ->andWhere('p.id != :currentId')
+            ->setParameter('published', true)
+            ->setParameter('category', $user->getCategory())
+            ->setParameter('currentId', $user->getId())
+            ->orderBy('p.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
 
-        $categories = [];
+        // Si nous avons plus de projets que la limite demandée, mélanger aléatoirement
+        if (count($allSimilarPermissions) > $limit) {
+            shuffle($allSimilarPermissions);
+            return array_slice($allSimilarPermissions, 0, $limit);
+        }
+
+        return $allSimilarPermissions;
+    }
+
+    /**
+     * Alternative pour les projets similaires utilisant une requête SQL native avec RAND()
+     * Cette méthode peut être utilisée si vous préférez l'ordre vraiment aléatoire de la base de données
+     */
+    public function findSimilarPermissionsWithRandomOrder(Permission $permission, int $limit = 3): array
+    {
+        $connection = $this->getEntityManager()->getConnection();
+        
+        $sql = 'SELECT p.* FROM permissions p 
+                WHERE p.published = :published 
+                AND p.procedure = :procedure 
+                AND p.id != :currentId 
+                ORDER BY RAND() 
+                LIMIT :limit';
+        
+        $result = $connection->executeQuery($sql, [
+            'published' => 1,
+            'procedure' => $family->getPermission(),
+            'currentId' => $family->getId(),
+            'limit' => $limit
+        ])->fetchAllAssociative();
+
+        // Convertir les résultats en entités Project
+        $permissions = [];
         foreach ($result as $row) {
-            $categories[$row['category']] = $row['count'];
+            $permissionEntity = $this->find($row['id']);
+            if ($permissionEntity) {
+                $permissions[] = $permissionEntity;
+            }
         }
 
-        return $categories;
+        return $permissions;
     }
 
     /**
-     * Récupère les permissions les plus utilisées
+     * Méthode alternative pour récupérer les années en utilisant uniquement PHP
+     * Cette approche évite complètement les fonctions SQL
      */
-    public function findMostUsedPermissions(int $limit = 10): array
+    public function findUniqueYearsAlternative(): array
     {
-        return $this->createQueryBuilder('p')
-            ->select('p', 'COUNT(r.id) as roleCount')
-            ->leftJoin('p.roles', 'r')
-            ->groupBy('p.id')
-            ->orderBy('roleCount', 'DESC')
-            ->setMaxResults($limit)
+        $projects = $this->createQueryBuilder('p')
+            ->select('p.createdAt')
+            ->where('p.published = :published')
+            ->setParameter('published', true)
             ->getQuery()
             ->getResult();
+
+        $years = [];
+        foreach ($users as $user) {
+            $year = $user['createdAt']->format('Y');
+            if (!in_array($year, $years)) {
+                $years[] = $year;
+            }
+        }
+
+        rsort($years); // Tri décroissant
+        return $years;
     }
 
     /**
-     * Récupère les permissions non utilisées
+     * Méthode utilitaire pour compter les projets par année
      */
-    public function findUnusedPermissions(): array
+    public function countUsersByYear(): array
     {
-        return $this->createQueryBuilder('p')
-            ->leftJoin('p.roles', 'r')
-            ->andWhere('r.id IS NULL')
-            ->orderBy('p.category', 'ASC')
-            ->addOrderBy('p.createdAt', 'DESC')
+        $users = $this->createQueryBuilder('p')
+            ->select('p.createdAt')
+            ->where('p.published = :published')
+            ->setParameter('published', true)
             ->getQuery()
             ->getResult();
-    }
 
-    /**
-     * Recherche avancée de permissions avec pagination
-     */
-    public function findWithPagination(array $criteria = [], int $page = 1, int $limit = 20): array
-    {
-        $qb = $this->createQueryBuilder('p');
-
-        if (!empty($criteria['search'])) {
-            $qb->andWhere($qb->expr()->orX(
-                $qb->expr()->like('p.name', ':search'),
-                $qb->expr()->like('p.label', ':search'),
-                $qb->expr()->like('p.description', ':search')
-            ))
-            ->setParameter('search', '%' . $criteria['search'] . '%');
+        $yearCounts = [];
+        foreach ($users as $user) {
+            $year = $user['createdAt']->format('Y');
+            $yearCounts[$year] = ($yearCounts[$year] ?? 0) + 1;
         }
 
-        if (!empty($criteria['category'])) {
-            $qb->andWhere('p.category = :category')
-               ->setParameter('category', $criteria['category']);
-        }
-
-        if (!empty($criteria['action'])) {
-            $qb->andWhere('p.action = :action')
-               ->setParameter('action', $criteria['action']);
-        }
-
-        if (isset($criteria['active'])) {
-            $qb->andWhere('p.isActive = :active')
-               ->setParameter('active', $criteria['active']);
-        }
-
-        if (isset($criteria['system'])) {
-            $qb->andWhere('p.isSystem = :system')
-               ->setParameter('system', $criteria['system']);
-        }
-
-        $offset = ($page - 1) * $limit;
-
-        return $qb->setFirstResult($offset)
-                  ->setMaxResults($limit)
-                  ->orderBy('p.category', 'ASC')
-                  ->addOrderBy('p.displayOrder', 'ASC')
-                  ->addOrderBy('p.createdAt', 'DESC')
-                  ->getQuery()
-                  ->getResult();
-    }
-
-    /**
-     * Compte le nombre total de permissions selon les critères
-     */
-    public function countWithCriteria(array $criteria = []): int
-    {
-        $qb = $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)');
-
-        if (!empty($criteria['search'])) {
-            $qb->andWhere($qb->expr()->orX(
-                $qb->expr()->like('p.name', ':search'),
-                $qb->expr()->like('p.label', ':search'),
-                $qb->expr()->like('p.description', ':search')
-            ))
-            ->setParameter('search', '%' . $criteria['search'] . '%');
-        }
-
-        if (!empty($criteria['category'])) {
-            $qb->andWhere('p.category = :category')
-               ->setParameter('category', $criteria['category']);
-        }
-
-        if (!empty($criteria['action'])) {
-            $qb->andWhere('p.action = :action')
-               ->setParameter('action', $criteria['action']);
-        }
-
-        if (isset($criteria['active'])) {
-            $qb->andWhere('p.isActive = :active')
-               ->setParameter('active', $criteria['active']);
-        }
-
-        if (isset($criteria['system'])) {
-            $qb->andWhere('p.isSystem = :system')
-               ->setParameter('system', $criteria['system']);
-        }
-
-        return $qb->getQuery()->getSingleScalarResult();
-    }
-
-    /**
-     * Vérifie si un nom de permission existe déjà
-     */
-    public function existsByName(string $name, ?int $excludeId = null): bool
-    {
-        $qb = $this->createQueryBuilder('p')
-            ->select('COUNT(p.id)')
-            ->andWhere('p.name = :name')
-            ->setParameter('name', $name);
-
-        if ($excludeId) {
-            $qb->andWhere('p.id != :excludeId')
-               ->setParameter('excludeId', $excludeId);
-        }
-
-        return $qb->getQuery()->getSingleScalarResult() > 0;
+        krsort($yearCounts); // Tri par année décroissante
+        return $yearCounts;
     }
 }

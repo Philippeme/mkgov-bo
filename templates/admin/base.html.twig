@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Administration{% endblock %} - OAG</title>
+    <title>{% block title %}Administration{% endblock %} - MK Gov</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -19,7 +19,9 @@
             --success-color: #28a745;
             --danger-color: #dc3545;
             --warning-color: #ffc107;
-            --sidebar-width: 250px;
+            --sidebar-width: 280px;
+            --sidebar-collapsed-width: 70px;
+            --transition-speed: 0.3s;
         }
 
         body {
@@ -34,18 +36,30 @@
 
         .admin-sidebar {
             width: var(--sidebar-width);
-            background: linear-gradient(180deg, var(--primary-color) 0%, #2a5db3 100%);
+            background: linear-gradient(180deg, #1a1d29 0%, #2c3e50 100%);
             color: white;
             box-shadow: 2px 0 5px rgba(0,0,0,0.1);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
+            overflow-x: hidden;
+            transition: width var(--transition-speed) ease;
+            z-index: 1000;
+        }
+
+        .admin-sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
         }
 
         .admin-content {
             flex: 1;
             margin-left: var(--sidebar-width);
             min-height: 100vh;
+            transition: margin-left var(--transition-speed) ease;
+        }
+
+        .admin-content.collapsed {
+            margin-left: var(--sidebar-collapsed-width);
         }
 
         /* Styles pour les accordéons cliquables */
@@ -160,6 +174,8 @@
             padding: 1.5rem;
             text-align: center;
             border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            background: rgba(26, 75, 143, 0.1);
         }
 
         .sidebar-header img {
@@ -172,12 +188,75 @@
             margin: 0;
             font-size: 18px;
             font-weight: 600;
+            transition: opacity var(--transition-speed) ease;
         }
 
+        .collapsed .sidebar-header h4 {
+            opacity: 0;
+        }
+
+        /* Hamburger Toggle Button */
+        .hamburger-toggle {
+            position: absolute;
+            top: 20px;
+            right: 15px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .hamburger-toggle:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        .hamburger-toggle i {
+            font-size: 16px;
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .collapsed .hamburger-toggle i {
+            transform: rotate(180deg);
+        }
+
+        /* Navigation Improvements */
         .sidebar-nav {
             padding: 0;
             list-style: none;
             margin: 0;
+        }
+
+        .nav-section {
+            margin-bottom: 8px;
+        }
+
+        .nav-section-title {
+            padding: 16px 20px 8px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255,255,255,0.5);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin-bottom: 8px;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .collapsed .nav-section-title {
+            opacity: 0;
+            height: 0;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
         }
 
         .sidebar-nav li {
@@ -185,23 +264,115 @@
         }
 
         .sidebar-nav a {
-            display: block;
-            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
             color: rgba(255,255,255,0.9);
             text-decoration: none;
             transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
         }
 
         .sidebar-nav a:hover,
         .sidebar-nav a.active {
-            background-color: rgba(255,255,255,0.1);
+            background: linear-gradient(90deg, rgba(26, 75, 143, 0.3) 0%, rgba(241, 130, 33, 0.1) 100%);
             color: white;
             padding-left: 2rem;
+            text-decoration: none;
+        }
+
+        .sidebar-nav a.active {
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            box-shadow: 0 2px 8px rgba(26, 75, 143, 0.3);
+        }
+
+        .sidebar-nav a.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--secondary-color);
         }
 
         .sidebar-nav i {
             width: 20px;
-            margin-right: 10px;
+            margin-right: 12px;
+            font-size: 16px;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .nav-text {
+            flex: 1;
+            transition: opacity var(--transition-speed) ease;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .collapsed .nav-text {
+            opacity: 0;
+            width: 0;
+        }
+
+        .nav-arrow {
+            font-size: 12px;
+            transition: transform var(--transition-speed) ease;
+            margin-left: auto;
+        }
+
+        .collapsed .nav-arrow {
+            opacity: 0;
+        }
+
+        .nav-badge {
+            background: var(--danger-color);
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: auto;
+            min-width: 18px;
+            text-align: center;
+            transition: opacity var(--transition-speed) ease;
+        }
+
+        .collapsed .nav-badge {
+            opacity: 0;
+        }
+
+        /* Tooltip for collapsed state */
+        .tooltip {
+            position: absolute;
+            left: calc(100% + 10px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+
+        .tooltip::before {
+            content: '';
+            position: absolute;
+            left: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 4px solid transparent;
+            border-right-color: rgba(0,0,0,0.8);
+        }
+
+        .collapsed .sidebar-nav a:hover .tooltip {
+            opacity: 1;
         }
 
         .user-info {
@@ -316,8 +487,8 @@
 
         @media (max-width: 768px) {
             .admin-sidebar {
-                margin-left: -var(--sidebar-width);
-                transition: margin-left 0.3s ease;
+                margin-left: calc(-1 * var(--sidebar-width));
+                transition: margin-left var(--transition-speed) ease;
             }
 
             .admin-sidebar.show {
@@ -726,194 +897,326 @@
         <!-- Sidebar -->
         <div class="admin-sidebar" id="adminSidebar">
             <div class="sidebar-header">
-            <h3><b>MK Gov</b></h3>
+                <h3><b>MK Gov</b></h3>
+                <button class="hamburger-toggle" id="hamburgerToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
 
             <ul class="sidebar-nav">
+                <!-- ANALYTICS SECTION -->
+                <li class="nav-section">
+                    <div class="nav-section-title">Analytics</div>
+                </li>
 
-            {# — Dashboard (pas de sous-menu) — #}
-            <li class="nav-item">
-                <a href="{{ path('admin_project_index') }}"
-                class="nav-link {{ app.request.get('_route') starts with 'admin_project' ? 'active' : '' }}">
-                <i class="bi-speedometer2 me-2"></i>
-                Dashboard
-                </a>
-            </li>
+                <li class="nav-item">
+                    <a href="{{ path('admin_project_index') }}" class="nav-link {{ app.request.get('_route') starts with 'admin_project' ? 'active' : '' }}">
+                        <i class="bi-speedometer2 me-2"></i>
+                        <span class="nav-text">Dashboard</span>
+                        <div class="tooltip">Dashboard</div>
+                    </a>
+                </li>
 
-            {# — Procedures Management — #}
-            <li class="nav-item dropdown">
-            <a href="#"
-                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
-                data-dropdown="procedures">
-                <span>
-                <i class="bi-file-earmark-text me-2"></i>
-                Procedures 
-                </span>
-                <i class="bi-chevron-down"></i>
-            </a>
-            <ul class="dropdown-menu">
-                <li>
-                <a class="dropdown-item" href="{{ path('admin_procedure_new') }}">
-                    <i class="bi-plus-circle me-2"></i>
-                    <span class="ms-2">New</span>
-                </a>
+                <!-- SERVICE MANAGEMENT SECTION -->
+                <li class="nav-section">
+                    <div class="nav-section-title">Service Management</div>
                 </li>
-                <li>
-                <a class="dropdown-item" href="{{ path('admin_procedure_index') }}">
-                    <i class="bi-list-ul me-2"></i>
-                    <span class="ms-2">List</span>
-                </a>
-                </li>
-            </ul>
-            </li>
 
-            {# — Family Management — #}
-            <li class="nav-item dropdown">
-                <a href="#"
-                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
-                data-dropdown="family">
-                <span>
-                    <i class="bi-people-fill me-2"></i>
-                    Family
-                </span>
-                <i class="bi-chevron-down"></i>
-                </a>
-                <ul class="dropdown-menu">
-                    <li>
-                        <a class="dropdown-item" href="{{ path('admin_family_new') }}">
-                            <i class="bi-plus-circle me-2"></i>
-                            <span class="ms-2">New</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item" href="{{ path('admin_family_index') }}">
-                            <i class="bi-list-ul me-2"></i>
-                            <span class="ms-2">List</span>
-                        </a>
-                    </li>
-                </ul>
-            </li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="requests">
+                        <span>
+                            <i class="bi-journal-text me-2"></i>
+                            <span class="nav-text">Requests</span>
+                        </span>
+                        <span class="nav-badge">23</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Requests Management</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-plus-circle me-2"></i>
+                                <span class="ms-2">New Request</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-list-ul me-2"></i>
+                                <span class="ms-2">All Requests</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-clock me-2"></i>
+                                <span class="ms-2">Pending Requests</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-check-circle me-2"></i>
+                                <span class="ms-2">Completed</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 
-            {# — Institutions Management — #}
-            <li class="nav-item dropdown">
-            <a href="#"
-                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
-                data-dropdown="institutions">
-                <span>
-                <i class="bi-building me-2"></i>
-                Institutions 
-                </span>
-                <i class="bi-chevron-down"></i>
-            </a>
-            <ul class="dropdown-menu">
-                <li>
-                <a class="dropdown-item" href="{{ path('admin_institution_new') }}">
-                    <i class="bi-plus-circle me-2"></i>
-                    <span class="ms-2">New</span>
-                </a>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_procedure' ? 'active' : '' }}" data-dropdown="procedures">
+                        <span>
+                            <i class="bi-file-earmark-text me-2"></i>
+                            <span class="nav-text">Procedures</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Procedures Management</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_procedure_new') }}">
+                                <i class="bi-plus-circle me-2"></i>
+                                <span class="ms-2">New Procedure</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_procedure_index') }}">
+                                <i class="bi-list-ul me-2"></i>
+                                <span class="ms-2">All Procedures</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
-                <li>
-                <a class="dropdown-item" href="{{ path('admin_institution_index') }}">
-                    <i class="bi-list-ul me-2"></i>
-                    <span class="ms-2">List</span>
-                </a>
-                </li>
-            </ul>
-            </li>
 
-            {# — Requests Management — #}
-            <li class="nav-item dropdown">
-            <a href="#"
-                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
-                data-dropdown="requests">
-                <span>
-                <i class="bi-journal-text me-2"></i>
-                Requests 
-                </span>
-                <i class="bi-chevron-down"></i>
-            </a>
-            <ul class="dropdown-menu">
-                <li>
-                <a class="dropdown-item" href="#">
-                    <i class="bi-list-ul me-2"></i>
-                    <span class="ms-2">List</span>
-                </a>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_family' ? 'active' : '' }}" data-dropdown="families">
+                        <span>
+                            <i class="bi-diagram-3 me-2"></i>
+                            <span class="nav-text">Service Families</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Service Families</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_family_new') }}">
+                                <i class="bi-plus-circle me-2"></i>
+                                <span class="ms-2">New Family</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_family_index') }}">
+                                <i class="bi-list-ul me-2"></i>
+                                <span class="ms-2">All Families</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
-            </ul>
-            </li>
 
-            {# — Users Management — #}
-            <li class="nav-item dropdown">
-            <a href="#"
-                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
-                data-dropdown="users">
-                <span>
-                <i class="bi-people me-2"></i>
-                Users 
-                </span>
-                <i class="bi-chevron-down"></i>
-            </a>
-            <ul class="dropdown-menu">
-                <li>
-                <a class="dropdown-item" href="#">
-                    <i class="bi-person me-2"></i>
-                    <span class="ms-2">Users</span>
-                </a>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="workflows">
+                        <span>
+                            <i class="bi-arrow-repeat me-2"></i>
+                            <span class="nav-text">Workflows</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Workflows Management</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-plus-circle me-2"></i>
+                                <span class="ms-2">New Workflow</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-list-ul me-2"></i>
+                                <span class="ms-2">All Workflows</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-gear me-2"></i>
+                                <span class="ms-2">Designer</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
-                <li>
-                <a class="dropdown-item" href="#">
-                    <i class="bi-person-badge me-2"></i>
-                    <span class="ms-2">Roles</span>
-                </a>
-                </li>
-                <li>
-                <a class="dropdown-item" href="#">
-                    <i class="bi-key me-2"></i>
-                    <span class="ms-2">Permissions</span>
-                </a>
-                </li>
-            </ul>
-            </li>
 
-            {# — System — #}
-            <li class="nav-item dropdown">
-            <a href="#"
-                class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom"
-                data-dropdown="system">
-                <span>
-                <i class="bi-gear me-2"></i>
-                System
-                </span>
-                <i class="bi-chevron-down"></i>
-            </a>
-            <ul class="dropdown-menu">
-                <li>
-                <a class="dropdown-item" href="#">
-                    <i class="bi-sliders2 me-2"></i>
-                    <span class="ms-2">Settings</span>
-                </a>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_document' ? 'active' : '' }}" data-dropdown="documents">
+                        <span>
+                            <i class="bi-folder me-2"></i>
+                            <span class="nav-text">Documents</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Documents Management</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_document_new') }}">
+                                <i class="bi-upload me-2"></i>
+                                <span class="ms-2">Upload Document</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_document_index') }}">
+                                <i class="bi-list-ul me-2"></i>
+                                <span class="ms-2">All Documents</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
-                <li>
-                <a class="dropdown-item" href="#">
-                    <i class="bi-database me-2"></i>
-                    <span class="ms-2">References Data</span>
-                </a>
-                </li>
-                <li>
-                <a class="dropdown-item" href="#">
-                    <i class="bi-clock-history me-2"></i>
-                    <span class="ms-2">Logs</span>
-                </a>
-                </li>
-            </ul>
-            </li>
 
+                <!-- USER & ENTITY MANAGEMENT SECTION -->
+                <li class="nav-section">
+                    <div class="nav-section-title">User & Entity Management</div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="users">
+                        <span>
+                            <i class="bi-people me-2"></i>
+                            <span class="nav-text">User Management</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">User Management</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-person-plus me-2"></i>
+                                <span class="ms-2">New User</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-people me-2"></i>
+                                <span class="ms-2">All Users</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-key me-2"></i>
+                                <span class="ms-2">Roles & Permissions</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_person' ? 'active' : '' }}" data-dropdown="persons">
+                        <span>
+                            <i class="bi-person-vcard me-2"></i>
+                            <span class="nav-text">Citizens</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Citizens Registry</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_person_new') }}">
+                                <i class="bi-person-plus me-2"></i>
+                                <span class="ms-2">Register Citizen</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_person_index') }}">
+                                <i class="bi-person-vcard me-2"></i>
+                                <span class="ms-2">Citizens Registry</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_institution' ? 'active' : '' }}" data-dropdown="entities">
+                        <span>
+                            <i class="bi-building me-2"></i>
+                            <span class="nav-text">Public Entities</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Public Entities</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_institution_new') }}">
+                                <i class="bi-plus-circle me-2"></i>
+                                <span class="ms-2">New Entity</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_institution_index') }}">
+                                <i class="bi-building me-2"></i>
+                                <span class="ms-2">All Entities</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="departments">
+                        <span>
+                            <i class="bi-diagram-2 me-2"></i>
+                            <span class="nav-text">Departments</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Departments</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-plus-circle me-2"></i>
+                                <span class="ms-2">New Department</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-list-ul me-2"></i>
+                                <span class="ms-2">All Departments</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- SYSTEM SECTION -->
+                <li class="nav-section">
+                    <div class="nav-section-title">System</div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="system">
+                        <span>
+                            <i class="bi-gear me-2"></i>
+                            <span class="nav-text">System</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">System Management</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-sliders2 me-2"></i>
+                                <span class="ms-2">Settings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-database me-2"></i>
+                                <span class="ms-2">Reference Data</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi-clock-history me-2"></i>
+                                <span class="ms-2">Logs</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
             </ul>
         </div>
 
-
         <!-- Contenu principal -->
-        <div class="admin-content">
+        <div class="admin-content" id="adminContent">
             <div class="admin-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="header-left-section">
@@ -935,7 +1238,6 @@
                                 <a href="#" class="breadcrumb-item">Dashboard</a>
                                 <span class="breadcrumb-separator">/</span>
                                 <a href="#" class="breadcrumb-item">Procedures Management</a>
-
                             </div>
                             
                             <div class="breadcrumb-actions">
@@ -989,7 +1291,7 @@
                         <!-- User Profile -->
                         <div class="user-profile">
                             <button class="profile-toggle" id="profileToggle">
-                                <div class="user-avatar">GB</div>
+                                <div class="user-avatar">AG</div>
                                 <div class="user-info-header d-none d-md-block">
                                     <div class="user-name">Admin User</div>
                                     <div class="user-role">Administrator</div>
@@ -999,10 +1301,11 @@
                             
                             <div class="profile-dropdown" id="profileDropdown">
                                 <div class="profile-dropdown-header">
+                                    <div class="user-avatar">AG</div>
                                     <div>
                                         <div class="user-name">Admin User</div>
                                         <div class="user-role">System Administrator</div>
-                                        <small class="text-muted">Guinea-Bissau Government</small>
+                                        <small class="text-muted">Cameroon Government</small>
                                     </div>
                                 </div>
                                 
@@ -1043,44 +1346,98 @@
     <script>
         // Gestion de la recherche dans le header
         document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('adminSidebar');
+            const content = document.getElementById('adminContent');
+            const hamburgerToggle = document.getElementById('hamburgerToggle');
+            const mobileMenuToggle = document.getElementById('mobileMenuToggle');
             const searchInput = document.getElementById('headerSearch');
             const searchBtn = document.querySelector('.search-btn');
-            
+            const profileToggle = document.getElementById('profileToggle');
+            const profileDropdown = document.getElementById('profileDropdown');
+            const notificationBtn = document.getElementById('notificationBtn');
+
+            // Hamburger toggle functionality
+            if (hamburgerToggle) {
+                hamburgerToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    content.classList.toggle('collapsed');
+                    
+                    // Update hamburger icon
+                    const icon = this.querySelector('i');
+                    if (sidebar.classList.contains('collapsed')) {
+                        icon.className = 'fas fa-chevron-right';
+                    } else {
+                        icon.className = 'fas fa-bars';
+                    }
+                });
+            }
+
+            // Mobile menu toggle
+            if (mobileMenuToggle) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('show');
+                });
+            }
+
+            // Search functionality
             if (searchInput && searchBtn) {
-                // Fonction de recherche
                 function performSearch() {
                     const query = searchInput.value.trim();
                     if (query.length > 0) {
                         console.log('Searching for:', query);
-                        // Ici vous pouvez ajouter la logique de recherche
-                        // Par exemple : window.location.href = '/search?q=' + encodeURIComponent(query);
+                        // Add search logic here
                     }
                 }
                 
-                // Recherche au clic sur le bouton
                 searchBtn.addEventListener('click', performSearch);
                 
-                // Recherche à l'appui sur Entrée
                 searchInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         performSearch();
                     }
                 });
+            }
+
+            // Profile dropdown
+            if (profileToggle && profileDropdown) {
+                profileToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    profileDropdown.classList.toggle('show');
+                });
                 
-                // Autocomplete basique (optionnel)
-                searchInput.addEventListener('input', function() {
-                    const query = this.value.trim();
-                    if (query.length >= 2) {
-                        // Ici vous pouvez ajouter la logique d'autocomplétion
-                        console.log('Autocomplete for:', query);
+                document.addEventListener('click', function(e) {
+                    if (!e.target.closest('.user-profile')) {
+                        profileDropdown.classList.remove('show');
                     }
                 });
             }
-        });
 
-        // Gestion des accordéons dans la sidebar
-        document.addEventListener('DOMContentLoaded', function() {
+            // Language selector
+            const languageLinks = document.querySelectorAll('[data-lang]');
+            const currentLangDisplay = document.querySelector('#languageDropdown span');
+            
+            languageLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const selectedLang = this.getAttribute('data-lang').toUpperCase();
+                    if (currentLangDisplay) {
+                        currentLangDisplay.textContent = selectedLang;
+                    }
+                    console.log('Language changed to:', selectedLang);
+                });
+            });
+
+            // Notifications
+            if (notificationBtn) {
+                notificationBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Notifications clicked');
+                });
+            }
+
+            // Gestion des accordéons dans la sidebar
             const dropdownToggles = document.querySelectorAll('.dropdown-toggle-custom');
             
             dropdownToggles.forEach(function(toggle) {
@@ -1119,74 +1476,23 @@
                     });
                 }
             });
-        });
 
-        // Gestion du profil utilisateur dans le header
-        document.addEventListener('DOMContentLoaded', function() {
-            const profileToggle = document.getElementById('profileToggle');
-            const profileDropdown = document.getElementById('profileDropdown');
-            
-            if (profileToggle && profileDropdown) {
-                profileToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    profileDropdown.classList.toggle('show');
-                });
-                
-                // Fermer le dropdown si on clique ailleurs
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.user-profile')) {
-                        profileDropdown.classList.remove('show');
-                    }
-                });
-            }
-        });
-
-        // Gestion du sélecteur de langue
-        document.addEventListener('DOMContentLoaded', function() {
-            const languageLinks = document.querySelectorAll('[data-lang]');
-            const currentLangDisplay = document.querySelector('#languageDropdown span');
-            
-            languageLinks.forEach(function(link) {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const selectedLang = this.getAttribute('data-lang').toUpperCase();
-                    if (currentLangDisplay) {
-                        currentLangDisplay.textContent = selectedLang;
-                    }
-                    
-                    // Ici vous pouvez ajouter la logique pour changer réellement la langue
-                    console.log('Language changed to:', selectedLang);
-                });
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('show');
+                }
             });
         });
 
-        // Gestion des notifications
-        document.addEventListener('DOMContentLoaded', function() {
-            const notificationBtn = document.getElementById('notificationBtn');
-            
-            if (notificationBtn) {
-                notificationBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    // Ici vous pouvez ajouter la logique pour afficher les notifications
-                    console.log('Notifications clicked');
-                });
-            }
-        });
-
-        // Fonction de déconnexion
+        // Logout functionality
         function logout() {
             if (confirm('Are you sure you want to logout?')) {
-                // Ici vous pouvez ajouter la logique de déconnexion
                 console.log('User logged out');
+                // Add logout logic here
                 // window.location.href = '/logout';
             }
         }
-
-        // Gestion du menu mobile
-        document.getElementById('mobileMenuToggle')?.addEventListener('click', function() {
-            document.getElementById('adminSidebar').classList.toggle('show');
-        });
 
         // Auto-dismiss des messages flash après 5 secondes
         setTimeout(function() {
