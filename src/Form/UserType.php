@@ -32,6 +32,10 @@ class UserType extends AbstractType
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Enter username'
+                ],
+                'constraints' => [
+                    new NotBlank(['message' => 'Username is required']),
+                    new Length(['min' => 3, 'max' => 100])
                 ]
             ])
             ->add('email', EmailType::class, [
@@ -104,6 +108,7 @@ class UserType extends AbstractType
             ->add('isActive', CheckboxType::class, [
                 'label' => 'Active User',
                 'required' => false,
+                'data' => true, // Par défaut actif
                 'attr' => [
                     'class' => 'form-check-input'
                 ]
@@ -117,6 +122,7 @@ class UserType extends AbstractType
             ])
             ->add('displayOrder', IntegerType::class, [
                 'label' => 'Display Order',
+                'data' => 0,
                 'attr' => [
                     'class' => 'form-control',
                     'min' => 0
@@ -132,14 +138,12 @@ class UserType extends AbstractType
                 'attr' => ['autocomplete' => 'new-password'],
                 'constraints' => [
                     new NotBlank([
-                        'message' => 'Please enter a password',
-                        'groups' => ['Registration']
+                        'message' => 'Please enter a password'
                     ]),
                     new Length([
                         'min' => 6,
                         'minMessage' => 'Your password should be at least {{ limit }} characters',
-                        'max' => 4096,
-                        'groups' => ['Registration']
+                        'max' => 4096
                     ]),
                 ],
                 'first_options' => [

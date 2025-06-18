@@ -1,4 +1,3 @@
-<!-- templates/admin/user/_form.html.twig -->
 {{ form_start(form) }}
 <div class="row">
     <div class="col-md-8">
@@ -50,7 +49,7 @@
         <div class="mb-3">
             <label class="form-label">Roles</label>
             <div class="roles-container">
-                {{ form_widget(form.roles) }}
+                {{ form_widget(form.userRoles) }}
             </div>
         </div>
     </div>
@@ -58,7 +57,7 @@
     <div class="col-md-4">
         <div class="mb-3">
             {{ form_row(form.avatarFile) }}
-            {% if user.avatar is defined and user.avatar %}
+            {% if user is defined and user.avatar %}
                 <div class="mt-2">
                     <p>Current avatar:</p>
                     <img src="{{ asset('uploads/users/' ~ user.avatar) }}" 

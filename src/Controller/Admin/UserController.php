@@ -29,8 +29,16 @@ class UserController extends AbstractController
             'verified' => $request->query->get('verified'),
         ];
 
-        $users = $userRepository->findActiveUsersWithFilters($filters, $page, $limit);
-        $statistics = $userRepository->getUserStatistics();
+        // Méthode simple pour récupérer les utilisateurs
+        $users = $userRepository->findBy([], ['displayOrder' => 'ASC', 'createdAt' => 'DESC'], $limit);
+        
+        // Statistiques basiques
+        $statistics = [
+            'total' => $userRepository->count([]),
+            'active' => $userRepository->count(['isActive' => true]),
+            'verified' => $userRepository->count(['isVerified' => true]),
+            'new_this_month' => 0, // Simplifier pour le debug
+        ];
         
         return $this->render('admin/user/index.html.twig', [
             'users' => $users,
@@ -51,12 +59,26 @@ class UserController extends AbstractController
         $user = new User();
         
         $form = $this->createForm(UserType::class, $user, [
-            'validation_groups' => ['Default', 'Registration'],
+            'is_edit' => false,
         ]);
         
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($form->isSubmitted()) {
+            // Debug : vérifier les erreurs de validation
+            if (!$form->isValid()) {
+                $errors = [];
+                foreach ($form->getErrors(true) as $error) {
+                    $errors[] = $error->getMessage();
+                }
+                $this->addFlash('error', 'Validation errors: ' . implode(', ', $errors));
+                
+                return $this->render('admin/user/new.html.twig', [
+                    'user' => $user,
+                    'form' => $form,
+                ]);
+            }
+
             try {
                 // Hash password
                 $plainPassword = $form->get('plainPassword')->getData();
@@ -73,7 +95,8 @@ class UserController extends AbstractController
                     $newFilename = $safeFilename.'-'.uniqid().'.'.$avatarFile->guessExtension();
 
                     try {
-                        $uploadsDirectory = $this->getParameter('users_directory');
+                        // Créer le dossier s'il n'existe pas
+                        $uploadsDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads/users';
                         if (!is_dir($uploadsDirectory)) {
                             mkdir($uploadsDirectory, 0755, true);
                         }
@@ -81,22 +104,19 @@ class UserController extends AbstractController
                         $avatarFile->move($uploadsDirectory, $newFilename);
                         $user->setAvatar($newFilename);
                     } catch (FileException $e) {
-                        $this->addFlash('error', 'Error uploading avatar: ' . $e->getMessage());
-                        return $this->redirectToRoute('admin_user_new');
+                        $this->addFlash('warning', 'Avatar upload failed: ' . $e->getMessage());
+                        // Continue sans avatar
                     }
                 }
 
                 $entityManager->persist($user);
                 $entityManager->flush();
-                
-                $entityManager->clear();
 
                 $this->addFlash('success', 'User has been created successfully.');
                 return $this->redirectToRoute('admin_user_index', [], Response::HTTP_SEE_OTHER);
                 
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Error creating user: ' . $e->getMessage());
-                return $this->redirectToRoute('admin_user_new');
             }
         }
 
@@ -123,7 +143,6 @@ class UserController extends AbstractController
         SluggerInterface $slugger
     ): Response {
         $form = $this->createForm(UserType::class, $user, [
-            'validation_groups' => ['Default'],
             'is_edit' => true,
         ]);
         
@@ -143,7 +162,7 @@ class UserController extends AbstractController
                 if ($avatarFile) {
                     // Remove old avatar if exists
                     if ($user->getAvatar()) {
-                        $oldAvatarPath = $this->getParameter('users_directory').'/'.$user->getAvatar();
+                        $oldAvatarPath = $this->getParameter('kernel.project_dir') . '/public/uploads/users/' . $user->getAvatar();
                         if (file_exists($oldAvatarPath)) {
                             unlink($oldAvatarPath);
                         }
@@ -154,7 +173,7 @@ class UserController extends AbstractController
                     $newFilename = $safeFilename.'-'.uniqid().'.'.$avatarFile->guessExtension();
 
                     try {
-                        $uploadsDirectory = $this->getParameter('users_directory');
+                        $uploadsDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads/users';
                         if (!is_dir($uploadsDirectory)) {
                             mkdir($uploadsDirectory, 0755, true);
                         }
@@ -168,14 +187,12 @@ class UserController extends AbstractController
                 }
 
                 $entityManager->flush();
-                $entityManager->clear();
 
                 $this->addFlash('success', 'User has been updated successfully.');
                 return $this->redirectToRoute('admin_user_index', [], Response::HTTP_SEE_OTHER);
                 
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Error updating user: ' . $e->getMessage());
-                return $this->redirectToRoute('admin_user_edit', ['id' => $user->getId()]);
             }
         }
 
@@ -192,7 +209,7 @@ class UserController extends AbstractController
             try {
                 // Remove avatar if exists
                 if ($user->getAvatar()) {
-                    $avatarPath = $this->getParameter('users_directory').'/'.$user->getAvatar();
+                    $avatarPath = $this->getParameter('kernel.project_dir') . '/public/uploads/users/' . $user->getAvatar();
                     if (file_exists($avatarPath)) {
                         unlink($avatarPath);
                     }
@@ -200,7 +217,6 @@ class UserController extends AbstractController
 
                 $entityManager->remove($user);
                 $entityManager->flush();
-                $entityManager->clear();
 
                 $this->addFlash('success', 'User has been deleted successfully.');
             } catch (\Exception $e) {

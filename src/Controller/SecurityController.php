@@ -12,45 +12,31 @@ class SecurityController extends AbstractController
     #[Route(path: '/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        // CORRECTION: Redirection systématique vers l'administration si déjà connecté
-        if ($this->getUser() && $this->isGranted('ROLE_ADMIN')) {
-            return $this->redirectToRoute('admin_procedure_index');
-        }
+        // if ($this->getUser()) {
+        //     return $this->redirectToRoute('admin_user_index');
+        // }
 
-        // Récupérer l'erreur de connexion si elle existe
+        // get the login error if there is one
         $error = $authenticationUtils->getLastAuthenticationError();
-        
-        // Dernier nom d'utilisateur saisi par l'utilisateur
+        // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
 
-        return $this->render('security/login.html.twig', [
-            'last_username' => $lastUsername,
-            'error' => $error,
-        ]);
+        return $this->render('security/login.html.twig', ['last_username' => $lastUsername, 'error' => $error]);
     }
 
     #[Route(path: '/logout', name: 'app_logout')]
-    public function logout(): Response
+    public function logout(): void
     {
-        // CORRECTION: Cette méthode sera interceptée par le système de sécurité de Symfony
-        // La redirection se fait automatiquement vers app_login selon la configuration security.yaml
-        // En cas d'accès direct à cette route, redirection manuelle vers la page de connexion
-        return $this->redirectToRoute('app_login');
+        throw new \LogicException('This method can be blank - it will be intercepted by the logout key on your firewall.');
     }
-    
-    /**
-     * Route d'accès direct à l'administration - Protection renforcée
-     * Redirige systématiquement vers la page de connexion si non authentifié
-     */
-    #[Route(path: '/admin', name: 'admin_dashboard')]
-    public function adminDashboard(): Response
+
+    #[Route('/', name: 'app_home')]
+    public function home(): Response
     {
-        // Vérification de l'authentification et redirection vers la gestion des projets
-        if (!$this->isGranted('ROLE_ADMIN')) {
-            return $this->redirectToRoute('app_login');
+        if ($this->getUser()) {
+            return $this->redirectToRoute('admin_user_index');
         }
-        
-        // Redirection vers la page principale d'administration
-        return $this->redirectToRoute('admin_procedure_index');
+
+        return $this->redirectToRoute('app_login');
     }
 }
