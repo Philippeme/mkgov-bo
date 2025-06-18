@@ -39,7 +39,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column]
-    #[Assert\NotBlank(message: 'Password is required')]
     private ?string $password = null;
 
     #[ORM\Column(length: 100)]
