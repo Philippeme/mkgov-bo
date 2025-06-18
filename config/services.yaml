@@ -31,6 +31,9 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Twig\UniqueExtension:
+        tags: ['twig.extension']
     
     App\Controller\:
         resource: '../src/Controller/'

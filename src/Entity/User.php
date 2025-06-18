@@ -173,6 +173,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return trim($this->firstName . ' ' . $this->lastName);
     }
 
+        /**
+     * Get user initials from first and last name
+     */
+    public function getInitials(): string
+    {
+        $firstInitial = $this->firstName ? strtoupper(substr($this->firstName, 0, 1)) : '';
+        $lastInitial = $this->lastName ? strtoupper(substr($this->lastName, 0, 1)) : '';
+        
+        return $firstInitial . $lastInitial;
+    }
+
     public function getPhoneNumber(): ?string
     {
         return $this->phoneNumber;

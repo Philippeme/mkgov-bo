@@ -55,8 +55,9 @@ class Role
 
     /**
      * @var Collection<int, User>
+     * CORRECTION: mappedBy doit référencer la propriété 'userRoles' dans User
      */
-    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'roles')]
+    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'userRoles')]
     private Collection $users;
 
     /**
@@ -254,6 +255,32 @@ class Role
     public function getPermissionsCount(): int
     {
         return $this->permissions->count();
+    }
+
+    /**
+     * Get badge color based on role type and system status
+     */
+    public function getBadgeColor(): string
+    {
+        if ($this->isSystem) {
+            return match ($this->name) {
+                'ROLE_SUPER_ADMIN' => 'danger',
+                'ROLE_ADMIN' => 'warning',
+                'ROLE_MANAGER' => 'info',
+                'ROLE_USER' => 'secondary',
+                default => 'primary',
+            };
+        }
+        
+        return 'success'; // Custom roles = green
+    }
+
+    /**
+     * Get role label for display
+     */
+    public function getLabel(): string
+    {
+        return $this->displayName ?? $this->name;
     }
 
     public function __toString(): string

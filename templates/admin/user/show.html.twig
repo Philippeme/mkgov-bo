@@ -61,10 +61,11 @@
             <div class="card-body text-center">
                 <div class="mb-3">
                     {% if user.avatar %}
-                        <img src="{{ asset('uploads/avatars/' ~ user.avatar) }}" 
+                        <img src="{{ asset('uploads/users/' ~ user.avatar) }}" 
                              alt="{{ user.fullName }}" 
                              class="rounded-circle img-thumbnail" 
-                             width="120" height="120">
+                             width="120" height="120"
+                             style="object-fit: cover;">
                     {% else %}
                         <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" 
                              style="width: 120px; height: 120px; font-size: 2rem; font-weight: bold;">
@@ -83,59 +84,31 @@
                     {% if user.isVerified %}
                         <span class="badge bg-info">Verified</span>
                     {% else %}
-                        <span class="badge bg-warning">Unverified</span>
+                        <span class="badge bg-warning text-dark">Unverified</span>
                     {% endif %}
                 </div>
-                {% if user.biography %}
-                    <p class="text-muted">{{ user.biography }}</p>
-                {% endif %}
             </div>
         </div>
 
-        <!-- Contact Information -->
+        <!-- User Statistics -->
         <div class="card mb-4">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-address-card me-2"></i>Contact Information
-                </h5>
-            </div>
             <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <i class="fas fa-envelope text-muted me-3" style="width: 20px;"></i>
-                    <div>
-                        <strong>Email:</strong><br>
-                        <a href="mailto:{{ user.email }}" class="text-decoration-none">{{ user.email }}</a>
-                    </div>
-                </div>
-                {% if user.phoneNumber %}
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="fas fa-phone text-muted me-3" style="width: 20px;"></i>
-                        <div>
-                            <strong>Phone:</strong><br>
-                            <a href="tel:{{ user.phoneNumber }}" class="text-decoration-none">{{ user.phoneNumber }}</a>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Account Statistics -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>Account Statistics
-                </h5>
-            </div>
-            <div class="card-body">
+                <h6 class="card-title">Statistics</h6>
                 <div class="row text-center">
                     <div class="col-6">
                         <div class="border-end">
-                            <h4 class="text-primary">{{ user.userRoles|length }}</h4>
+                            <h4 class="text-primary mb-0">{{ user.userRoles|length }}</h4>
                             <small class="text-muted">Roles</small>
                         </div>
                     </div>
                     <div class="col-6">
-                        <h4 class="text-info">{{ user.permissions|length }}</h4>
+                        <h4 class="text-success mb-0">
+                            {% set totalPermissions = 0 %}
+                            {% for role in user.userRoles %}
+                                {% set totalPermissions = totalPermissions + role.permissions|length %}
+                            {% endfor %}
+                            {{ totalPermissions }}
+                        </h4>
                         <small class="text-muted">Permissions</small>
                     </div>
                 </div>
@@ -144,80 +117,52 @@
     </div>
 
     <div class="col-md-8">
-        <!-- User Details -->
+        <!-- User Information -->
         <div class="card mb-4">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2"></i>User Details
+                    <i class="fas fa-user me-2"></i>User Information
                 </h5>
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-6">
-                        <table class="table table-borderless">
+                        <table class="table table-sm table-borderless">
                             <tr>
-                                <td class="text-muted" style="width: 40%;">User ID:</td>
-                                <td><strong>{{ user.id }}</strong></td>
+                                <th style="width: 40%;">ID:</th>
+                                <td>{{ user.id }}</td>
                             </tr>
                             <tr>
-                                <td class="text-muted">Username:</td>
+                                <th>Username:</th>
                                 <td><code>{{ user.username }}</code></td>
                             </tr>
                             <tr>
-                                <td class="text-muted">Full Name:</td>
-                                <td>{{ user.fullName }}</td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Email:</td>
+                                <th>Email:</th>
                                 <td>{{ user.email }}</td>
                             </tr>
-                            {% if user.phoneNumber %}
-                                <tr>
-                                    <td class="text-muted">Phone:</td>
-                                    <td>{{ user.phoneNumber }}</td>
-                                </tr>
-                            {% endif %}
+                            <tr>
+                                <th>Full Name:</th>
+                                <td>{{ user.fullName }}</td>
+                            </tr>
                         </table>
                     </div>
                     <div class="col-md-6">
-                        <table class="table table-borderless">
+                        <table class="table table-sm table-borderless">
                             <tr>
-                                <td class="text-muted" style="width: 40%;">Status:</td>
-                                <td>
-                                    {% if user.isActive %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">Inactive</span>
-                                    {% endif %}
-                                </td>
+                                <th style="width: 40%;">Phone:</th>
+                                <td>{{ user.phoneNumber ?? '-' }}</td>
                             </tr>
                             <tr>
-                                <td class="text-muted">Verification:</td>
-                                <td>
-                                    {% if user.isVerified %}
-                                        <span class="badge bg-success">Verified</span>
-                                    {% else %}
-                                        <span class="badge bg-warning">Unverified</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="text-muted">Created:</td>
+                                <th>Created:</th>
                                 <td>{{ user.createdAt|date('d/m/Y H:i') }}</td>
                             </tr>
                             <tr>
-                                <td class="text-muted">Last Updated:</td>
+                                <th>Updated:</th>
                                 <td>{{ user.updatedAt|date('d/m/Y H:i') }}</td>
                             </tr>
                             <tr>
-                                <td class="text-muted">Last Login:</td>
-                                <td>
-                                    {% if user.lastLoginAt %}
-                                        {{ user.lastLoginAt|date('d/m/Y H:i') }}
-                                    {% else %}
-                                        <span class="text-muted">Never</span>
-                                    {% endif %}
-                                </td>
+                                <th>Last Login:</th>
+                                <td>{{ user.lastLoginAt ? user.lastLoginAt|date('d/m/Y H:i') : 'Never' }}</td>
                             </tr>
                         </table>
                     </div>
@@ -234,21 +179,23 @@
             </div>
             <div class="card-body">
                 {% if user.userRoles|length > 0 %}
-                    <h6 class="text-muted">Assigned Roles:</h6>
+                    <h6 class="text-muted mb-3">Assigned Roles:</h6>
                     <div class="mb-4">
                         {% for role in user.userRoles %}
-                            <div class="card border-start border-4 border-{{ role.badgeColor }} mb-2">
+                            <div class="card border-start border-4 border-{{ role.isSystem ? 'warning' : 'success' }} mb-2">
                                 <div class="card-body py-2">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <div>
-                                            <h6 class="mb-1">{{ role.label }}</h6>
+                                            <h6 class="mb-1">{{ role.displayName }}</h6>
                                             <small class="text-muted">{{ role.name }}</small>
                                             {% if role.description %}
-                                                <p class="mb-0 mt-1">{{ role.description }}</p>
+                                                <p class="mb-0 mt-1 text-muted">{{ role.description }}</p>
                                             {% endif %}
                                         </div>
                                         <div>
-                                            <span class="badge bg-{{ role.badgeColor }}">{{ role.label }}</span>
+                                            <span class="badge bg-{{ role.isSystem ? 'warning' : 'success' }}">
+                                                {{ role.displayName }}
+                                            </span>
                                             {% if role.isSystem %}
                                                 <span class="badge bg-secondary">System</span>
                                             {% endif %}
@@ -259,27 +206,50 @@
                         {% endfor %}
                     </div>
 
-                    <h6 class="text-muted">Effective Permissions:</h6>
+                    <h6 class="text-muted mb-3">Effective Permissions:</h6>
                     <div class="row">
-                        {% set permissionsByCategory = {} %}
+                        {% set allPermissions = [] %}
                         {% for role in user.userRoles %}
                             {% for permission in role.permissions %}
-                                {% set category = permission.category %}
-                                {% if permissionsByCategory[category] is not defined %}
-                                    {% set permissionsByCategory = permissionsByCategory|merge({(category): []}) %}
-                                {% endif %}
-                                {% set permissionsByCategory = permissionsByCategory|merge({(category): permissionsByCategory[category]|merge([permission])}) %}
+                                {% set allPermissions = allPermissions|merge([permission.id]) %}
                             {% endfor %}
                         {% endfor %}
-
-                        {% for category, permissions in permissionsByCategory %}
-                            <div class="col-md-6 mb-3">
-                                <h6 class="text-primary">{{ category|title|replace({'_': ' '}) }}</h6>
-                                {% for permission in permissions|unique %}
-                                    <span class="badge {{ permission.badgeClass }} me-1 mb-1">{{ permission.label }}</span>
-                                {% endfor %}
+                        {% set uniquePermissionIds = allPermissions|unique %}
+                        
+                        {% if uniquePermissionIds|length > 0 %}
+                            <div class="col-12">
+                                <div class="permission-list">
+                                    {% for role in user.userRoles %}
+                                        {% for permission in role.permissions %}
+                                            {% if permission.id not in (seenPermissions ?? []) %}
+                                                {% set seenPermissions = (seenPermissions ?? [])|merge([permission.id]) %}
+                                                <div class="permission-item border rounded p-2 mb-2">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <span class="badge bg-primary me-2">{{ permission.name }}</span>
+                                                            {% if permission.description %}
+                                                                <small class="text-muted d-block mt-1">{{ permission.description }}</small>
+                                                            {% endif %}
+                                                        </div>
+                                                        <small class="text-muted">
+                                                            Order: {{ permission.displayOrder }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                </div>
                             </div>
-                        {% endfor %}
+                        {% else %}
+                            <div class="col-12">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-key fa-2x text-muted mb-3"></i>
+                                    <h6 class="text-muted">No permissions found</h6>
+                                    <p class="text-muted">The assigned roles don't have any permissions configured.</p>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                 {% else %}
                     <div class="text-center py-4">
@@ -295,4 +265,22 @@
         </div>
     </div>
 </div>
+
+<style>
+.permission-item {
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.permission-item:hover {
+    background-color: #e9ecef;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.permission-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+</style>
 {% endblock %}
