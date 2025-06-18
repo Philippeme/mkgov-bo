@@ -24,16 +24,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180, unique: true)]
+    #[ORM\Column(length: 100, unique: true)]
     #[Assert\NotBlank(message: 'Username is required')]
-    #[Assert\Length(min: 3, max: 180)]
-    #[Assert\Regex(pattern: '/^[a-zA-Z0-9_]+$/', message: 'Username can only contain letters, numbers and underscores')]
+    #[Assert\Length(min: 3, max: 100)]
+    #[Assert\Regex(
+        pattern: '/^[a-zA-Z0-9._-]+$/',
+        message: 'Username can only contain letters, numbers, dots, underscores and hyphens'
+    )]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, unique: true)]
     #[Assert\NotBlank(message: 'Email is required')]
     #[Assert\Email(message: 'Please enter a valid email address')]
     private ?string $email = null;
+
+    #[ORM\Column]
+    #[Assert\NotBlank(message: 'Password is required')]
+    private ?string $password = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'First name is required')]
@@ -48,8 +55,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $phoneNumber = null;
 
-    #[ORM\Column]
-    private ?string $password = null;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $avatar = null;
 
     #[ORM\Column]
     private ?bool $isActive = true;
@@ -60,12 +67,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $lastLoginAt = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $avatar = null;
-
-    #[ORM\Column(type: Types::TEXT, nullable: true)]
-    private ?string $biography = null;
-
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -75,13 +76,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $displayOrder = 0;
 
+    /**
+     * @var Collection<int, Role>
+     */
     #[ORM\ManyToMany(targetEntity: Role::class, inversedBy: 'users')]
     #[ORM\JoinTable(name: 'user_roles')]
-    private Collection $roles;
+    private Collection $userRoles;
 
     public function __construct()
     {
-        $this->roles = new ArrayCollection();
+        $this->userRoles = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
     }
@@ -116,6 +120,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setEmail(string $email): static
     {
         $this->email = $email;
+        return $this;
+    }
+
+    /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->username;
+    }
+
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): static
+    {
+        $this->password = $password;
         return $this;
     }
 
@@ -157,68 +185,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    /**
-     * A visual identifier that represents this user.
-     */
-    public function getUserIdentifier(): string
+    public function getAvatar(): ?string
     {
-        return (string) $this->username;
+        return $this->avatar;
     }
 
-    /**
-     * @return list<string>
-     */
-    public function getRoles(): array
+    public function setAvatar(?string $avatar): static
     {
-        $roles = [];
-        foreach ($this->roles as $role) {
-            $roles[] = $role->getName();
-        }
-        
-        // Guarantee every user at least has ROLE_USER
-        $roles[] = 'ROLE_USER';
-
-        return array_unique($roles);
-    }
-
-    public function getUserRoles(): Collection
-    {
-        return $this->roles;
-    }
-
-    public function addRole(Role $role): static
-    {
-        if (!$this->roles->contains($role)) {
-            $this->roles->add($role);
-        }
-
-        return $this;
-    }
-
-    public function removeRole(Role $role): static
-    {
-        $this->roles->removeElement($role);
-        return $this;
-    }
-
-    public function hasRole(string $roleName): bool
-    {
-        foreach ($this->roles as $role) {
-            if ($role->getName() === $roleName) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public function getPassword(): string
-    {
-        return $this->password;
-    }
-
-    public function setPassword(string $password): static
-    {
-        $this->password = $password;
+        $this->avatar = $avatar;
         return $this;
     }
 
@@ -252,28 +226,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setLastLoginAt(?\DateTimeInterface $lastLoginAt): static
     {
         $this->lastLoginAt = $lastLoginAt;
-        return $this;
-    }
-
-    public function getAvatar(): ?string
-    {
-        return $this->avatar;
-    }
-
-    public function setAvatar(?string $avatar): static
-    {
-        $this->avatar = $avatar;
-        return $this;
-    }
-
-    public function getBiography(): ?string
-    {
-        return $this->biography;
-    }
-
-    public function setBiography(?string $biography): static
-    {
-        $this->biography = $biography;
         return $this;
     }
 
@@ -311,24 +263,52 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
+     * @return Collection<int, Role>
+     */
+    public function getUserRoles(): Collection
+    {
+        return $this->userRoles;
+    }
+
+    public function addRole(Role $role): static
+    {
+        if (!$this->userRoles->contains($role)) {
+            $this->userRoles->add($role);
+        }
+        return $this;
+    }
+
+    public function removeRole(Role $role): static
+    {
+        $this->userRoles->removeElement($role);
+        return $this;
+    }
+
+    /**
      * @see UserInterface
      */
-    public function eraseCredentials(): void
+    public function getRoles(): array
     {
-        // If you store any temporary, sensitive data on the user, clear it here
+        $roles = [];
+        foreach ($this->userRoles as $role) {
+            $roles[] = $role->getName();
+        }
+        
+        // guarantee every user at least has ROLE_USER
+        if (empty($roles)) {
+            $roles[] = 'ROLE_USER';
+        }
+
+        return array_unique($roles);
     }
 
-    public function getInitials(): string
-    {
-        $firstInitial = $this->firstName ? strtoupper(substr($this->firstName, 0, 1)) : '';
-        $lastInitial = $this->lastName ? strtoupper(substr($this->lastName, 0, 1)) : '';
-        return $firstInitial . $lastInitial;
-    }
-
+    /**
+     * Get all permissions from user roles
+     */
     public function getPermissions(): array
     {
         $permissions = [];
-        foreach ($this->roles as $role) {
+        foreach ($this->userRoles as $role) {
             foreach ($role->getPermissions() as $permission) {
                 $permissions[] = $permission->getName();
             }
@@ -336,15 +316,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($permissions);
     }
 
+    /**
+     * Check if user has a specific permission
+     */
     public function hasPermission(string $permissionName): bool
     {
-        foreach ($this->roles as $role) {
-            foreach ($role->getPermissions() as $permission) {
-                if ($permission->getName() === $permissionName) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return in_array($permissionName, $this->getPermissions());
+    }
+
+    /**
+     * Check if user has a specific role
+     */
+    public function hasRole(string $roleName): bool
+    {
+        return in_array($roleName, $this->getRoles());
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials(): void
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
+    }
+
+    public function __toString(): string
+    {
+        return $this->getFullName() . ' (' . $this->username . ')';
     }
 }

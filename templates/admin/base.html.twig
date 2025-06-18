@@ -1066,13 +1066,13 @@
                     </ul>
                 </li>
 
-                <!-- USER & ENTITY MANAGEMENT SECTION -->
+                 <!-- USER & ENTITY MANAGEMENT SECTION -->
                 <li class="nav-section">
                     <div class="nav-section-title">User & Entity Management</div>
                 </li>
 
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="users">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_user' ? 'active' : '' }}" data-dropdown="users">
                         <span>
                             <i class="bi-people me-2"></i>
                             <span class="nav-text">User Management</span>
@@ -1082,21 +1082,46 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{{ path('admin_user_new') }}">
                                 <i class="bi-person-plus me-2"></i>
                                 <span class="ms-2">New User</span>
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{{ path('admin_user_index') }}">
                                 <i class="bi-people me-2"></i>
                                 <span class="ms-2">All Users</span>
                             </a>
                         </li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_role' ? 'active' : '' }}" data-dropdown="roles">
+                        <span>
+                            <i class="bi-shield-check me-2"></i>
+                            <span class="nav-text">Roles & Permissions</span>
+                        </span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Roles & Permissions</div>
+                    </a>
+                    <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{{ path('admin_role_new') }}">
+                                <i class="bi-plus-circle me-2"></i>
+                                <span class="ms-2">New Role</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_role_index') }}">
+                                <i class="bi-shield-check me-2"></i>
+                                <span class="ms-2">All Roles</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ path('admin_permission_index') }}">
                                 <i class="bi-key me-2"></i>
-                                <span class="ms-2">Roles & Permissions</span>
+                                <span class="ms-2">Permissions</span>
                             </a>
                         </li>
                     </ul>

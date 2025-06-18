@@ -2,9 +2,8 @@
 
 namespace App\Form;
 
-use App\Entity\User;
 use App\Entity\Role;
-use App\Repository\RoleRepository;
+use App\Entity\User;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -15,7 +14,6 @@ use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\RepeatedType;
 use Symfony\Component\Form\Extension\Core\Type\TelType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
@@ -27,15 +25,14 @@ class UserType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $isEdit = $options['is_edit'] ?? false;
-
+        
         $builder
             ->add('username', TextType::class, [
                 'label' => 'Username',
                 'attr' => [
                     'class' => 'form-control',
                     'placeholder' => 'Enter username'
-                ],
-                'help' => 'Username must be unique and contain only letters, numbers and underscores'
+                ]
             ])
             ->add('email', EmailType::class, [
                 'label' => 'Email Address',
@@ -66,17 +63,8 @@ class UserType extends AbstractType
                     'placeholder' => 'Enter phone number'
                 ]
             ])
-            ->add('biography', TextareaType::class, [
-                'label' => 'Biography',
-                'required' => false,
-                'attr' => [
-                    'class' => 'form-control',
-                    'rows' => 4,
-                    'placeholder' => 'Brief description about the user'
-                ]
-            ])
             ->add('avatarFile', FileType::class, [
-                'label' => 'Avatar Image',
+                'label' => 'Profile Avatar',
                 'mapped' => false,
                 'required' => false,
                 'constraints' => [
@@ -94,54 +82,50 @@ class UserType extends AbstractType
                 'attr' => [
                     'class' => 'form-control',
                     'accept' => 'image/*'
-                ],
-                'help' => 'Upload an avatar image (max 2MB)'
+                ]
             ])
-            ->add('roles', EntityType::class, [
+            ->add('userRoles', EntityType::class, [
                 'class' => Role::class,
-                'query_builder' => function (RoleRepository $repository) {
-                    return $repository->createQueryBuilder('r')
-                        ->andWhere('r.isActive = :active')
-                        ->setParameter('active', true)
-                        ->orderBy('r.displayOrder', 'ASC');
-                },
-                'choice_label' => 'label',
+                'choice_label' => 'displayName',
                 'multiple' => true,
                 'expanded' => true,
-                'label' => 'Roles',
                 'required' => false,
+                'query_builder' => function ($repository) {
+                    return $repository->createQueryBuilder('r')
+                        ->where('r.isActive = :active')
+                        ->setParameter('active', true)
+                        ->orderBy('r.displayOrder', 'ASC')
+                        ->addOrderBy('r.name', 'ASC');
+                },
                 'attr' => [
                     'class' => 'roles-checkboxes'
-                ],
-                'help' => 'Select one or more roles for this user'
+                ]
             ])
             ->add('isActive', CheckboxType::class, [
-                'label' => 'Active',
+                'label' => 'Active User',
                 'required' => false,
                 'attr' => [
                     'class' => 'form-check-input'
-                ],
-                'help' => 'Inactive users cannot log in'
+                ]
             ])
             ->add('isVerified', CheckboxType::class, [
-                'label' => 'Verified',
+                'label' => 'Email Verified',
                 'required' => false,
                 'attr' => [
                     'class' => 'form-check-input'
-                ],
-                'help' => 'Mark user as verified'
+                ]
             ])
             ->add('displayOrder', IntegerType::class, [
                 'label' => 'Display Order',
                 'attr' => [
                     'class' => 'form-control',
                     'min' => 0
-                ],
-                'help' => 'Order for sorting users (lower numbers appear first)'
+                ]
             ]);
 
-        // Add password fields only for new users or when editing password
+        // Add password field based on context
         if (!$isEdit) {
+            // For new users, password is required
             $builder->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'mapped' => false,
@@ -175,6 +159,7 @@ class UserType extends AbstractType
                 'invalid_message' => 'The password fields must match.',
             ]);
         } else {
+            // For editing users, password is optional
             $builder->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
                 'mapped' => false,
@@ -188,10 +173,10 @@ class UserType extends AbstractType
                     ]),
                 ],
                 'first_options' => [
-                    'label' => 'New Password',
+                    'label' => 'New Password (leave blank to keep current)',
                     'attr' => [
                         'class' => 'form-control',
-                        'placeholder' => 'Enter new password (leave blank to keep current)'
+                        'placeholder' => 'Enter new password'
                     ]
                 ],
                 'second_options' => [
@@ -202,7 +187,6 @@ class UserType extends AbstractType
                     ]
                 ],
                 'invalid_message' => 'The password fields must match.',
-                'help' => 'Leave blank to keep current password'
             ]);
         }
     }

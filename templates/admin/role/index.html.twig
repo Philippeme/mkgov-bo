@@ -1,25 +1,28 @@
-{# templates/admin/role/index.html.twig #}
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Roles Management{% endblock %}
+{% block title %}Role Management{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1><i class="fas fa-shield-alt me-2"></i>Roles Management</h1>
-        <p class="text-muted mb-0">Manage user roles and their permissions</p>
-    </div>
+    <h1>Role Management</h1>
     <div class="d-flex gap-2">
         <a href="{{ path('admin_role_new') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> New Role
+            <i class="fas fa-plus"></i> New Role
         </a>
+        <form method="post" action="{{ path('admin_role_create_defaults') }}" style="display: inline;">
+            <input type="hidden" name="_token" value="{{ csrf_token('create_defaults') }}">
+            <button type="submit" class="btn btn-outline-info" 
+                    onclick="return confirm('Create default system roles?');">
+                <i class="fas fa-cogs"></i> Create Default Roles
+            </button>
+        </form>
         <div class="dropdown">
             <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-download me-1"></i> Export
+                <i class="fas fa-download"></i> Export
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>Export as CSV</a></li>
-                <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i>Export as Excel</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>Export CSV</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i>Export Excel</a></li>
             </ul>
         </div>
     </div>
@@ -32,11 +35,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title text-white-50">Total Roles</h6>
+                        <h5 class="card-title">Total Roles</h5>
                         <h3 class="mb-0">{{ statistics.total }}</h3>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-shield-alt fa-2x text-white-50"></i>
+                        <i class="fas fa-user-tag fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
@@ -47,11 +50,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title text-white-50">Active Roles</h6>
+                        <h5 class="card-title">Active Roles</h5>
                         <h3 class="mb-0">{{ statistics.active }}</h3>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-check-circle fa-2x text-white-50"></i>
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
@@ -62,11 +65,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title text-white-50">System Roles</h6>
+                        <h5 class="card-title">System Roles</h5>
                         <h3 class="mb-0">{{ statistics.system }}</h3>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-cog fa-2x text-white-50"></i>
+                        <i class="fas fa-shield-alt fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
@@ -77,11 +80,11 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h6 class="card-title text-white-50">Custom Roles</h6>
+                        <h5 class="card-title">Custom Roles</h5>
                         <h3 class="mb-0">{{ statistics.custom }}</h3>
                     </div>
                     <div class="align-self-center">
-                        <i class="fas fa-user-edit fa-2x text-white-50"></i>
+                        <i class="fas fa-user-cog fa-2x opacity-75"></i>
                     </div>
                 </div>
             </div>
@@ -92,36 +95,33 @@
 <!-- Filters -->
 <div class="card mb-4">
     <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-5">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
                 <label for="search" class="form-label">Search</label>
                 <input type="text" class="form-control" id="search" name="search" 
-                       value="{{ filters.search ?? '' }}" placeholder="Search by name, label or description">
+                       value="{{ filters.search }}" placeholder="Search roles...">
             </div>
             <div class="col-md-3">
-                <label for="active" class="form-label">Status</label>
-                <select class="form-select" id="active" name="active">
-                    <option value="">All Status</option>
-                    <option value="1" {{ filters.active == true ? 'selected' : '' }}>Active</option>
-                    <option value="0" {{ filters.active == false ? 'selected' : '' }}>Inactive</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="system" class="form-label">Type</label>
+                <label for="system" class="form-label">Role Type</label>
                 <select class="form-select" id="system" name="system">
                     <option value="">All Types</option>
-                    <option value="1" {{ filters.system == true ? 'selected' : '' }}>System</option>
-                    <option value="0" {{ filters.system == false ? 'selected' : '' }}>Custom</option>
+                    <option value="1" {{ filters.system == '1' ? 'selected' : '' }}>System Roles</option>
+                    <option value="0" {{ filters.system == '0' ? 'selected' : '' }}>Custom Roles</option>
                 </select>
             </div>
-            <div class="col-md-1">
+            <div class="col-md-3">
+                <label for="permission" class="form-label">Has Permission</label>
+                <input type="text" class="form-control" id="permission" name="permission" 
+                       value="{{ filters.permission }}" placeholder="Permission name...">
+            </div>
+            <div class="col-md-2">
                 <label class="form-label">&nbsp;</label>
-                <div class="d-flex gap-1">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search"></i>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i> Filter
                     </button>
                     <a href="{{ path('admin_role_index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-times"></i>
+                        <i class="fas fa-times"></i> Clear
                     </a>
                 </div>
             </div>
@@ -129,268 +129,134 @@
     </div>
 </div>
 
-<!-- Most Used Roles -->
-{% if most_used|length > 0 %}
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">Most Used Roles</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                {% for item in most_used %}
-                    {% set role = item[0] %}
-                    {% set userCount = item.userCount %}
-                    <div class="col-md-2 text-center mb-3">
-                        <div class="card border">
-                            <div class="card-body py-3">
-                                <span class="badge bg-{{ role.badgeColor }} mb-2">{{ role.label }}</span>
-                                <h5 class="mb-0">{{ userCount }}</h5>
-                                <small class="text-muted">users</small>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-{% endif %}
-
 <!-- Roles Table -->
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Roles List</h5>
-        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#bulkActionModal">
-            <i class="fas fa-tasks me-1"></i> Bulk Actions
-        </button>
-    </div>
-    <div class="card-body p-0">
-        {% if roles %}
-            <form id="rolesForm">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th width="50">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="selectAll">
-                                    </div>
-                                </th>
-                                <th>Role</th>
-                                <th>Description</th>
-                                <th>Users</th>
-                                <th>Permissions</th>
-                                <th>Status</th>
-                                <th width="150">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        {% for role in roles %}
-                            <tr>
-                                <td>
-                                    <div class="form-check">
-                                        <input class="form-check-input role-checkbox" type="checkbox" name="roles[]" value="{{ role.id }}"
-                                               {{ role.isSystem ? 'disabled title="System roles cannot be bulk-edited"' : '' }}>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="d-flex align-items-center">
-                                        <span class="badge bg-{{ role.badgeColor }} me-2">{{ role.label }}</span>
-                                        <div>
-                                            <div class="fw-semibold">{{ role.label }}</div>
-                                            <small class="text-muted font-monospace">{{ role.name }}</small>
-                                        </div>
-                                        {% if role.isSystem %}
-                                            <span class="badge bg-secondary ms-2">System</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if role.description %}
-                                        <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ role.description }}">
-                                            {{ role.description }}
-                                        </span>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Users</th>
+                        <th>Permissions</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for role in roles %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="role-icon me-2">
+                                    {% if role.isSystem %}
+                                        <i class="fas fa-shield-alt text-warning" title="System Role"></i>
                                     {% else %}
-                                        <span class="text-muted">No description</span>
+                                        <i class="fas fa-user-tag text-primary" title="Custom Role"></i>
                                     {% endif %}
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark">{{ role.usersCount }} users</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark">{{ role.permissionsCount }} permissions</span>
-                                </td>
-                                <td>
-                                    {% if role.isActive %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">Inactive</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm" role="group">
-                                        <a href="{{ path('admin_role_show', {'id': role.id}) }}" class="btn btn-outline-info" title="View">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        {% if not role.isSystem %}
-                                            <a href="{{ path('admin_role_edit', {'id': role.id}) }}" class="btn btn-outline-warning" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                        {% endif %}
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" title="More actions">
-                                                <i class="fas fa-ellipsis-v"></i>
+                                </div>
+                                <div>
+                                    <strong>{{ role.displayName }}</strong><br>
+                                    <small class="text-muted">{{ role.name }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <code class="text-dark">{{ role.name }}</code>
+                        </td>
+                        <td>
+                            <span title="{{ role.description }}">
+                                {{ role.description|length > 50 ? role.description|slice(0, 50) ~ '...' : role.description }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if role.isSystem %}
+                                <span class="badge bg-warning">System</span>
+                            {% else %}
+                                <span class="badge bg-info">Custom</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ role.usersCount }}</span>
+                            {% if role.usersCount > 0 %}
+                                <small class="text-muted">users</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-primary">{{ role.permissionsCount }}</span>
+                            {% if role.permissionsCount > 0 %}
+                                <small class="text-muted">permissions</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if role.isActive %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span title="{{ role.createdAt|date('d/m/Y H:i:s') }}">
+                                {{ role.createdAt|date('d/m/Y') }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ path('admin_role_show', {'id': role.id}) }}" 
+                                   class="btn btn-outline-info" title="View">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_role_edit', {'id': role.id}) }}" 
+                                   class="btn btn-outline-warning" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ path('admin_role_permissions', {'id': role.id}) }}" 
+                                   class="btn btn-outline-primary" title="Manage Permissions">
+                                    <i class="fas fa-key"></i>
+                                </a>
+                                
+                                <!-- Status Toggle -->
+                                {% if not role.isSystem %}
+                                    <form method="post" action="{{ path('admin_role_toggle_status', {'id': role.id}) }}" 
+                                          style="display: inline;">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ role.id) }}">
+                                        <button type="submit" 
+                                                class="btn btn-outline-{{ role.isActive ? 'warning' : 'success' }}" 
+                                                title="{{ role.isActive ? 'Deactivate' : 'Activate' }}">
+                                            <i class="fas fa-{{ role.isActive ? 'pause' : 'play' }}"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Delete Button -->
+                                    {% if role.usersCount == 0 %}
+                                        <form method="post" action="{{ path('admin_role_delete', {'id': role.id}) }}" 
+                                              onsubmit="return confirm('Are you sure you want to delete this role?');" 
+                                              style="display: inline;">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ role.id) }}">
+                                            <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                                <i class="fas fa-trash"></i>
                                             </button>
-                                            <ul class="dropdown-menu">
-                                                <li>
-                                                    <a href="{{ path('admin_role_permissions', {'id': role.id}) }}" class="dropdown-item">
-                                                        <i class="fas fa-key me-2"></i> Manage Permissions
-                                                    </a>
-                                                </li>
-                                                <li>
-                                                    <form method="post" action="{{ path('admin_role_clone', {'id': role.id}) }}" style="display: inline;">
-                                                        <input type="hidden" name="_token" value="{{ csrf_token('clone' ~ role.id) }}">
-                                                        <button type="submit" class="dropdown-item">
-                                                            <i class="fas fa-copy me-2"></i> Clone Role
-                                                        </button>
-                                                    </form>
-                                                </li>
-                                                {% if not role.isSystem %}
-                                                    <li>
-                                                        <form method="post" action="{{ path('admin_role_toggle_status', {'id': role.id}) }}" style="display: inline;">
-                                                            <input type="hidden" name="_token" value="{{ csrf_token('toggle_status' ~ role.id) }}">
-                                                            <button type="submit" class="dropdown-item">
-                                                                <i class="fas fa-{{ role.isActive ? 'ban' : 'check' }} me-2"></i>
-                                                                {{ role.isActive ? 'Deactivate' : 'Activate' }}
-                                                            </button>
-                                                        </form>
-                                                    </li>
-                                                    {% if role.usersCount == 0 %}
-                                                        <li><hr class="dropdown-divider"></li>
-                                                        <li>
-                                                            <form method="post" action="{{ path('admin_role_delete', {'id': role.id}) }}" 
-                                                                  onsubmit="return confirm('Are you sure you want to delete this role?');" style="display: inline;">
-                                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ role.id) }}">
-                                                                <button type="submit" class="dropdown-item text-danger">
-                                                                    <i class="fas fa-trash me-2"></i> Delete
-                                                                </button>
-                                                            </form>
-                                                        </li>
-                                                    {% endif %}
-                                                {% endif %}
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </form>
-        {% else %}
-            <div class="text-center py-5">
-                <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No roles found</h5>
-                <p class="text-muted">Start by creating your first role.</p>
-                <a href="{{ path('admin_role_new') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-1"></i> Create Role
-                </a>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Bulk Action Modal -->
-<div class="modal fade" id="bulkActionModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Bulk Actions</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" action="{{ path('admin_role_bulk_action') }}">
-                <div class="modal-body">
-                    <p>Select an action to apply to the selected roles:</p>
-                    <div class="mb-3">
-                        <select name="action" class="form-select" required>
-                            <option value="">Choose an action...</option>
-                            <option value="activate">Activate</option>
-                            <option value="deactivate">Deactivate</option>
-                            <option value="delete">Delete (only roles without users)</option>
-                        </select>
-                    </div>
-                    <div id="selectedRolesCount" class="text-info">
-                        <i class="fas fa-info-circle me-1"></i> No roles selected
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Apply Action</button>
-                </div>
-            </form>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="fas fa-user-tag fa-3x mb-3"></i><br>
+                            No roles found
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const selectAllCheckbox = document.getElementById('selectAll');
-    const roleCheckboxes = document.querySelectorAll('.role-checkbox:not(:disabled)');
-    const selectedCountElement = document.getElementById('selectedRolesCount');
-    const bulkActionModal = document.getElementById('bulkActionModal');
-
-    // Select all functionality
-    selectAllCheckbox.addEventListener('change', function() {
-        roleCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
-        });
-        updateSelectedCount();
-    });
-
-    // Individual checkbox change
-    roleCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            updateSelectAllState();
-            updateSelectedCount();
-        });
-    });
-
-    function updateSelectAllState() {
-        const checkedBoxes = document.querySelectorAll('.role-checkbox:checked');
-        selectAllCheckbox.checked = checkedBoxes.length === roleCheckboxes.length;
-        selectAllCheckbox.indeterminate = checkedBoxes.length > 0 && checkedBoxes.length < roleCheckboxes.length;
-    }
-
-    function updateSelectedCount() {
-        const checkedBoxes = document.querySelectorAll('.role-checkbox:checked');
-        const count = checkedBoxes.length;
-        
-        if (count === 0) {
-            selectedCountElement.innerHTML = '<i class="fas fa-info-circle me-1"></i> No roles selected';
-            selectedCountElement.className = 'text-info';
-        } else {
-            selectedCountElement.innerHTML = `<i class="fas fa-check-circle me-1"></i> ${count} role${count > 1 ? 's' : ''} selected`;
-            selectedCountElement.className = 'text-success';
-        }
-    }
-
-    // Copy selected role IDs to bulk action form
-    bulkActionModal.addEventListener('show.bs.modal', function() {
-        const checkedBoxes = document.querySelectorAll('.role-checkbox:checked');
-        const form = bulkActionModal.querySelector('form');
-        
-        // Remove existing hidden inputs
-        form.querySelectorAll('input[name="roles[]"]').forEach(input => input.remove());
-        
-        // Add selected role IDs
-        checkedBoxes.forEach(checkbox => {
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'roles[]';
-            hiddenInput.value = checkbox.value;
-            form.appendChild(hiddenInput);
-        });
-    });
-});
-</script>
 {% endblock %}

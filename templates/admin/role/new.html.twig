@@ -1,20 +1,29 @@
-{# templates/admin/role/new.html.twig #}
+<!-- templates/admin/role/new.html.twig -->
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Create New Role{% endblock %}
+{% block title %}New Role{% endblock %}
 
 {% block body %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1><i class="fas fa-shield-alt me-2"></i>Create New Role</h1>
-        <p class="text-muted mb-0">Add a new role to the system</p>
-    </div>
-    <div>
-        <a href="{{ path('admin_role_index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Back to Roles
-        </a>
+<h1>Create New Role</h1>
+
+<div class="card">
+    <div class="card-body">
+        {{ include('admin/role/_form.html.twig') }}
     </div>
 </div>
+{% endblock %}
 
-{{ include('admin/role/_form.html.twig') }}
+<!-- templates/admin/role/edit.html.twig -->
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Edit Role{% endblock %}
+
+{% block body %}
+<h1>Edit Role: {{ role.displayName }}</h1>
+
+<div class="card">
+    <div class="card-body">
+        {{ include('admin/role/_form.html.twig', {'button_label': 'Update'}) }}
+    </div>
+</div>
 {% endblock %}

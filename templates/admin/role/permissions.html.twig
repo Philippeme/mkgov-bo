@@ -1,465 +1,144 @@
+!-- templates/admin/role/permissions.html.twig -->
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Manage Permissions - {{ role.label }}{% endblock %}
+{% block title %}Manage Permissions - {{ role.displayName }}{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Manage Permissions: {{ role.displayName }}</h1>
     <div>
-        <h1>
-            <span class="badge bg-{{ role.badgeColor }} me-2">{{ role.label }}</span>
-            <i class="fas fa-key me-2"></i>Manage Permissions
-            {% if role.isSystem %}
-                <span class="badge bg-secondary">System</span>
-            {% endif %}
-        </h1>
-        <p class="text-muted mb-0">Assign or remove permissions for this role</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{{ path('admin_role_show', {'id': role.id}) }}" class="btn btn-outline-info">
-            <i class="fas fa-eye me-1"></i> View Role
-        </a>
-        {% if not role.isSystem %}
-            <a href="{{ path('admin_role_edit', {'id': role.id}) }}" class="btn btn-outline-warning">
-                <i class="fas fa-edit me-1"></i> Edit Role
-            </a>
-        {% endif %}
-        <a href="{{ path('admin_role_index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Back to Roles
+        <a href="{{ path('admin_role_show', {'id': role.id}) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Role
         </a>
     </div>
 </div>
 
-<!-- Role Information Summary -->
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h5 class="mb-1">{{ role.label }}</h5>
-                <p class="text-muted mb-0">{{ role.description ?: 'No description available' }}</p>
-            </div>
-            <div class="col-md-4 text-end">
-                <div class="d-flex justify-content-end gap-3">
-                    <div class="text-center">
-                        <h4 class="text-primary mb-0">{{ role.usersCount }}</h4>
-                        <small class="text-muted">Users</small>
-                    </div>
-                    <div class="text-center">
-                        <h4 class="text-info mb-0" id="permissionCount">{{ role_permission_ids|length }}</h4>
-                        <small class="text-muted">Permissions</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<form method="post" id="permissionsForm">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <!-- Search and Filter -->
-            <div class="card mb-4">
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label for="searchPermissions" class="form-label">Search Permissions</label>
-                            <input type="text" class="form-control" id="searchPermissions" placeholder="Search by name, label or description...">
-                        </div>
-                        <div class="col-md-3">
-                            <label for="filterCategory" class="form-label">Filter by Category</label>
-                            <select class="form-select" id="filterCategory">
-                                <option value="">All Categories</option>
-                                {% for category in permissions_by_category|keys %}
-                                    <option value="{{ category }}">{{ category|title|replace({'_': ' '}) }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="filterAction" class="form-label">Filter by Action</label>
-                            <select class="form-select" id="filterAction">
-                                <option value="">All Actions</option>
-                                <option value="create">Create</option>
-                                <option value="read">Read</option>
-                                <option value="update">Update</option>
-                                <option value="delete">Delete</option>
-                                <option value="manage">Manage</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Permissions by Category -->
-            <div class="permissions-list">
-                {% for category, permissions in permissions_by_category %}
-                    <div class="card mb-3 permission-category" data-category="{{ category }}">
-                        <div class="card-header d-flex justify-content-between align-items-center">
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Available Permissions</h5>
+                <form method="post">
+                    <input type="hidden" name="_token" value="{{ csrf_token('permissions' ~ role.id) }}">
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span>Select permissions for this role:</span>
                             <div>
-                                <h5 class="mb-0">
-                                    <i class="fas fa-folder-open me-2"></i>
-                                    {{ category|title|replace({'_': ' '}) }}
-                                    <span class="badge bg-primary ms-2 category-count">{{ permissions|length }}</span>
-                                    <span class="badge bg-success ms-1 category-selected">0</span>
-                                </h5>
-                            </div>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-primary" onclick="selectCategoryPermissions('{{ category }}')">
-                                    <i class="fas fa-check-double me-1"></i> Select All
+                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectAll()">
+                                    Select All
                                 </button>
-                                <button type="button" class="btn btn-outline-secondary" onclick="clearCategoryPermissions('{{ category }}')">
-                                    <i class="fas fa-times me-1"></i> Clear All
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectNone()">
+                                    Select None
                                 </button>
                             </div>
                         </div>
-                        <div class="card-body">
-                            <div class="row">
-                                {% for permission in permissions %}
-                                    <div class="col-md-6 mb-3 permission-item" 
-                                         data-category="{{ category }}" 
-                                         data-action="{{ permission.action|default('') }}"
-                                         data-name="{{ permission.name|lower }}"
-                                         data-label="{{ permission.label|lower }}"
-                                         data-description="{{ permission.description|default('')|lower }}">
-                                        <div class="card border permission-card {{ permission.id in role_permission_ids ? 'selected' : '' }}">
-                                            <div class="card-body py-3">
-                                                <div class="form-check">
-                                                    <input class="form-check-input permission-checkbox" 
-                                                           type="checkbox" 
-                                                           name="permissions[]" 
-                                                           value="{{ permission.id }}"
-                                                           id="permission_{{ permission.id }}"
-                                                           {{ permission.id in role_permission_ids ? 'checked' : '' }}
-                                                           data-category="{{ category }}">
-                                                    <label class="form-check-label w-100" for="permission_{{ permission.id }}">
-                                                        <div class="d-flex justify-content-between align-items-start">
-                                                            <div class="flex-grow-1">
-                                                                <div class="d-flex align-items-center mb-1">
-                                                                    {% if permission.action %}
-                                                                        <span class="badge {{ permission.badgeClass }} me-2">{{ permission.action|title }}</span>
-                                                                    {% endif %}
-                                                                    <strong>{{ permission.label }}</strong>
-                                                                </div>
-                                                                <div class="text-muted small mb-1">
-                                                                    <code>{{ permission.name }}</code>
-                                                                </div>
-                                                                {% if permission.description %}
-                                                                    <div class="text-muted small">
-                                                                        {{ permission.description }}
-                                                                    </div>
-                                                                {% endif %}
-                                                                {% if permission.resource %}
-                                                                    <div class="mt-1">
-                                                                        <small class="text-info">Resource: <code>{{ permission.resource }}</code></small>
-                                                                    </div>
-                                                                {% endif %}
-                                                            </div>
-                                                        </div>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
+                        
+                        <div class="permissions-grid" style="max-height: 400px; overflow-y: auto;">
+                            {% for permission in all_permissions %}
+                                <div class="form-check mb-2 p-2 border rounded">
+                                    <input class="form-check-input" type="checkbox" 
+                                           name="permissions[]" 
+                                           value="{{ permission.id }}" 
+                                           id="permission_{{ permission.id }}"
+                                           {% if permission in role.permissions %}checked{% endif %}>
+                                    <label class="form-check-label w-100" for="permission_{{ permission.id }}">
+                                        <strong>{{ permission.name }}</strong>
+                                        {% if permission.description %}
+                                            <br><small class="text-muted">{{ permission.description }}</small>
+                                        {% endif %}
+                                    </label>
+                                </div>
+                            {% endfor %}
                         </div>
-                    </div>
-                {% else %}
-                    <div class="card">
-                        <div class="card-body text-center py-5">
-                            <i class="fas fa-key fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">No permissions available</h5>
-                            <p class="text-muted">Create some permissions first before assigning them to roles.</p>
-                            <a href="{{ path('admin_permission_new') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Create Permission
-                            </a>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <!-- Quick Actions -->
-            <div class="card mb-4 sticky-top" style="top: 1rem;">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-lightning-bolt me-2"></i>Quick Actions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-outline-primary" onclick="selectAllPermissions()">
-                            <i class="fas fa-check-double me-1"></i> Select All Permissions
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="clearAllPermissions()">
-                            <i class="fas fa-times me-1"></i> Clear All Permissions
-                        </button>
-                        <button type="button" class="btn btn-outline-info" onclick="selectByAction('create')">
-                            <i class="fas fa-plus me-1"></i> Select All "Create"
-                        </button>
-                        <button type="button" class="btn btn-outline-info" onclick="selectByAction('read')">
-                            <i class="fas fa-eye me-1"></i> Select All "Read"
-                        </button>
-                        <button type="button" class="btn btn-outline-warning" onclick="selectByAction('update')">
-                            <i class="fas fa-edit me-1"></i> Select All "Update"
-                        </button>
-                        <button type="button" class="btn btn-outline-danger" onclick="selectByAction('delete')">
-                            <i class="fas fa-trash me-1"></i> Select All "Delete"
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Permission Summary -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-pie me-2"></i>Permission Summary
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div id="permissionSummary">
-                        <!-- Will be updated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Save Actions -->
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i> Save Permissions
-                        </button>
-                        <a href="{{ path('admin_role_show', {'id': role.id}) }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i> Cancel Changes
-                        </a>
                     </div>
                     
-                    <div class="mt-3 text-center">
-                        <small class="text-muted">
-                            <i class="fas fa-info-circle me-1"></i>
-                            Changes will take effect immediately for all users with this role.
-                        </small>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Permissions
+                        </button>
+                        <a href="{{ path('admin_role_show', {'id': role.id}) }}" class="btn btn-secondary">
+                            Cancel
+                        </a>
                     </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Role Summary</h5>
+                <table class="table table-sm">
+                    <tr>
+                        <th>Role:</th>
+                        <td>{{ role.displayName }}</td>
+                    </tr>
+                    <tr>
+                        <th>Name:</th>
+                        <td><code>{{ role.name }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Type:</th>
+                        <td>
+                            {% if role.isSystem %}
+                                <span class="badge bg-warning">System</span>
+                            {% else %}
+                                <span class="badge bg-info">Custom</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Users:</th>
+                        <td>{{ role.usersCount }}</td>
+                    </tr>
+                    <tr>
+                        <th>Current Permissions:</th>
+                        <td id="current-count">{{ role.permissionsCount }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title">Current Permissions</h6>
+                <div id="current-permissions" style="max-height: 200px; overflow-y: auto;">
+                    {% for permission in role.permissions %}
+                        <span class="badge bg-primary me-1 mb-1">{{ permission.name }}</span>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
-</form>
-
-<style>
-.permission-card {
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.permission-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transform: translateY(-1px);
-}
-
-.permission-card.selected {
-    border-color: #0d6efd;
-    background-color: #f8f9ff;
-}
-
-.permission-card.selected .form-check-label {
-    color: #0d6efd;
-}
-
-.form-check-label {
-    cursor: pointer;
-}
-
-.permission-item {
-    transition: opacity 0.3s ease;
-}
-
-.permission-item.hidden {
-    display: none;
-}
-
-.sticky-top {
-    z-index: 1020;
-}
-
-.category-selected {
-    transition: all 0.3s ease;
-}
-
-.badge {
-    font-size: 0.75em;
-}
-</style>
+</div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('searchPermissions');
-    const categoryFilter = document.getElementById('filterCategory');
-    const actionFilter = document.getElementById('filterAction');
-    const permissionCheckboxes = document.querySelectorAll('.permission-checkbox');
-    const permissionCards = document.querySelectorAll('.permission-card');
-    const permissionCount = document.getElementById('permissionCount');
-    const permissionSummary = document.getElementById('permissionSummary');
-
-    // Search functionality
-    searchInput.addEventListener('input', function() {
-        filterPermissions();
-    });
-
-    categoryFilter.addEventListener('change', function() {
-        filterPermissions();
-    });
-
-    actionFilter.addEventListener('change', function() {
-        filterPermissions();
-    });
-
-    function filterPermissions() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const categoryFilter = document.getElementById('filterCategory').value;
-        const actionFilter = document.getElementById('filterAction').value;
-
-        document.querySelectorAll('.permission-item').forEach(item => {
-            const name = item.dataset.name || '';
-            const label = item.dataset.label || '';
-            const description = item.dataset.description || '';
-            const category = item.dataset.category || '';
-            const action = item.dataset.action || '';
-
-            const matchesSearch = !searchTerm || 
-                name.includes(searchTerm) || 
-                label.includes(searchTerm) || 
-                description.includes(searchTerm);
-            
-            const matchesCategory = !categoryFilter || category === categoryFilter;
-            const matchesAction = !actionFilter || action === actionFilter;
-
-            if (matchesSearch && matchesCategory && matchesAction) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-
-        updateCategoryCounts();
-    }
-
-    // Permission selection
-    permissionCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const card = this.closest('.permission-card');
-            if (this.checked) {
-                card.classList.add('selected');
-            } else {
-                card.classList.remove('selected');
-            }
-            updateCounts();
-        });
-    });
-
-    // Card click to toggle checkbox
-    permissionCards.forEach(card => {
-        card.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'INPUT') {
-                const checkbox = this.querySelector('.permission-checkbox');
-                checkbox.checked = !checkbox.checked;
-                checkbox.dispatchEvent(new Event('change'));
-            }
-        });
-    });
-
-    function updateCounts() {
-        const checkedBoxes = document.querySelectorAll('.permission-checkbox:checked');
-        permissionCount.textContent = checkedBoxes.length;
-        updateCategoryCounts();
-        updatePermissionSummary();
-    }
-
-    function updateCategoryCounts() {
-        document.querySelectorAll('.permission-category').forEach(categoryCard => {
-            const category = categoryCard.dataset.category;
-            const categoryPermissions = categoryCard.querySelectorAll('.permission-item:not(.hidden)');
-            const selectedPermissions = categoryCard.querySelectorAll('.permission-item:not(.hidden) .permission-checkbox:checked');
-            
-            const countBadge = categoryCard.querySelector('.category-count');
-            const selectedBadge = categoryCard.querySelector('.category-selected');
-            
-            countBadge.textContent = categoryPermissions.length;
-            selectedBadge.textContent = selectedPermissions.length;
-        });
-    }
-
-    function updatePermissionSummary() {
-        const summary = {};
-        const checkedBoxes = document.querySelectorAll('.permission-checkbox:checked');
-        
-        checkedBoxes.forEach(checkbox => {
-            const category = checkbox.dataset.category;
-            summary[category] = (summary[category] || 0) + 1;
-        });
-
-        let summaryHtml = '';
-        for (const [category, count] of Object.entries(summary)) {
-            summaryHtml += `
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small">${category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                    <span class="badge bg-primary">${count}</span>
-                </div>
-            `;
-        }
-
-        if (summaryHtml === '') {
-            summaryHtml = '<p class="text-muted mb-0">No permissions selected</p>';
-        }
-
-        permissionSummary.innerHTML = summaryHtml;
-    }
-
-    // Initial update
-    updateCounts();
-});
-
-function selectAllPermissions() {
-    document.querySelectorAll('.permission-checkbox').forEach(checkbox => {
+function selectAll() {
+    document.querySelectorAll('input[name="permissions[]"]').forEach(checkbox => {
         checkbox.checked = true;
-        checkbox.dispatchEvent(new Event('change'));
     });
+    updateCount();
 }
 
-function clearAllPermissions() {
-    document.querySelectorAll('.permission-checkbox').forEach(checkbox => {
+function selectNone() {
+    document.querySelectorAll('input[name="permissions[]"]').forEach(checkbox => {
         checkbox.checked = false;
-        checkbox.dispatchEvent(new Event('change'));
     });
+    updateCount();
 }
 
-function selectCategoryPermissions(category) {
-    document.querySelectorAll(`.permission-checkbox[data-category="${category}"]`).forEach(checkbox => {
-        const item = checkbox.closest('.permission-item');
-        if (!item.classList.contains('hidden')) {
-            checkbox.checked = true;
-            checkbox.dispatchEvent(new Event('change'));
-        }
-    });
+function updateCount() {
+    const checked = document.querySelectorAll('input[name="permissions[]"]:checked').length;
+    document.getElementById('current-count').textContent = checked;
 }
 
-function clearCategoryPermissions(category) {
-    document.querySelectorAll(`.permission-checkbox[data-category="${category}"]`).forEach(checkbox => {
-        checkbox.checked = false;
-        checkbox.dispatchEvent(new Event('change'));
+// Add event listeners to checkboxes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('input[name="permissions[]"]').forEach(checkbox => {
+        checkbox.addEventListener('change', updateCount);
     });
-}
-
-function selectByAction(action) {
-    document.querySelectorAll('.permission-item').forEach(item => {
-        if (item.dataset.action === action && !item.classList.contains('hidden')) {
-            const checkbox = item.querySelector('.permission-checkbox');
-            checkbox.checked = true;
-            checkbox.dispatchEvent(new Event('change'));
-        }
-    });
-}
+});
 </script>
 {% endblock %}

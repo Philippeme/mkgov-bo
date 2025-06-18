@@ -1,23 +1,14 @@
-{# templates/admin/user/edit.html.twig #}
+<!-- templates/admin/user/edit.html.twig -->
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Edit User: {{ user.fullName }}{% endblock %}
+{% block title %}Edit User{% endblock %}
 
 {% block body %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1><i class="fas fa-user-edit me-2"></i>Edit User</h1>
-        <p class="text-muted mb-0">Update user information and settings</p>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="{{ path('admin_user_show', {'id': user.id}) }}" class="btn btn-outline-info">
-            <i class="fas fa-eye me-1"></i> View User
-        </a>
-        <a href="{{ path('admin_user_index') }}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left me-1"></i> Back to Users
-        </a>
+<h1>Edit User: {{ user.fullName }}</h1>
+
+<div class="card">
+    <div class="card-body">
+        {{ include('admin/user/_form.html.twig', {'button_label': 'Update'}) }}
     </div>
 </div>
-
-{{ include('admin/user/_form.html.twig') }}
 {% endblock %}

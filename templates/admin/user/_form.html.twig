@@ -1,337 +1,92 @@
-{{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'needs-validation'}}) }}
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Basic Information -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-user me-2"></i>Basic Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form_row(form.firstName) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form_row(form.lastName) }}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form_row(form.username) }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form_row(form.email) }}
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.phoneNumber) }}
-                    </div>
-                    <div class="mb-3">
-                        {{ form_row(form.biography) }}
-                    </div>
+<!-- templates/admin/user/_form.html.twig -->
+{{ form_start(form) }}
+<div class="row">
+    <div class="col-md-8">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.username) }}
                 </div>
             </div>
-
-            <!-- Password Section -->
-            {% if form.plainPassword is defined %}
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-lock me-2"></i>Password
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ form_row(form.plainPassword.first) }}
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                {{ form_row(form.plainPassword.second) }}
-                            </div>
-                        </div>
-                        <div class="password-strength-indicator">
-                            <div class="progress mb-2" style="height: 5px;">
-                                <div class="progress-bar" role="progressbar" style="width: 0%"></div>
-                            </div>
-                            <small class="text-muted">
-                                Password should be at least 6 characters long and contain a mix of letters and numbers.
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            {% endif %}
-
-            <!-- Roles & Permissions -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-shield-alt me-2"></i>Roles & Permissions
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        {{ form_label(form.roles) }}
-                        <div class="roles-grid mt-2">
-                            {{ form_widget(form.roles) }}
-                        </div>
-                        {% if form.roles.vars.help %}
-                            <div class="form-text">{{ form.roles.vars.help }}</div>
-                        {% endif %}
-                    </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.email) }}
                 </div>
             </div>
         </div>
-
-        <div class="col-md-4">
-            <!-- Avatar -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-image me-2"></i>Avatar
-                    </h5>
-                </div>
-                <div class="card-body text-center">
-                    <div class="avatar-preview mb-3">
-                        {% if user.avatar %}
-                            <img src="{{ asset('uploads/avatars/' ~ user.avatar) }}" 
-                                 alt="{{ user.fullName }}" 
-                                 class="rounded-circle img-thumbnail" 
-                                 width="120" height="120"
-                                 id="avatarPreview">
-                        {% else %}
-                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mx-auto" 
-                                 style="width: 120px; height: 120px; font-size: 2rem; font-weight: bold;"
-                                 id="avatarPreview">
-                                {{ user.initials|default('??') }}
-                            </div>
-                        {% endif %}
-                    </div>
-                    {{ form_row(form.avatarFile) }}
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.firstName) }}
                 </div>
             </div>
-
-            <!-- Settings -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-cog me-2"></i>Settings
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        {{ form_row(form.displayOrder) }}
-                    </div>
-                    <div class="form-check mb-3">
-                        {{ form_widget(form.isActive) }}
-                        {{ form_label(form.isActive) }}
-                        {% if form.isActive.vars.help %}
-                            <div class="form-text">{{ form.isActive.vars.help }}</div>
-                        {% endif %}
-                    </div>
-                    <div class="form-check mb-3">
-                        {{ form_widget(form.isVerified) }}
-                        {{ form_label(form.isVerified) }}
-                        {% if form.isVerified.vars.help %}
-                            <div class="form-text">{{ form.isVerified.vars.help }}</div>
-                        {% endif %}
-                    </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.lastName) }}
                 </div>
             </div>
-
-            <!-- User Information (for edit mode) -->
-            {% if user.id %}
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-info-circle me-2"></i>User Information
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-sm">
-                            <tr>
-                                <td><strong>Created:</strong></td>
-                                <td>{{ user.createdAt|date('d/m/Y H:i') }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Last Updated:</strong></td>
-                                <td>{{ user.updatedAt|date('d/m/Y H:i') }}</td>
-                            </tr>
-                            {% if user.lastLoginAt %}
-                                <tr>
-                                    <td><strong>Last Login:</strong></td>
-                                    <td>{{ user.lastLoginAt|date('d/m/Y H:i') }}</td>
-                                </tr>
-                            {% endif %}
-                            <tr>
-                                <td><strong>Status:</strong></td>
-                                <td>
-                                    {% if user.isActive %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                        <span class="badge bg-danger">Inactive</span>
-                                    {% endif %}
-                                    {% if user.isVerified %}
-                                        <span class="badge bg-info">Verified</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-            {% endif %}
         </div>
-    </div>
-
-    <!-- Form Actions -->
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between">
-                <div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save me-1"></i>
-                        {{ button_label|default(user.id ? 'Update User' : 'Create User') }}
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary ms-2" onclick="history.back()">
-                        <i class="fas fa-times me-1"></i> Cancel
-                    </button>
+        
+        <div class="mb-3">
+            {{ form_row(form.phoneNumber) }}
+        </div>
+        
+        {% if form.plainPassword is defined %}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.plainPassword.first) }}
                 </div>
-                <div>
-                    {% if user.id %}
-                        <a href="{{ path('admin_user_show', {'id': user.id}) }}" class="btn btn-outline-info">
-                            <i class="fas fa-eye me-1"></i> View User
-                        </a>
-                    {% endif %}
-                    <a href="{{ path('admin_user_index') }}" class="btn btn-outline-secondary">
-                        <i class="fas fa-list me-1"></i> Back to List
-                    </a>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.plainPassword.second) }}
                 </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="mb-3">
+            <label class="form-label">Roles</label>
+            <div class="roles-container">
+                {{ form_widget(form.roles) }}
             </div>
         </div>
     </div>
+    
+    <div class="col-md-4">
+        <div class="mb-3">
+            {{ form_row(form.avatarFile) }}
+            {% if user.avatar is defined and user.avatar %}
+                <div class="mt-2">
+                    <p>Current avatar:</p>
+                    <img src="{{ asset('uploads/users/' ~ user.avatar) }}" 
+                         alt="{{ user.fullName }}" 
+                         class="img-fluid rounded" 
+                         style="max-width: 200px;">
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="mb-3">
+            {{ form_row(form.displayOrder) }}
+        </div>
+        
+        <div class="form-check mb-3">
+            {{ form_widget(form.isActive) }}
+            {{ form_label(form.isActive) }}
+        </div>
+        
+        <div class="form-check mb-3">
+            {{ form_widget(form.isVerified) }}
+            {{ form_label(form.isVerified) }}
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2">
+    <button class="btn btn-primary">{{ button_label|default('Save') }}</button>
+    <a href="{{ path('admin_user_index') }}" class="btn btn-secondary">Cancel</a>
+</div>
 {{ form_end(form) }}
-
-<style>
-.roles-grid .form-check {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem;
-    border: 1px solid #dee2e6;
-    border-radius: 0.375rem;
-    background-color: #f8f9fa;
-}
-
-.roles-grid .form-check:hover {
-    background-color: #e9ecef;
-}
-
-.roles-grid .form-check-input:checked + .form-check-label {
-    font-weight: 600;
-    color: #0d6efd;
-}
-
-.avatar-preview {
-    position: relative;
-}
-
-.password-strength-indicator .progress-bar {
-    transition: width 0.3s ease;
-}
-
-.password-strength-weak .progress-bar {
-    background-color: #dc3545;
-}
-
-.password-strength-medium .progress-bar {
-    background-color: #ffc107;
-}
-
-.password-strength-strong .progress-bar {
-    background-color: #198754;
-}
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Avatar preview functionality
-    const avatarFileInput = document.querySelector('input[type="file"][name*="avatarFile"]');
-    const avatarPreview = document.getElementById('avatarPreview');
-    
-    if (avatarFileInput && avatarPreview) {
-        avatarFileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    if (avatarPreview.tagName === 'IMG') {
-                        avatarPreview.src = e.target.result;
-                    } else {
-                        // Replace the div with an img element
-                        const newImg = document.createElement('img');
-                        newImg.src = e.target.result;
-                        newImg.alt = 'Avatar Preview';
-                        newImg.className = 'rounded-circle img-thumbnail';
-                        newImg.style.width = '120px';
-                        newImg.style.height = '120px';
-                        newImg.id = 'avatarPreview';
-                        avatarPreview.parentNode.replaceChild(newImg, avatarPreview);
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-
-    // Password strength indicator
-    const passwordInput = document.querySelector('input[name*="plainPassword"][type="password"]');
-    const strengthIndicator = document.querySelector('.password-strength-indicator');
-    
-    if (passwordInput && strengthIndicator) {
-        const progressBar = strengthIndicator.querySelector('.progress-bar');
-        const progressContainer = strengthIndicator.querySelector('.progress');
-        
-        passwordInput.addEventListener('input', function() {
-            const password = this.value;
-            const strength = calculatePasswordStrength(password);
-            
-            progressBar.style.width = strength.percentage + '%';
-            progressContainer.className = 'progress mb-2 password-strength-' + strength.level;
-            
-            // Update progress bar text
-            progressBar.setAttribute('aria-valuenow', strength.percentage);
-        });
-    }
-
-    function calculatePasswordStrength(password) {
-        let score = 0;
-        
-        if (password.length >= 6) score += 25;
-        if (password.length >= 10) score += 25;
-        if (/[a-z]/.test(password)) score += 10;
-        if (/[A-Z]/.test(password)) score += 10;
-        if (/[0-9]/.test(password)) score += 15;
-        if (/[^A-Za-z0-9]/.test(password)) score += 15;
-        
-        let level = 'weak';
-        if (score >= 50) level = 'medium';
-        if (score >= 80) level = 'strong';
-        
-        return {
-            percentage: Math.min(score, 100),
-            level: level
-        };
-    }
-
-    // Form validation
-    const form = document.querySelector('.needs-validation');
-    if (form) {
-        form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
-            form.classList.add('was-validated');
-        });
-    }
-});
-</script>

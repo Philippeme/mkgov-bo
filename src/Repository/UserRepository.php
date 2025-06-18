@@ -34,76 +34,7 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
-     * Récupère les utilisateurs actifs triés par ordre d'affichage
-     */
-    public function findActiveUsers(): array
-    {
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.isActive = :active')
-            ->setParameter('active', true)
-            ->orderBy('u.displayOrder', 'ASC')
-            ->addOrderBy('u.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * Récupère les utilisateurs avec filtres
-     */
-    public function findUsersWithFilters(array $filters): array
-    {
-        $qb = $this->createQueryBuilder('u')
-            ->leftJoin('u.roles', 'r');
-
-        if (!empty($filters['search'])) {
-            $qb->andWhere($qb->expr()->orX(
-                $qb->expr()->like('u.username', ':search'),
-                $qb->expr()->like('u.email', ':search'),
-                $qb->expr()->like('u.firstName', ':search'),
-                $qb->expr()->like('u.lastName', ':search')
-            ))
-            ->setParameter('search', '%' . $filters['search'] . '%');
-        }
-
-        if (!empty($filters['role'])) {
-            $qb->andWhere('r.name = :role')
-               ->setParameter('role', $filters['role']);
-        }
-
-        if (isset($filters['active'])) {
-            $qb->andWhere('u.isActive = :active')
-               ->setParameter('active', $filters['active']);
-        }
-
-        if (isset($filters['verified'])) {
-            $qb->andWhere('u.isVerified = :verified')
-               ->setParameter('verified', $filters['verified']);
-        }
-
-        return $qb->orderBy('u.displayOrder', 'ASC')
-                  ->addOrderBy('u.createdAt', 'DESC')
-                  ->getQuery()
-                  ->getResult();
-    }
-
-    /**
-     * Récupère les rôles uniques des utilisateurs
-     */
-    public function findUniqueRoles(): array
-    {
-        $result = $this->createQueryBuilder('u')
-            ->select('DISTINCT r.name')
-            ->leftJoin('u.roles', 'r')
-            ->where('r.name IS NOT NULL')
-            ->orderBy('r.name', 'ASC')
-            ->getQuery()
-            ->getResult();
-
-        return array_column($result, 'name');
-    }
-
-    /**
-     * Recherche d'utilisateurs par nom d'utilisateur ou email
+     * Find user by username or email
      */
     public function findByUsernameOrEmail(string $identifier): ?User
     {
@@ -115,128 +46,36 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
-     * Récupère les utilisateurs récemment actifs
+     * Find active users with filters
      */
-    public function findRecentlyActive(int $days = 30): array
-    {
-        $date = new \DateTime();
-        $date->modify('-' . $days . ' days');
-
-        return $this->createQueryBuilder('u')
-            ->andWhere('u.lastLoginAt >= :date')
-            ->setParameter('date', $date)
-            ->orderBy('u.lastLoginAt', 'DESC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * Compte les utilisateurs par statut
-     */
-    public function countUsersByStatus(): array
-    {
-        $total = $this->createQueryBuilder('u')
-            ->select('COUNT(u.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $active = $this->createQueryBuilder('u')
-            ->select('COUNT(u.id)')
-            ->andWhere('u.isActive = :active')
-            ->setParameter('active', true)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $verified = $this->createQueryBuilder('u')
-            ->select('COUNT(u.id)')
-            ->andWhere('u.isVerified = :verified')
-            ->setParameter('verified', true)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $recentlyActive = $this->createQueryBuilder('u')
-            ->select('COUNT(u.id)')
-            ->andWhere('u.lastLoginAt >= :date')
-            ->setParameter('date', new \DateTime('-30 days'))
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        return [
-            'total' => $total,
-            'active' => $active,
-            'inactive' => $total - $active,
-            'verified' => $verified,
-            'unverified' => $total - $verified,
-            'recently_active' => $recentlyActive
-        ];
-    }
-
-    /**
-     * Récupère les utilisateurs avec un rôle spécifique
-     */
-    public function findByRole(string $roleName): array
-    {
-        return $this->createQueryBuilder('u')
-            ->leftJoin('u.roles', 'r')
-            ->andWhere('r.name = :roleName')
-            ->setParameter('roleName', $roleName)
-            ->orderBy('u.displayOrder', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * Récupère les utilisateurs sans rôle assigné
-     */
-    public function findUsersWithoutRoles(): array
-    {
-        return $this->createQueryBuilder('u')
-            ->leftJoin('u.roles', 'r')
-            ->andWhere('r.id IS NULL')
-            ->orderBy('u.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * Met à jour la dernière connexion d'un utilisateur
-     */
-    public function updateLastLogin(User $user): void
-    {
-        $user->setLastLoginAt(new \DateTime());
-        $this->getEntityManager()->persist($user);
-        $this->getEntityManager()->flush();
-    }
-
-    /**
-     * Recherche avancée d'utilisateurs avec pagination
-     */
-    public function findWithPagination(array $criteria = [], int $page = 1, int $limit = 20): array
+    public function findActiveUsersWithFilters(array $filters = [], int $page = 1, int $limit = 20): array
     {
         $qb = $this->createQueryBuilder('u')
-            ->leftJoin('u.roles', 'r');
+            ->andWhere('u.isActive = :active')
+            ->setParameter('active', true);
 
-        if (!empty($criteria['search'])) {
+        if (!empty($filters['search'])) {
             $qb->andWhere($qb->expr()->orX(
-                $qb->expr()->like('u.username', ':search'),
+                $qb->expr()->like('u.firstName', ':search'),
+                $qb->expr()->like('u.lastName', ':search'),
                 $qb->expr()->like('u.email', ':search'),
-                $qb->expr()->like('CONCAT(u.firstName, \' \', u.lastName)', ':search')
+                $qb->expr()->like('u.username', ':search')
             ))
-            ->setParameter('search', '%' . $criteria['search'] . '%');
+            ->setParameter('search', '%' . $filters['search'] . '%');
         }
 
-        if (!empty($criteria['role'])) {
-            $qb->andWhere('r.name = :role')
-               ->setParameter('role', $criteria['role']);
+        if (!empty($filters['role'])) {
+            $qb->join('u.roles', 'r')
+               ->andWhere('r.name = :role')
+               ->setParameter('role', $filters['role']);
         }
 
-        if (isset($criteria['active'])) {
-            $qb->andWhere('u.isActive = :active')
-               ->setParameter('active', $criteria['active']);
+        if (isset($filters['verified']) && $filters['verified'] !== '') {
+            $qb->andWhere('u.isVerified = :verified')
+               ->setParameter('verified', (bool)$filters['verified']);
         }
 
         $offset = ($page - 1) * $limit;
-
         return $qb->setFirstResult($offset)
                   ->setMaxResults($limit)
                   ->orderBy('u.displayOrder', 'ASC')
@@ -246,33 +85,129 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
     }
 
     /**
-     * Compte le nombre total d'utilisateurs selon les critères
+     * Count active users
      */
-    public function countWithCriteria(array $criteria = []): int
+    public function countActiveUsers(): int
     {
-        $qb = $this->createQueryBuilder('u')
+        return $this->createQueryBuilder('u')
             ->select('COUNT(u.id)')
-            ->leftJoin('u.roles', 'r');
+            ->andWhere('u.isActive = :active')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 
-        if (!empty($criteria['search'])) {
-            $qb->andWhere($qb->expr()->orX(
-                $qb->expr()->like('u.username', ':search'),
-                $qb->expr()->like('u.email', ':search'),
-                $qb->expr()->like('CONCAT(u.firstName, \' \', u.lastName)', ':search')
+    /**
+     * Find users by role
+     */
+    public function findByRole(string $roleName): array
+    {
+        return $this->createQueryBuilder('u')
+            ->join('u.roles', 'r')
+            ->andWhere('r.name = :roleName')
+            ->andWhere('u.isActive = :active')
+            ->setParameter('roleName', $roleName)
+            ->setParameter('active', true)
+            ->orderBy('u.firstName', 'ASC')
+            ->addOrderBy('u.lastName', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find recently registered users
+     */
+    public function findRecentlyRegistered(int $days = 7, int $limit = 10): array
+    {
+        $date = new \DateTime();
+        $date->modify("-{$days} days");
+
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.createdAt >= :date')
+            ->setParameter('date', $date)
+            ->orderBy('u.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find users with last login activity
+     */
+    public function findActiveUsers(int $days = 30): array
+    {
+        $date = new \DateTime();
+        $date->modify("-{$days} days");
+
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.lastLoginAt >= :date')
+            ->andWhere('u.isActive = :active')
+            ->setParameter('date', $date)
+            ->setParameter('active', true)
+            ->orderBy('u.lastLoginAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find inactive users
+     */
+    public function findInactiveUsers(int $days = 90): array
+    {
+        $date = new \DateTime();
+        $date->modify("-{$days} days");
+
+        return $this->createQueryBuilder('u')
+            ->andWhere($qb->expr()->orX(
+                $qb->expr()->isNull('u.lastLoginAt'),
+                $qb->expr()->lt('u.lastLoginAt', ':date')
             ))
-            ->setParameter('search', '%' . $criteria['search'] . '%');
-        }
+            ->andWhere('u.isActive = :active')
+            ->setParameter('date', $date)
+            ->setParameter('active', true)
+            ->orderBy('u.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 
-        if (!empty($criteria['role'])) {
-            $qb->andWhere('r.name = :role')
-               ->setParameter('role', $criteria['role']);
-        }
+    /**
+     * Get user statistics
+     */
+    public function getUserStatistics(): array
+    {
+        $totalUsers = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
 
-        if (isset($criteria['active'])) {
-            $qb->andWhere('u.isActive = :active')
-               ->setParameter('active', $criteria['active']);
-        }
+        $activeUsers = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.isActive = :active')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
 
-        return $qb->getQuery()->getSingleScalarResult();
+        $verifiedUsers = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.isVerified = :verified')
+            ->setParameter('verified', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        // Users registered this month
+        $thisMonth = new \DateTime('first day of this month');
+        $newUsersThisMonth = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.createdAt >= :thisMonth')
+            ->setParameter('thisMonth', $thisMonth)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            'total' => $totalUsers,
+            'active' => $activeUsers,
+            'verified' => $verifiedUsers,
+            'new_this_month' => $newUsersThisMonth,
+        ];
     }
 }
