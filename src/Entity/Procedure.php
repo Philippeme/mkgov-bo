@@ -18,13 +18,14 @@ class Procedure
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: 'Name is required')]
+    #[Assert\NotBlank(message: 'Procedure name is required')]
     #[Assert\Length(max: 255)]
     private ?string $pname = null;
 
-    #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Family is required')]
-    private ?string $family = null;
+    #[ORM\ManyToOne(targetEntity: Family::class, inversedBy: 'procedures')]
+    #[ORM\JoinColumn(nullable: false)]
+    #[Assert\NotNull(message: 'Family is required')]
+    private ?Family $family = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Short description is required')]
@@ -34,16 +35,20 @@ class Procedure
     #[Assert\NotBlank(message: 'Long description is required')]
     private ?string $longdesc = null;
 
-    #[ORM\Column(type: Types::INTEGER)]
+    #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Process time is required')]
     private ?string $processtime = null;
 
-    #[ORM\Column(type: Types::DECIMAL)]
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotBlank(message: 'Service cost is required')]
+    #[Assert\PositiveOrZero(message: 'Service cost must be positive or zero')]
     private ?string $servicecost = null; 
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $legaltext = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
@@ -56,6 +61,9 @@ class Procedure
 
     #[ORM\Column]
     private ?int $displayOrder = 0;
+
+    #[ORM\Column]
+    private ?bool $isActive = true;
 
     public function __construct()
     {
@@ -85,12 +93,12 @@ class Procedure
         return $this;
     }
 
-    public function getFamily(): ?string
+    public function getFamily(): ?Family
     {
         return $this->family;
     }
 
-    public function setFamily(string $family): static
+    public function setFamily(?Family $family): static
     {
         $this->family = $family;
         return $this;
@@ -118,17 +126,6 @@ class Procedure
         return $this;
     }
 
-    public function getServiceCost(): ?string
-    {
-        return $this->servicecost;
-    }
-
-    public function setServiceCost(string $servicecost): static
-    {
-        $this->servicecost = $servicecost;
-        return $this;
-    }
-
     public function getProcessTime(): ?string
     {
         return $this->processtime;
@@ -140,6 +137,17 @@ class Procedure
         return $this;
     }
 
+    public function getServiceCost(): ?string
+    {
+        return $this->servicecost;
+    }
+
+    public function setServiceCost(string $servicecost): static
+    {
+        $this->servicecost = $servicecost;
+        return $this;
+    }
+
     public function getImage(): ?string
     {
         return $this->image;
@@ -148,6 +156,17 @@ class Procedure
     public function setImage(?string $image): static
     {
         $this->image = $image;
+        return $this;
+    }
+
+    public function getLegalText(): ?string
+    {
+        return $this->legaltext;
+    }
+
+    public function setLegalText(?string $legaltext): static
+    {
+        $this->legaltext = $legaltext;
         return $this;
     }
 
@@ -193,5 +212,21 @@ class Procedure
     {
         $this->displayOrder = $displayOrder;
         return $this;
+    }
+
+    public function isActive(): ?bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->pname ?? '';
     }
 }

@@ -190,6 +190,47 @@ final class Version20250618120000 extends AbstractMigration
             ) DEFAULT CHARACTER SET utf8mb4 COLLATE `utf8mb4_unicode_ci` ENGINE = InnoDB
         SQL);
 
+        // Add new fields to families table
+        $this->addSql('ALTER TABLE families ADD icon VARCHAR(255) DEFAULT NULL');
+        $this->addSql('ALTER TABLE families ADD is_active TINYINT(1) NOT NULL DEFAULT 1');
+        
+        // Add new fields to procedures table
+        $this->addSql('ALTER TABLE procedures ADD legaltext VARCHAR(255) DEFAULT NULL');
+        $this->addSql('ALTER TABLE procedures ADD is_active TINYINT(1) NOT NULL DEFAULT 1');
+        $this->addSql('ALTER TABLE procedures ADD family_id INT DEFAULT NULL');
+        
+        // Create foreign key constraint
+        $this->addSql('ALTER TABLE procedures ADD CONSTRAINT FK_A9F909AFC35E566A FOREIGN KEY (family_id) REFERENCES families (id)');
+        $this->addSql('CREATE INDEX IDX_A9F909AFC35E566A ON procedures (family_id)');
+        
+        // Migrate existing family string data to foreign key relations
+        $this->addSql('
+            UPDATE procedures p 
+            SET family_id = (
+                SELECT f.id 
+                FROM families f 
+                WHERE f.fname = p.family 
+                LIMIT 1
+            ) 
+            WHERE p.family IS NOT NULL
+        ');
+        
+        // Drop the old family string column after migration
+        $this->addSql('ALTER TABLE procedures DROP family');
+        
+        // Update procedure processtime column type
+        $this->addSql('ALTER TABLE procedures CHANGE processtime processtime VARCHAR(100) NOT NULL');
+        
+        // Update servicecost column precision
+        $this->addSql('ALTER TABLE procedures CHANGE servicecost servicecost NUMERIC(10, 2) NOT NULL');
+        
+        // Add indexes for better performance
+        $this->addSql('CREATE INDEX idx_family_active ON families (is_active)');
+        $this->addSql('CREATE INDEX idx_family_display_order ON families (display_order)');
+        $this->addSql('CREATE INDEX idx_procedure_active ON procedures (is_active)');
+        $this->addSql('CREATE INDEX idx_procedure_published ON procedures (published)');
+        $this->addSql('CREATE INDEX idx_procedure_display_order ON procedures (display_order)');
+
         // Add foreign key constraints
         $this->addSql('ALTER TABLE user_roles ADD CONSTRAINT FK_54FCD59FA76ED395 FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE');
         $this->addSql('ALTER TABLE user_roles ADD CONSTRAINT FK_54FCD59FD60322AC FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE');
@@ -270,6 +311,43 @@ final class Version20250618120000 extends AbstractMigration
         $this->addSql('ALTER TABLE user_roles DROP FOREIGN KEY FK_54FCD59FD60322AC');
         $this->addSql('ALTER TABLE role_permissions DROP FOREIGN KEY FK_5256D9B3D60322AC');
         $this->addSql('ALTER TABLE role_permissions DROP FOREIGN KEY FK_5256D9B3FED90CCA');
+
+        // Drop indexes
+        $this->addSql('DROP INDEX idx_family_active ON families');
+        $this->addSql('DROP INDEX idx_family_display_order ON families');
+        $this->addSql('DROP INDEX idx_procedure_active ON procedures');
+        $this->addSql('DROP INDEX idx_procedure_published ON procedures');
+        $this->addSql('DROP INDEX idx_procedure_display_order ON procedures');
+        
+        // Add back the family string column
+        $this->addSql('ALTER TABLE procedures ADD family VARCHAR(100) NOT NULL');
+        
+        // Migrate family_id back to string
+        $this->addSql('
+            UPDATE procedures p 
+            SET family = (
+                SELECT f.fname 
+                FROM families f 
+                WHERE f.id = p.family_id 
+                LIMIT 1
+            ) 
+            WHERE p.family_id IS NOT NULL
+        ');
+        
+        // Drop foreign key constraint
+        $this->addSql('ALTER TABLE procedures DROP FOREIGN KEY FK_A9F909AFC35E566A');
+        $this->addSql('DROP INDEX IDX_A9F909AFC35E566A ON procedures');
+        
+        // Remove new fields
+        $this->addSql('ALTER TABLE procedures DROP family_id');
+        $this->addSql('ALTER TABLE procedures DROP legaltext');
+        $this->addSql('ALTER TABLE procedures DROP is_active');
+        $this->addSql('ALTER TABLE families DROP icon');
+        $this->addSql('ALTER TABLE families DROP is_active');
+        
+        // Revert column types
+        $this->addSql('ALTER TABLE procedures CHANGE processtime processtime INT NOT NULL');
+        $this->addSql('ALTER TABLE procedures CHANGE servicecost servicecost NUMERIC(10, 0) NOT NULL');
 
         // Drop tables
         $this->addSql('DROP TABLE user_roles');

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\FamilyRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -18,13 +20,16 @@ class Family
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: 'Name is required')]
+    #[Assert\NotBlank(message: 'Family name is required')]
     #[Assert\Length(max: 255)]
     private ?string $fname = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Description is required')]
     private ?string $description = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $icon = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
@@ -35,10 +40,17 @@ class Family
     #[ORM\Column]
     private ?int $displayOrder = 0;
 
+    #[ORM\Column]
+    private ?bool $isActive = true;
+
+    #[ORM\OneToMany(mappedBy: 'family', targetEntity: Procedure::class)]
+    private Collection $procedures;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
+        $this->procedures = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -63,7 +75,6 @@ class Family
         return $this;
     }
 
-
     public function getDescription(): ?string
     {
         return $this->description;
@@ -72,6 +83,17 @@ class Family
     public function setDescription(string $description): static
     {
         $this->description = $description;
+        return $this;
+    }
+
+    public function getIcon(): ?string
+    {
+        return $this->icon;
+    }
+
+    public function setIcon(?string $icon): static
+    {
+        $this->icon = $icon;
         return $this;
     }
 
@@ -106,5 +128,51 @@ class Family
     {
         $this->displayOrder = $displayOrder;
         return $this;
+    }
+
+    public function isActive(): ?bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Procedure>
+     */
+    public function getProcedures(): Collection
+    {
+        return $this->procedures;
+    }
+
+    public function addProcedure(Procedure $procedure): static
+    {
+        if (!$this->procedures->contains($procedure)) {
+            $this->procedures->add($procedure);
+            $procedure->setFamily($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProcedure(Procedure $procedure): static
+    {
+        if ($this->procedures->removeElement($procedure)) {
+            // set the owning side to null (unless already changed)
+            if ($procedure->getFamily() === $this) {
+                $procedure->setFamily(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->fname ?? '';
     }
 }
