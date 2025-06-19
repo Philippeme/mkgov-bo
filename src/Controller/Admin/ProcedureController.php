@@ -22,7 +22,8 @@ class ProcedureController extends AbstractController
     {
         $procedures = $procedureRepository->createQueryBuilder('p')
             ->leftJoin('p.family', 'f')
-            ->addSelect('f')
+            ->leftJoin('p.documents', 'd')
+            ->addSelect('f', 'd')
             ->orderBy('p.displayOrder', 'ASC')
             ->addOrderBy('p.createdAt', 'DESC')
             ->getQuery()

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\ProcedureRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -65,10 +67,14 @@ class Procedure
     #[ORM\Column]
     private ?bool $isActive = true;
 
+    #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Document::class)]
+    private Collection $documents;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
+        $this->documents = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -223,6 +229,46 @@ class Procedure
     {
         $this->isActive = $isActive;
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Document>
+     */
+    public function getDocuments(): Collection
+    {
+        return $this->documents;
+    }
+
+    public function addDocument(Document $document): static
+    {
+        if (!$this->documents->contains($document)) {
+            $this->documents->add($document);
+            $document->setProcedure($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDocument(Document $document): static
+    {
+        if ($this->documents->removeElement($document)) {
+            // set the owning side to null (unless already changed)
+            if ($document->getProcedure() === $this) {
+                $document->setProcedure(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getInputDocuments(): Collection
+    {
+        return $this->documents->filter(fn(Document $doc) => $doc->getType() === 'input' && $doc->isActive());
+    }
+
+    public function getOutputDocuments(): Collection
+    {
+        return $this->documents->filter(fn(Document $doc) => $doc->getType() === 'output' && $doc->isActive());
     }
 
     public function __toString(): string

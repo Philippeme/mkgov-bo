@@ -126,6 +126,12 @@
                                         {% else %}
                                             <span class="badge bg-secondary">Draft</span>
                                         {% endif %}
+                                        {% if procedure.documents|length > 0 %}
+                                            <div class="mt-1">
+                                                <span class="badge bg-warning badge-sm">{{ procedure.inputDocuments|length }} In</span>
+                                                <span class="badge bg-info badge-sm">{{ procedure.outputDocuments|length }} Out</span>
+                                            </div>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         <a href="{{ path('admin_procedure_show', {'id': procedure.id}) }}" 

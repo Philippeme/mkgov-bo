@@ -1,63 +1,243 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Documents Management{% endblock %}
+{% block title %}Documents{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Documents Management</h1>
+    <h1 class="mb-0">
+        <i class="bi-files me-2"></i>
+        Documents Management
+    </h1>
     <a href="{{ path('admin_document_new') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> New document
+        <i class="bi-plus-circle me-2"></i>
+        New Document
     </a>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for document in documents %}
-                <tr>
-                    <td>{{ document.id }}</td>
-                    <td>
-                        {% if document.pdf %}
-                            <a href="{{ asset('uploads/pdf_uploads/' ~ document.pdf) }}" target="_blank">Show the PDF</a>
-                        {% else %}
-                            <span class="text-muted">No PDF file</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ document.dname }}</td>
-                    <td>{{ document.description }}</td>
-                    <td>{{ document.category }}</td>
-                    <td>
-                        <a href="{{ path('admin_document_show', {'id': document.id}) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="{{ path('admin_document_edit', {'id': document.id}) }}" class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form method="post" action="{{ path('admin_document_delete', {'id': document.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette procedure ?');" style="display: inline-block;">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ document.id) }}">
-                            <button class="btn btn-sm btn-danger">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <td colspan="8" class="text-center">No document found</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+{% if documents|length > 0 %}
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">
+            <i class="bi-list-ul me-2"></i>
+            All Documents ({{ documents|length }})
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="8%">File</th>
+                        <th width="20%">Name</th>
+                        <th width="10%">Type</th>
+                        <th width="15%">Related Procedure</th>
+                        <th width="12%">File Info</th>
+                        <th width="8%">Required</th>
+                        <th width="6%">Order</th>
+                        <th width="6%">Status</th>
+                        <th width="10%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for document in documents %}
+                    <tr>
+                        <td class="text-muted">#{{ document.id }}</td>
+                        <td>
+                            {% if document.filePath %}
+                                {% if document.mimeType starts with 'image/' %}
+                                    <i class="bi-image text-info" style="font-size: 1.5rem;"></i>
+                                {% elseif document.mimeType == 'application/pdf' %}
+                                    <i class="bi-file-pdf text-danger" style="font-size: 1.5rem;"></i>
+                                {% elseif document.mimeType starts with 'application/vnd.openxmlformats' %}
+                                    <i class="bi-file-word text-primary" style="font-size: 1.5rem;"></i>
+                                {% else %}
+                                    <i class="bi-file-earmark text-secondary" style="font-size: 1.5rem;"></i>
+                                {% endif %}
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center rounded"
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi-file text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ document.name }}</strong>
+                            <div class="text-muted small">
+                                Created: {{ document.createdAt|date('M d, Y') }}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ document.type == 'input' ? 'warning' : 'success' }}">
+                                {{ document.type|upper }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if document.procedure %}
+                                <a href="{{ path('admin_procedure_show', {'id': document.procedure.id}) }}" 
+                                   class="text-decoration-none">
+                                    {{ document.procedure.pname|slice(0, 30) }}{% if document.procedure.pname|length > 30 %}...{% endif %}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">No procedure</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if document.filePath %}
+                                <div>
+                                    {% if document.filePath ends with '-template.pdf' %}
+                                        <span class="badge bg-primary">Template</span>
+                                    {% else %}
+                                        <span class="badge bg-info">Custom</span>
+                                    {% endif %}
+                                </div>
+                                {% if document.fileSize %}
+                                    <small class="text-muted">{{ document.fileSize }}</small>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">No file</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-{{ document.isRequired ? 'danger' : 'secondary' }}">
+                                {{ document.isRequired ? 'Required' : 'Optional' }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-secondary">{{ document.displayOrder }}</span>
+                        </td>
+                        <td>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input status-toggle" 
+                                       type="checkbox" 
+                                       data-document-id="{{ document.id }}"
+                                       {% if document.isActive %}checked{% endif %}>
+                                <label class="form-check-label">
+                                    <span class="badge bg-{{ document.isActive ? 'success' : 'danger' }}">
+                                        {{ document.isActive ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </label>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                {% if document.filePath %}
+                                <a href="{{ asset('uploads/documents/' ~ document.filePath) }}" 
+                                   target="_blank"
+                                   class="btn btn-outline-secondary" title="View File">
+                                    <i class="bi-eye"></i>
+                                </a>
+                                {% endif %}
+                                <a href="{{ path('admin_document_show', {'id': document.id}) }}" 
+                                   class="btn btn-outline-info" title="View Details">
+                                    <i class="bi-info-circle"></i>
+                                </a>
+                                <a href="{{ path('admin_document_edit', {'id': document.id}) }}" 
+                                   class="btn btn-outline-warning" title="Edit">
+                                    <i class="bi-pencil"></i>
+                                </a>
+                                <button type="button" 
+                                        class="btn btn-outline-danger delete-btn" 
+                                        data-document-id="{{ document.id }}"
+                                        data-document-name="{{ document.name }}"
+                                        title="Delete">
+                                    <i class="bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi-files text-muted" style="font-size: 4rem;"></i>
+    <h3 class="text-muted mt-3">No documents found</h3>
+    <p class="text-muted">Start by creating your first document</p>
+    <a href="{{ path('admin_document_new') }}" class="btn btn-primary">
+        <i class="bi-plus-circle me-2"></i>
+        Create First Document
+    </a>
+</div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the document <strong id="documentName"></strong>?</p>
+                <p class="text-muted small">This action will deactivate the document and cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <input type="hidden" name="_token" id="deleteToken">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi-trash me-1"></i>
+                        Delete Document
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status toggle functionality
+    document.querySelectorAll('.status-toggle').forEach(function(toggle) {
+        toggle.addEventListener('change', function() {
+            const documentId = this.dataset.documentId;
+            
+            fetch(`/admin/document/${documentId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const badge = this.parentElement.querySelector('.badge');
+                    badge.className = `badge bg-${data.status ? 'success' : 'danger'}`;
+                    badge.textContent = data.status ? 'Active' : 'Inactive';
+                } else {
+                    this.checked = !this.checked;
+                    alert('Error updating status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                this.checked = !this.checked;
+                alert('Error updating status');
+            });
+        });
+    });
+
+    // Delete modal functionality
+    document.querySelectorAll('.delete-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const documentId = this.dataset.documentId;
+            const documentName = this.dataset.documentName;
+            
+            document.getElementById('documentName').textContent = documentName;
+            document.getElementById('deleteForm').action = `/admin/document/${documentId}/delete`;
+            document.getElementById('deleteToken').value = '{{ csrf_token("delete") }}';
+            
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+});
+</script>
 {% endblock %}

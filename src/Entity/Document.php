@@ -18,29 +18,45 @@ class Document
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: 'Name is required')]
+    #[Assert\NotBlank(message: 'Document name is required')]
     #[Assert\Length(max: 255)]
-    private ?string $dname = null;
+    private ?string $name = null;
 
-    #[ORM\Column(type: Types::TEXT)]
-    #[Assert\NotBlank(message: 'Description is required')]
+    #[ORM\Column(length: 20)]
+    #[Assert\NotBlank(message: 'Document type is required')]
+    #[Assert\Choice(choices: ['input', 'output'], message: 'Type must be either input or output')]
+    private ?string $type = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
-    #[ORM\Column(length: 100)]
-    #[Assert\NotBlank(message: 'Category is required')]
-    private ?string $category = null;
-
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $pdf = null;
+    private ?string $filePath = null;
+
+    #[ORM\Column(length: 100, nullable: true)]
+    private ?string $fileSize = null;
+
+    #[ORM\Column(length: 50, nullable: true)]
+    private ?string $mimeType = null;
+
+    #[ORM\ManyToOne(targetEntity: Procedure::class, inversedBy: 'documents')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Procedure $procedure = null;
+
+    #[ORM\Column]
+    private ?bool $isRequired = false;
+
+    #[ORM\Column]
+    private ?bool $isActive = true;
+
+    #[ORM\Column]
+    private ?int $displayOrder = 0;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $updatedAt = null;
-
-    #[ORM\Column]
-    private ?int $displayOrder = 0;
 
     public function __construct()
     {
@@ -59,48 +75,113 @@ class Document
         return $this->id;
     }
 
-    public function getDname(): ?string
+    public function getName(): ?string
     {
-        return $this->dname;
+        return $this->name;
     }
 
-    public function setDname(string $dname): static
+    public function setName(string $name): static
     {
-        $this->dname = $dname;
+        $this->name = $name;
         return $this;
     }
 
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
+        return $this;
+    }
 
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(?string $description): static
     {
         $this->description = $description;
         return $this;
     }
 
-    public function getCategory(): ?string
+    public function getFilePath(): ?string
     {
-        return $this->category;
+        return $this->filePath;
     }
 
-    public function setCategory(string $category): static
+    public function setFilePath(?string $filePath): static
     {
-        $this->category = $category;
+        $this->filePath = $filePath;
         return $this;
     }
 
-    public function getPdf(): ?string
+    public function getFileSize(): ?string
     {
-        return $this->pdf;
+        return $this->fileSize;
     }
 
-    public function setPdf(string $pdf): static
+    public function setFileSize(?string $fileSize): static
     {
-        $this->pdf = $pdf;
+        $this->fileSize = $fileSize;
+        return $this;
+    }
+
+    public function getMimeType(): ?string
+    {
+        return $this->mimeType;
+    }
+
+    public function setMimeType(?string $mimeType): static
+    {
+        $this->mimeType = $mimeType;
+        return $this;
+    }
+
+    public function getProcedure(): ?Procedure
+    {
+        return $this->procedure;
+    }
+
+    public function setProcedure(?Procedure $procedure): static
+    {
+        $this->procedure = $procedure;
+        return $this;
+    }
+
+    public function isRequired(): ?bool
+    {
+        return $this->isRequired;
+    }
+
+    public function setIsRequired(bool $isRequired): static
+    {
+        $this->isRequired = $isRequired;
+        return $this;
+    }
+
+    public function isActive(): ?bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): static
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function getDisplayOrder(): ?int
+    {
+        return $this->displayOrder;
+    }
+
+    public function setDisplayOrder(int $displayOrder): static
+    {
+        $this->displayOrder = $displayOrder;
         return $this;
     }
 
@@ -126,14 +207,8 @@ class Document
         return $this;
     }
 
-    public function getDisplayOrder(): ?int
+    public function __toString(): string
     {
-        return $this->displayOrder;
-    }
-
-    public function setDisplayOrder(int $displayOrder): static
-    {
-        $this->displayOrder = $displayOrder;
-        return $this;
+        return $this->name ?? '';
     }
 }

@@ -129,7 +129,7 @@
 
         <!-- Legal Document -->
         {% if procedure.legaltext %}
-        <div class="card shadow-sm">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-info text-white">
                 <h5 class="card-title mb-0">
                     <i class="bi-file-pdf me-2"></i>
@@ -148,6 +148,109 @@
                             <i class="bi-download me-1"></i>
                             Download Document
                         </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Associated Documents -->
+        {% if procedure.documents|length > 0 %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-files me-2"></i>
+                    Associated Documents ({{ procedure.documents|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Input Documents -->
+                    <div class="col-md-6">
+                        <h6 class="text-warning mb-3">
+                            <i class="bi-arrow-down-circle me-1"></i>
+                            Input Documents ({{ procedure.inputDocuments|length }})
+                        </h6>
+                        {% if procedure.inputDocuments|length > 0 %}
+                            {% for document in procedure.inputDocuments %}
+                            <div class="card mb-2">
+                                <div class="card-body p-2">
+                                    <div class="d-flex align-items-center">
+                                        {% if document.filePath %}
+                                            {% if document.mimeType == 'application/pdf' %}
+                                                <i class="bi-file-pdf text-danger me-2"></i>
+                                            {% else %}
+                                                <i class="bi-file-earmark text-info me-2"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="bi-file text-muted me-2"></i>
+                                        {% endif %}
+                                        <div class="flex-grow-1">
+                                            <strong class="small">{{ document.name }}</strong>
+                                            <div class="text-muted small">
+                                                {% if document.isRequired %}
+                                                    <span class="badge badge-sm bg-danger">Required</span>
+                                                {% else %}
+                                                    <span class="badge badge-sm bg-secondary">Optional</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% if document.filePath %}
+                                            <a href="{{ asset('uploads/documents/' ~ document.filePath) }}" 
+                                               target="_blank" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi-eye"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted small">No input documents required</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Output Documents -->
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">
+                            <i class="bi-arrow-up-circle me-1"></i>
+                            Output Documents ({{ procedure.outputDocuments|length }})
+                        </h6>
+                        {% if procedure.outputDocuments|length > 0 %}
+                            {% for document in procedure.outputDocuments %}
+                            <div class="card mb-2">
+                                <div class="card-body p-2">
+                                    <div class="d-flex align-items-center">
+                                        {% if document.filePath %}
+                                            {% if document.mimeType == 'application/pdf' %}
+                                                <i class="bi-file-pdf text-danger me-2"></i>
+                                            {% else %}
+                                                <i class="bi-file-earmark text-info me-2"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="bi-file text-muted me-2"></i>
+                                        {% endif %}
+                                        <div class="flex-grow-1">
+                                            <strong class="small">{{ document.name }}</strong>
+                                            {% if document.description %}
+                                                <div class="text-muted small">{{ document.description|slice(0, 50) }}...</div>
+                                            {% endif %}
+                                        </div>
+                                        {% if document.filePath %}
+                                            <a href="{{ asset('uploads/documents/' ~ document.filePath) }}" 
+                                               target="_blank" 
+                                               class="btn btn-sm btn-outline-success">
+                                                <i class="bi-eye"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted small">No output documents generated</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

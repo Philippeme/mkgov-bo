@@ -11,6 +11,9 @@ parameters:
     
     # User management uploads
     users_directory: '%kernel.project_dir%/public/uploads/users'
+
+    # User management uploads
+    documents_directory: '%kernel.project_dir%/public/uploads/documents'
     
     # Maximum file sizes
     max_avatar_size: '2M'

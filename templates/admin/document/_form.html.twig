@@ -1,31 +1,236 @@
-{{ form_start(form) }}
-    <div class="row">
-        <div class="col-md-8">
-            <div class="mb-3">
-                {{ form_row(form.dname) }}
+{{ form_start(form, {'attr': {'id': 'documentForm', 'enctype': 'multipart/form-data'}}) }}
+<div class="row">
+    <div class="col-md-8">
+        <div class="mb-3">
+            {{ form_row(form.name, {
+                'label_attr': {'class': 'form-label fw-bold'},
+                'attr': {'class': 'form-control'}
+            }) }}
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.type, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-select'}
+                    }) }}
+                </div>
             </div>
-            <div class="mb-3">
-                {{ form_row(form.description) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.category) }}
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.procedure, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-select'}
+                    }) }}
+                </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="mb-3">
-                {{ form_row(form.pdfFile) }}
-                {% if document.pdf %}
-                    <div class="mt-2">
-                        <p>Actual file PDF :</p>
-                        <embed src="{{ asset('uploads/pdf_uploads/' ~ document.pdf) }}" type="application/pdf" width="100%" height="600px">
-                    </div>
-                {% endif %}
+        
+        <div class="mb-3">
+            {{ form_row(form.description, {
+                'label_attr': {'class': 'form-label fw-bold'},
+                'attr': {'class': 'form-control', 'rows': 4}
+            }) }}
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    {{ form_row(form.displayOrder, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
             </div>
-            <div class="mb-3">
-                {{ form_row(form.displayOrder) }}
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <div class="form-check form-switch mt-4">
+                        {{ form_widget(form.isRequired, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form.isRequired, 'Required Document', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <div class="form-check form-switch mt-4">
+                        {{ form_widget(form.isActive, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form.isActive, 'Active Status', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <button class="btn btn-primary">{{ button_label|default('Save') }}</button>
-    <a href="{{ path('admin_document_index') }}" class="btn btn-secondary">Cancel</a>
+    
+    <div class="col-md-4">
+        <!-- Document File Section -->
+        <div class="card bg-light">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-file-earmark me-2"></i>
+                    Document File
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3 text-center">
+                    <div id="documentPreview" class="border rounded p-3" style="min-height: 120px;">
+                        {% if document.filePath %}
+                            <div class="text-success">
+                                {% if document.mimeType starts with 'image/' %}
+                                    <img src="{{ asset('uploads/documents/' ~ document.filePath) }}" 
+                                         alt="{{ document.name }}" 
+                                         class="img-fluid rounded"
+                                         style="max-height: 100px;">
+                                {% else %}
+                                    {% if document.mimeType == 'application/pdf' %}
+                                        <i class="bi-file-pdf text-danger" style="font-size: 3rem;"></i>
+                                    {% elseif document.mimeType starts with 'application/vnd.openxmlformats' %}
+                                        <i class="bi-file-word text-primary" style="font-size: 3rem;"></i>
+                                    {% else %}
+                                        <i class="bi-file-earmark text-info" style="font-size: 3rem;"></i>
+                                    {% endif %}
+                                {% endif %}
+                                <p class="mt-2 mb-0">
+                                    <a href="{{ asset('uploads/documents/' ~ document.filePath) }}" 
+                                       target="_blank" 
+                                       class="text-decoration-none">
+                                        View Current File
+                                    </a>
+                                </p>
+                                {% if document.fileSize %}
+                                    <small class="text-muted">{{ document.fileSize }}</small>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="text-muted">
+                                <i class="bi-file-earmark" style="font-size: 3rem;"></i>
+                                <p class="mt-2 mb-0">No file uploaded</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_row(form.documentTemplates, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-select', 'onchange': 'updateDocumentPreview(this.value, this.options[this.selectedIndex].text)'}
+                    }) }}
+                </div>
+                
+                <div class="mb-3">
+                    {{ form_row(form.documentFile, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-control', 'onchange': 'previewDocument(this)'}
+                    }) }}
+                </div>
+
+                <!-- Remove Document Option -->
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form_widget(form.removeDocument, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form.removeDocument, 'Remove current document', {'label_attr': {'class': 'form-check-label text-danger'}}) }}
+                    </div>
+                </div>
+                
+                <div class="form-text">
+                    <small>
+                        <i class="bi-info-circle me-1"></i>
+                        Choose template or upload custom. Max: 10MB
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <button type="submit" class="btn btn-primary">
+        <i class="bi-check-circle me-2"></i>
+        {{ button_label|default('Save Document') }}
+    </button>
+    <a href="{{ path('admin_document_index') }}" class="btn btn-secondary">
+        <i class="bi-arrow-left me-2"></i>
+        Cancel
+    </a>
+</div>
+
 {{ form_end(form) }}
+
+<script>
+function updateDocumentPreview(templateValue, templateLabel) {
+    if (templateValue) {
+        const preview = document.getElementById('documentPreview');
+        preview.innerHTML = `
+            <div class="text-info">
+                <i class="bi-file-pdf" style="font-size: 3rem;"></i>
+                <p class="mt-2 mb-0">Template: ${templateLabel}</p>
+                <small class="text-muted">Will be generated automatically</small>
+            </div>
+        `;
+        // Clear custom file input and remove checkbox
+        document.querySelector('input[name="document[documentFile]"]').value = '';
+        const removeCheckbox = document.querySelector('input[name="document[removeDocument]"]');
+        if (removeCheckbox) removeCheckbox.checked = false;
+    }
+}
+
+function previewDocument(input) {
+    const preview = document.getElementById('documentPreview');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const fileName = file.name;
+        const fileSize = (file.size / 1024 / 1024).toFixed(2);
+        const fileType = file.type;
+        
+        if (fileType.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `
+                    <img src="${e.target.result}" 
+                         class="img-fluid rounded" 
+                         style="max-height: 100px;"
+                         alt="Document preview">
+                    <p class="mt-2 mb-0">${fileName}</p>
+                    <small class="text-muted">${fileSize} MB</small>
+                `;
+            };
+            reader.readAsDataURL(file);
+        } else {
+            let icon = 'bi-file-earmark';
+            if (fileType === 'application/pdf') {
+                icon = 'bi-file-pdf text-danger';
+            } else if (fileType.includes('word') || fileType.includes('document')) {
+                icon = 'bi-file-word text-primary';
+            } else if (fileType.includes('excel') || fileType.includes('sheet')) {
+                icon = 'bi-file-excel text-success';
+            }
+            
+            preview.innerHTML = `
+                <div class="text-info">
+                    <i class="${icon}" style="font-size: 3rem;"></i>
+                    <p class="mt-2 mb-0">${fileName}</p>
+                    <small class="text-muted">${fileSize} MB</small>
+                </div>
+            `;
+        }
+        
+        // Clear template selection and remove checkbox
+        document.querySelector('select[name="document[documentTemplates]"]').value = '';
+        const removeCheckbox = document.querySelector('input[name="document[removeDocument]"]');
+        if (removeCheckbox) removeCheckbox.checked = false;
+    }
+}
+
+// Form validation
+document.getElementById('documentForm').addEventListener('submit', function(e) {
+    const name = document.querySelector('input[name="document[name]"]').value.trim();
+    const type = document.querySelector('select[name="document[type]"]').value;
+    
+    if (!name || !type) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+        return false;
+    }
+});
+</script>

@@ -83,6 +83,12 @@
                             <div class="text-truncate" style="max-width: 200px;" title="{{ procedure.shortdesc }}">
                                 {{ procedure.shortdesc|slice(0, 60) }}{% if procedure.shortdesc|length > 60 %}...{% endif %}
                             </div>
+                            {% if procedure.documents|length > 0 %}
+                                <div class="mt-1">
+                                    <span class="badge bg-warning badge-sm">{{ procedure.inputDocuments|length }} Input</span>
+                                    <span class="badge bg-success badge-sm">{{ procedure.outputDocuments|length }} Output</span>
+                                </div>
+                            {% endif %}
                         </td>
                         <td>
                             <span class="badge bg-success">{{ procedure.servicecost|number_format(0, '.', ',') }} XAF</span>
