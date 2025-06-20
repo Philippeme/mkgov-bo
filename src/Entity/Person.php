@@ -166,9 +166,6 @@ class Person
     public function getFullName(): string
     {
         $name = $this->firstName;
-        if ($this->middleName) {
-            $name .= ' ' . $this->middleName;
-        }
         $name .= ' ' . $this->lastName;
         return trim($name);
     }
