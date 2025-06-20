@@ -1,896 +1,457 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ person.fullName }} - Citizen Profile{% endblock %}
-
-{% block stylesheets %}
-<style>
-    .profile-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 20px;
-        color: white;
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 2rem;
-    }
-    
-    .profile-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: float 6s ease-in-out infinite;
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-20px) rotate(5deg); }
-    }
-    
-    .profile-avatar {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        border: 4px solid white;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        object-fit: cover;
-    }
-    
-    .profile-avatar-placeholder {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        border: 4px solid white;
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: white;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-    }
-    
-    .verification-status {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background: rgba(255,255,255,0.2);
-        backdrop-filter: blur(10px);
-        border-radius: 50px;
-        padding: 8px 20px;
-        border: 1px solid rgba(255,255,255,0.3);
-    }
-    
-    .info-card {
-        border: none;
-        border-radius: 16px;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        margin-bottom: 1.5rem;
-        overflow: hidden;
-    }
-    
-    .info-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-    }
-    
-    .info-card .card-header {
-        border: none;
-        padding: 1.5rem;
-        position: relative;
-    }
-    
-    .info-card .card-body {
-        padding: 1.5rem;
-    }
-    
-    .info-item {
-        display: flex;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    .info-item:last-child {
-        border-bottom: none;
-    }
-    
-    .info-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 1rem;
-        font-size: 1.1rem;
-    }
-    
-    .info-content {
-        flex: 1;
-    }
-    
-    .info-label {
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #6c757d;
-        margin: 0;
-    }
-    
-    .info-value {
-        font-size: 1rem;
-        color: #212529;
-        margin: 0;
-        word-break: break-word;
-    }
-    
-    .quick-action-btn {
-        border-radius: 12px;
-        padding: 12px 20px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        border: 2px solid transparent;
-        margin: 0.25rem;
-    }
-    
-    .quick-action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
-    }
-    
-    .document-item {
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        border: 1px solid #e9ecef;
-        transition: all 0.3s ease;
-        position: relative;
-    }
-    
-    .document-item:hover {
-        border-color: #667eea;
-        transform: translateX(4px);
-        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
-    }
-    
-    .document-icon {
-        width: 50px;
-        height: 50px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        margin-right: 1rem;
-    }
-    
-    .status-badge {
-        border-radius: 20px;
-        padding: 4px 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .emergency-contact-card {
-        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
-        border: none;
-        color: white;
-    }
-    
-    .emergency-contact-card .info-item {
-        border-bottom-color: rgba(255,255,255,0.2);
-    }
-    
-    .timeline {
-        position: relative;
-        padding-left: 2rem;
-    }
-    
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 15px;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: linear-gradient(to bottom, #667eea, #764ba2);
-    }
-    
-    .timeline-item {
-        position: relative;
-        margin-bottom: 2rem;
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .timeline-marker {
-        position: absolute;
-        left: -2rem;
-        top: 1rem;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.875rem;
-        color: white;
-        border: 3px solid white;
-        z-index: 1;
-    }
-    
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 16px;
-        padding: 1.5rem;
-        text-align: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border: 1px solid #e9ecef;
-        transition: all 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-    }
-    
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1rem;
-        font-size: 1.5rem;
-    }
-    
-    .breadcrumb-modern {
-        background: rgba(255,255,255,0.8);
-        backdrop-filter: blur(10px);
-        border-radius: 50px;
-        padding: 0.5rem 1.5rem;
-        border: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .floating-actions {
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        z-index: 1000;
-    }
-    
-    .floating-btn {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .floating-btn:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 25px rgba(0,0,0,0.4);
-    }
-    
-    @media (max-width: 768px) {
-        .profile-avatar, .profile-avatar-placeholder {
-            width: 100px;
-            height: 100px;
-        }
-        
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.75rem;
-        }
-        
-        .info-card {
-            margin-bottom: 1rem;
-        }
-        
-        .floating-actions {
-            bottom: 1rem;
-            right: 1rem;
-        }
-        
-        .floating-btn {
-            width: 48px;
-            height: 48px;
-            font-size: 1rem;
-        }
-    }
-</style>
-{% endblock %}
+{% block title %}{{ person.fullName }}{% endblock %}
 
 {% block body %}
-<div class="container-fluid px-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb breadcrumb-modern mb-0">
-            <li class="breadcrumb-item">
-                <a href="{{ path('admin_person_index') }}" class="text-decoration-none">
-                    <i class="bi-people me-1"></i>Citizens
-                </a>
-            </li>
-            <li class="breadcrumb-item active">{{ person.fullName }}</li>
-        </ol>
-    </nav>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi-eye me-2"></i>
+        {{ person.fullName }}
+    </h1>
+    <div class="btn-group">
+        <a href="{{ path('admin_person_edit', {'id': person.id}) }}" class="btn btn-warning">
+            <i class="bi-pencil me-2"></i>
+            Edit
+        </a>
+        <button type="button" 
+                class="btn btn-{{ person.verifiedAt ? 'success' : 'outline-success' }} verify-btn"
+                data-person-id="{{ person.id }}">
+            <i class="bi-{{ person.verifiedAt ? 'check-circle-fill' : 'check-circle' }} me-2"></i>
+            {{ person.verifiedAt ? 'Verified' : 'Verify' }}
+        </button>
+        <button type="button" 
+                class="btn btn-danger delete-btn" 
+                data-person-id="{{ person.id }}"
+                data-person-name="{{ person.fullName }}">
+            <i class="bi-trash me-2"></i>
+            Delete
+        </button>
+    </div>
+</div>
 
-    <!-- Profile Header -->
-    <div class="profile-header">
-        <div class="verification-status">
-            {% if person.verifiedAt %}
-                <i class="bi-shield-check me-2"></i>Verified Citizen
-            {% else %}
-                <i class="bi-clock me-2"></i>Pending Verification
-            {% endif %}
-        </div>
-        
-        <div class="row align-items-center p-4">
-            <div class="col-auto">
-                {% if person.image %}
-                    <img src="{{ asset('uploads/persons/' ~ person.image) }}" 
-                         alt="{{ person.fullName }}" 
-                         class="profile-avatar">
-                {% else %}
-                    <div class="profile-avatar-placeholder">
-                        {{ person.firstName|first|upper }}{{ person.lastName|first|upper }}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('admin_person_index') }}">Citizens</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ person.fullName }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Personal Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-person-fill me-2"></i>
+                    Personal Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Full Name:</label>
+                            <p class="fs-5">{{ person.fullName }}</p>
+                        </div>
                     </div>
-                {% endif %}
-            </div>
-            <div class="col">
-                <h1 class="mb-2 fw-bold">{{ person.fullName }}</h1>
-                <p class="mb-1 opacity-75">
-                    <i class="bi-credit-card me-2"></i>{{ person.nationalId }}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">National ID:</label>
+                            <p><span class="badge bg-dark fs-6">{{ person.nationalId }}</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Gender:</label>
+                            <p>
+                                <span class="badge bg-{{ person.gender == 'M' ? 'primary' : 'pink' }} fs-6">
+                                    <i class="bi-{{ person.gender == 'M' ? 'person' : 'person-dress' }} me-1"></i>
+                                    {{ person.genderText }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Age:</label>
+                            <p><span class="badge bg-info fs-6">{{ person.age }} years old</span></p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Date of Birth:</label>
+                            <p>{{ person.dateOfBirth|date('F d, Y') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if person.placeOfBirth or person.nationality %}
+                <div class="row">
+                    {% if person.placeOfBirth %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Place of Birth:</label>
+                            <p>{{ person.placeOfBirth }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
                     {% if person.nationality %}
-                        • {{ person.nationality }}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Nationality:</label>
+                            <p>{{ person.nationality }}</p>
+                        </div>
+                    </div>
                     {% endif %}
-                </p>
-                {% if person.profession %}
-                <p class="mb-1 opacity-75">
-                    <i class="bi-briefcase me-2"></i>{{ person.profession }}
-                    {% if person.employer %} at {{ person.employer }}{% endif %}
-                </p>
+                </div>
                 {% endif %}
-                <p class="mb-0 opacity-75">
-                    <i class="bi-calendar me-2"></i>{{ person.age }} years old
-                    <span class="mx-2">•</span>
-                    <i class="bi-person me-1"></i>{{ person.genderText }}
-                    {% if person.region %}
-                        <span class="mx-2">•</span>
-                        <i class="bi-geo-alt me-1"></i>{{ person.region }}
-                    {% endif %}
-                </p>
+
+                {% if person.maritalStatus %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted">Marital Status:</label>
+                    <p><span class="badge bg-secondary fs-6">{{ person.maritalStatus|title }}</span></p>
+                </div>
+                {% endif %}
             </div>
-            <div class="col-auto">
-                <div class="d-flex flex-column gap-2">
-                    <a href="{{ path('admin_person_edit', {'id': person.id}) }}" 
-                       class="btn btn-light quick-action-btn">
-                        <i class="bi-pencil me-2"></i>Edit Profile
-                    </a>
-                    {% if not person.verifiedAt %}
-                    <button class="btn btn-success quick-action-btn verify-btn"
-                            data-person-id="{{ person.id }}">
-                        <i class="bi-shield-check me-2"></i>Verify Citizen
-                    </button>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-telephone-fill me-2"></i>
+                    Contact Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Email:</label>
+                            <p>
+                                <a href="mailto:{{ person.email }}" class="text-decoration-none">
+                                    <i class="bi-envelope me-1"></i>{{ person.email }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Phone:</label>
+                            <p>
+                                <a href="tel:{{ person.phoneNumber }}" class="text-decoration-none">
+                                    <i class="bi-telephone me-1"></i>{{ person.phoneNumber }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted">Address:</label>
+                    <div class="border rounded p-3 bg-light">
+                        {{ person.fullAddress }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Information -->
+        {% if person.profession or person.employer %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-briefcase-fill me-2"></i>
+                    Professional Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if person.profession %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Profession:</label>
+                            <p>{{ person.profession }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if person.employer %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Employer:</label>
+                            <p>{{ person.employer }}</p>
+                        </div>
+                    </div>
                     {% endif %}
                 </div>
             </div>
         </div>
-    </div>
+        {% endif %}
 
-    <!-- Quick Stats -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon bg-primary-subtle text-primary">
-                <i class="bi-files"></i>
+        <!-- Emergency Contact -->
+        {% if person.emergencyContact %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="bi-exclamation-triangle-fill me-2"></i>
+                    Emergency Contact
+                </h5>
             </div>
-            <h4 class="fw-bold mb-1">{{ person.documents|length }}</h4>
-            <p class="text-muted mb-0 small">Documents</p>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Name:</label>
+                            <p>{{ person.emergencyContact.name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Relation:</label>
+                            <p><span class="badge bg-warning text-dark">{{ person.emergencyContact.relation|title }}</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    {% if person.emergencyContact.phone %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Phone:</label>
+                            <p>
+                                <a href="tel:{{ person.emergencyContact.phone }}" class="text-decoration-none">
+                                    <i class="bi-telephone me-1"></i>{{ person.emergencyContact.phone }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if person.emergencyContact.email %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Email:</label>
+                            <p>
+                                <a href="mailto:{{ person.emergencyContact.email }}" class="text-decoration-none">
+                                    <i class="bi-envelope me-1"></i>{{ person.emergencyContact.email }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-icon bg-success-subtle text-success">
-                <i class="bi-calendar-check"></i>
+        {% endif %}
+
+        <!-- Associated Documents -->
+        {% if person.activeDocuments|length > 0 %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-files me-2"></i>
+                    Associated Documents ({{ person.activeDocuments|length }})
+                </h5>
             </div>
-            <h4 class="fw-bold mb-1">{{ person.createdAt|date('M Y') }}</h4>
-            <p class="text-muted mb-0 small">Member Since</p>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon bg-info-subtle text-info">
-                <i class="bi-clock-history"></i>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Expiry</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in person.activeDocuments %}
+                            <tr>
+                                <td>
+                                    <strong>{{ document.name }}</strong>
+                                    {% if document.description %}
+                                        <div class="text-muted small">{{ document.description|slice(0, 50) }}...</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ document.type == 'input' ? 'warning' : 'success' }}">
+                                        {{ document.type|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ document.statusBadgeClass }}">
+                                        {{ document.status|title }}
+                                    </span>
+                                    {% if document.isExpired %}
+                                        <span class="badge bg-danger">Expired</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if document.expirationDate %}
+                                        {{ document.expirationDate|date('M d, Y') }}
+                                        {% if document.isExpired %}
+                                            <i class="bi-exclamation-triangle text-danger"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No expiry</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('admin_document_show', {'id': document.id}) }}" 
+                                           class="btn btn-outline-info">
+                                            <i class="bi-eye"></i>
+                                        </a>
+                                        {% if document.filePath %}
+                                            <a href="{{ asset('uploads/documents/' ~ document.filePath) }}" 
+                                               target="_blank" 
+                                               class="btn btn-outline-secondary">
+                                                <i class="bi-download"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <h4 class="fw-bold mb-1">{{ person.updatedAt|date('M d') }}</h4>
-            <p class="text-muted mb-0 small">Last Updated</p>
-        </div>
-        {% if person.verifiedAt %}
-        <div class="stat-card">
-            <div class="stat-icon bg-warning-subtle text-warning">
-                <i class="bi-shield-check"></i>
-            </div>
-            <h4 class="fw-bold mb-1">{{ person.verifiedAt|date('M d') }}</h4>
-            <p class="text-muted mb-0 small">Verified</p>
         </div>
         {% endif %}
     </div>
-
-    <div class="row">
-        <div class="col-lg-8">
-            <!-- Personal Information -->
-            <div class="info-card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi-person-fill me-2"></i>Personal Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="info-item">
-                        <div class="info-icon bg-primary-subtle text-primary">
-                            <i class="bi-person"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Full Name</p>
-                            <p class="info-value fw-semibold">{{ person.fullName }}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon bg-info-subtle text-info">
-                            <i class="bi-credit-card"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">National ID</p>
-                            <p class="info-value">{{ person.nationalId }}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <div class="info-icon bg-{{ person.gender == 'M' ? 'primary' : 'danger' }}-subtle text-{{ person.gender == 'M' ? 'primary' : 'danger' }}">
-                                    <i class="bi-{{ person.gender == 'M' ? 'person' : 'person-dress' }}"></i>
-                                </div>
-                                <div class="info-content">
-                                    <p class="info-label">Gender</p>
-                                    <p class="info-value">{{ person.genderText }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-item">
-                                <div class="info-icon bg-success-subtle text-success">
-                                    <i class="bi-calendar"></i>
-                                </div>
-                                <div class="info-content">
-                                    <p class="info-label">Age</p>
-                                    <p class="info-value">{{ person.age }} years old</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon bg-warning-subtle text-warning">
-                            <i class="bi-cake"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Date of Birth</p>
-                            <p class="info-value">{{ person.dateOfBirth|date('F d, Y') }}</p>
-                        </div>
-                    </div>
-                    
-                    {% if person.placeOfBirth %}
-                    <div class="info-item">
-                        <div class="info-icon bg-secondary-subtle text-secondary">
-                            <i class="bi-geo"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Place of Birth</p>
-                            <p class="info-value">{{ person.placeOfBirth }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    {% if person.maritalStatus %}
-                    <div class="info-item">
-                        <div class="info-icon bg-dark-subtle text-dark">
-                            <i class="bi-heart"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Marital Status</p>
-                            <p class="info-value">{{ person.maritalStatus|title }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
+    
+    <div class="col-md-4">
+        <!-- Photo -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-camera me-2"></i>
+                    Photo
+                </h6>
             </div>
-
-            <!-- Contact Information -->
-            <div class="info-card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi-telephone-fill me-2"></i>Contact Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="info-item">
-                        <div class="info-icon bg-primary-subtle text-primary">
-                            <i class="bi-envelope"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Email Address</p>
-                            <p class="info-value">
-                                <a href="mailto:{{ person.email }}" class="text-decoration-none">
-                                    {{ person.email }}
-                                </a>
-                            </p>
-                        </div>
-                        <div class="ms-auto">
-                            <a href="mailto:{{ person.email }}" class="btn btn-sm btn-outline-primary">
-                                <i class="bi-envelope"></i>
-                            </a>
-                        </div>
+            <div class="card-body text-center">
+                {% if person.image %}
+                    <img src="{{ asset('uploads/persons/' ~ person.image) }}" 
+                         alt="{{ person.fullName }}" 
+                         class="img-fluid rounded border"
+                         style="max-width: 100%; max-height: 300px;">
+                {% else %}
+                    <div class="text-muted">
+                        <i class="bi-person-circle" style="font-size: 8rem;"></i>
+                        <p class="mt-3 mb-0">No photo uploaded</p>
                     </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon bg-success-subtle text-success">
-                            <i class="bi-telephone"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Phone Number</p>
-                            <p class="info-value">
-                                <a href="tel:{{ person.phoneNumber }}" class="text-decoration-none">
-                                    {{ person.phoneNumber }}
-                                </a>
-                            </p>
-                        </div>
-                        <div class="ms-auto">
-                            <a href="tel:{{ person.phoneNumber }}" class="btn btn-sm btn-outline-success">
-                                <i class="bi-telephone"></i>
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon bg-warning-subtle text-warning">
-                            <i class="bi-house"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Address</p>
-                            <p class="info-value">{{ person.fullAddress }}</p>
-                        </div>
-                    </div>
-                </div>
+                {% endif %}
             </div>
-
-            <!-- Professional Information -->
-            {% if person.profession or person.employer %}
-            <div class="info-card">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0 fw-bold">
-                        <i class="bi-briefcase-fill me-2"></i>Professional Information
-                    </h5>
-                </div>
-                <div class="card-body">
-                    {% if person.profession %}
-                    <div class="info-item">
-                        <div class="info-icon bg-primary-subtle text-primary">
-                            <i class="bi-person-workspace"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Profession</p>
-                            <p class="info-value">{{ person.profession }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    {% if person.employer %}
-                    <div class="info-item">
-                        <div class="info-icon bg-info-subtle text-info">
-                            <i class="bi-building"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label">Employer</p>
-                            <p class="info-value">{{ person.employer }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Emergency Contact -->
-            {% if person.emergencyContact %}
-            <div class="info-card emergency-contact-card">
-                <div class="card-header border-0">
-                    <h5 class="mb-0 fw-bold text-white">
-                        <i class="bi-exclamation-triangle-fill me-2"></i>Emergency Contact
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="info-item">
-                        <div class="info-icon bg-light text-dark">
-                            <i class="bi-person"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label text-white opacity-75">Contact Name</p>
-                            <p class="info-value text-white fw-semibold">{{ person.emergencyContact.name }}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item">
-                        <div class="info-icon bg-light text-dark">
-                            <i class="bi-heart"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label text-white opacity-75">Relationship</p>
-                            <p class="info-value text-white">{{ person.emergencyContact.relation|title }}</p>
-                        </div>
-                    </div>
-                    
-                    {% if person.emergencyContact.phone %}
-                    <div class="info-item">
-                        <div class="info-icon bg-light text-dark">
-                            <i class="bi-telephone"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label text-white opacity-75">Phone</p>
-                            <p class="info-value text-white">
-                                <a href="tel:{{ person.emergencyContact.phone }}" class="text-white text-decoration-none">
-                                    {{ person.emergencyContact.phone }}
-                                </a>
-                            </p>
-                        </div>
-                    </div>
-                    {% endif %}
-                    
-                    {% if person.emergencyContact.email %}
-                    <div class="info-item">
-                        <div class="info-icon bg-light text-dark">
-                            <i class="bi-envelope"></i>
-                        </div>
-                        <div class="info-content">
-                            <p class="info-label text-white opacity-75">Email</p>
-                            <p class="info-value text-white">
-                                <a href="mailto:{{ person.emergencyContact.email }}" class="text-white text-decoration-none">
-                                    {{ person.emergencyContact.email }}
-                                </a>
-                            </p>
-                        </div>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            {% endif %}
         </div>
 
-        <div class="col-lg-4">
-            <!-- Quick Actions -->
-            <div class="info-card">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bi-lightning-fill me-2"></i>Quick Actions
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="mailto:{{ person.email }}" class="btn btn-outline-primary quick-action-btn">
-                            <i class="bi-envelope me-2"></i>Send Email
-                        </a>
-                        <a href="tel:{{ person.phoneNumber }}" class="btn btn-outline-success quick-action-btn">
-                            <i class="bi-telephone me-2"></i>Call Phone
-                        </a>
-                        <a href="{{ path('admin_document_new') }}?person={{ person.id }}" class="btn btn-outline-info quick-action-btn">
-                            <i class="bi-file-plus me-2"></i>Add Document
-                        </a>
-                        <hr class="my-2">
-                        <button class="btn btn-outline-danger delete-btn quick-action-btn" 
-                                data-person-id="{{ person.id }}" data-person-name="{{ person.fullName }}">
-                            <i class="bi-trash me-2"></i>Delete Citizen
-                        </button>
-                    </div>
-                </div>
+        <!-- Status & Metadata -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-info-circle me-2"></i>
+                    Status & Metadata
+                </h6>
             </div>
-
-            <!-- Documents -->
-            <div class="info-card">
-                <div class="card-header bg-secondary text-white">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bi-files me-2"></i>Documents ({{ person.activeDocuments|length }})
-                    </h6>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">ID:</label>
+                    <p class="mb-0">#{{ person.id }}</p>
                 </div>
-                <div class="card-body">
-                    {% if person.activeDocuments|length > 0 %}
-                        {% for document in person.activeDocuments %}
-                        <div class="document-item">
-                            <div class="d-flex align-items-center">
-                                <div class="document-icon bg-{{ document.type == 'input' ? 'warning' : 'success' }}-subtle text-{{ document.type == 'input' ? 'warning' : 'success' }}">
-                                    {% if document.filePath %}
-                                        {% if document.mimeType == 'application/pdf' %}
-                                            <i class="bi-file-pdf"></i>
-                                        {% elseif document.mimeType starts with 'image/' %}
-                                            <i class="bi-image"></i>
-                                        {% else %}
-                                            <i class="bi-file-earmark"></i>
-                                        {% endif %}
-                                    {% else %}
-                                        <i class="bi-file-x"></i>
-                                    {% endif %}
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1 fw-semibold">{{ document.name }}</h6>
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <span class="status-badge bg-{{ document.statusBadgeClass }} text-white">
-                                            {{ document.status }}
-                                        </span>
-                                        <span class="status-badge bg-{{ document.type == 'input' ? 'warning' : 'success' }} text-white">
-                                            {{ document.type|upper }}
-                                        </span>
-                                    </div>
-                                    {% if document.expirationDate %}
-                                    <small class="text-muted">
-                                        <i class="bi-calendar me-1"></i>
-                                        Expires: {{ document.expirationDate|date('M d, Y') }}
-                                        {% if document.isExpired %}
-                                            <span class="text-danger fw-semibold">(Expired)</span>
-                                        {% endif %}
-                                    </small>
-                                    {% endif %}
-                                </div>
-                                <div class="d-flex gap-1">
-                                    {% if document.filePath %}
-                                    <a href="{{ asset('uploads/documents/' ~ document.filePath) }}" 
-                                       target="_blank" 
-                                       class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi-eye"></i>
-                                    </a>
-                                    {% endif %}
-                                    <a href="{{ path('admin_document_show', {'id': document.id}) }}" 
-                                       class="btn btn-sm btn-outline-primary">
-                                        <i class="bi-arrow-right"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                        
-                        <div class="text-center mt-3">
-                            <a href="{{ path('admin_document_index') }}?person={{ person.id }}" 
-                               class="btn btn-outline-primary">
-                                <i class="bi-files me-2"></i>View All Documents
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="bi-file-x text-muted" style="font-size: 3rem;"></i>
-                            <h6 class="text-muted mt-2">No Documents</h6>
-                            <p class="text-muted small mb-3">This citizen has no documents yet.</p>
-                            <a href="{{ path('admin_document_new') }}?person={{ person.id }}" 
-                               class="btn btn-primary btn-sm">
-                                <i class="bi-file-plus me-1"></i>Add First Document
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Activity Timeline -->
-            <div class="info-card">
-                <div class="card-header bg-dark text-white">
-                    <h6 class="mb-0 fw-bold">
-                        <i class="bi-clock-history me-2"></i>Activity Timeline
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="timeline">
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-success">
-                                <i class="bi-person-plus text-white"></i>
-                            </div>
-                            <h6 class="fw-semibold mb-1">Citizen Registered</h6>
-                            <p class="text-muted small mb-0">Registered in the system</p>
-                            <small class="text-muted">{{ person.createdAt|date('F d, Y \\a\\t H:i') }}</small>
-                        </div>
-                        
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Verification Status:</label>
+                    <p class="mb-0">
                         {% if person.verifiedAt %}
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-primary">
-                                <i class="bi-shield-check text-white"></i>
-                            </div>
-                            <h6 class="fw-semibold mb-1">Verification Completed</h6>
-                            <p class="text-muted small mb-0">Citizen verification approved</p>
-                            <small class="text-muted">{{ person.verifiedAt|date('F d, Y \\a\\t H:i') }}</small>
-                        </div>
+                            <span class="badge bg-success">
+                                <i class="bi-check-circle-fill me-1"></i>
+                                Verified
+                            </span>
+                            <small class="text-muted d-block">{{ person.verifiedAt|date('F d, Y \\a\\t H:i') }}</small>
+                        {% else %}
+                            <span class="badge bg-warning">
+                                <i class="bi-exclamation-circle me-1"></i>
+                                Pending Verification
+                            </span>
                         {% endif %}
-                        
-                        {% if person.documents|length > 0 %}
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-info">
-                                <i class="bi-file-plus text-white"></i>
-                            </div>
-                            <h6 class="fw-semibold mb-1">Documents Added</h6>
-                            <p class="text-muted small mb-0">{{ person.documents|length }} document(s) associated</p>
-                            <small class="text-muted">{{ person.updatedAt|date('F d, Y \\a\\t H:i') }}</small>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-warning">
-                                <i class="bi-pencil text-white"></i>
-                            </div>
-                            <h6 class="fw-semibold mb-1">Profile Updated</h6>
-                            <p class="text-muted small mb-0">Last information update</p>
-                            <small class="text-muted">{{ person.updatedAt|date('F d, Y \\a\\t H:i') }}</small>
-                        </div>
-                    </div>
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Display Order:</label>
+                    <p class="mb-0"><span class="badge bg-secondary">{{ person.displayOrder }}</span></p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Registered:</label>
+                    <p class="mb-0">{{ person.createdAt|date('F d, Y \\a\\t H:i') }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Last Updated:</label>
+                    <p class="mb-0">{{ person.updatedAt|date('F d, Y \\a\\t H:i') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-lightning me-2"></i>
+                    Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="mailto:{{ person.email }}" class="btn btn-outline-primary">
+                        <i class="bi-envelope me-2"></i>
+                        Send Email
+                    </a>
+                    <a href="tel:{{ person.phoneNumber }}" class="btn btn-outline-success">
+                        <i class="bi-telephone me-2"></i>
+                        Call Phone
+                    </a>
+                    <a href="{{ path('admin_document_new') }}?person={{ person.id }}" class="btn btn-outline-info">
+                        <i class="bi-file-plus me-2"></i>
+                        Add Document
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Floating Actions -->
-<div class="floating-actions d-none d-lg-block">
-    <a href="{{ path('admin_person_edit', {'id': person.id}) }}" 
-       class="floating-btn btn btn-warning" title="Edit Profile">
-        <i class="bi-pencil"></i>
-    </a>
-    {% if not person.verifiedAt %}
-    <button class="floating-btn btn btn-success verify-btn" 
-            data-person-id="{{ person.id }}" title="Verify Citizen">
-        <i class="bi-shield-check"></i>
-    </button>
-    {% endif %}
-</div>
-
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-danger text-white border-0">
-                <h5 class="modal-title">
-                    <i class="bi-exclamation-triangle me-2"></i>Confirm Deletion
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4 text-center">
-                <i class="bi-person-x text-danger mb-3" style="font-size: 4rem;"></i>
-                <h5 class="mb-3">Delete {{ person.fullName }}?</h5>
-                <p class="text-muted mb-4">This action will remove the citizen from the active registry but preserve data for auditing purposes.</p>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>{{ person.fullName }}</strong>?</p>
                 {% if person.documents|length > 0 %}
-                <div class="alert alert-warning">
-                    <i class="bi-exclamation-triangle me-2"></i>
-                    This citizen has {{ person.documents|length }} associated document(s).
-                </div>
+                    <div class="alert alert-warning">
+                        <i class="bi-exclamation-triangle me-2"></i>
+                        This person has {{ person.documents|length }} associated document(s). They will remain in the system.
+                    </div>
                 {% endif %}
+                <p class="text-muted small">This action will remove the citizen from active registry but preserve their data for auditing purposes.</p>
             </div>
-            <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form method="post" action="{{ path('admin_person_delete', {'id': person.id}) }}" style="display: inline;">
                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ person.id) }}">
-                    <button type="submit" class="btn btn-danger px-4">
-                        <i class="bi-trash me-1"></i>Delete Citizen
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi-trash me-1"></i>
+                        Delete Citizen
                     </button>
                 </form>
             </div>
@@ -898,162 +459,39 @@
     </div>
 </div>
 
-{% endblock %}
-
-{% block javascripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialize components
-    initializeVerifyButton();
-    initializeDeleteModal();
-    initializeAnimations();
-    
     // Verify button functionality
-    function initializeVerifyButton() {
-        document.querySelectorAll('.verify-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const personId = this.dataset.personId;
-                const button = this;
-                
-                // Show loading state
-                const originalHTML = button.innerHTML;
-                button.disabled = true;
-                button.innerHTML = '<i class="bi-hourglass-split me-2"></i>Verifying...';
-                
-                fetch(`/admin/person/${personId}/verify`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Show success message
-                        showToast('success', 'Citizen verified successfully!');
-                        
-                        // Reload page to reflect changes
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
-                    } else {
-                        showToast('error', data.message);
-                        button.innerHTML = originalHTML;
-                        button.disabled = false;
-                    }
-                })
-                .catch(error => {
-                    showToast('error', 'Error verifying citizen');
-                    button.innerHTML = originalHTML;
-                    button.disabled = false;
-                });
-            });
-        });
-    }
-    
-    // Delete modal
-    function initializeDeleteModal() {
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                new bootstrap.Modal(document.getElementById('deleteModal')).show();
-            });
-        });
-    }
-    
-    // Animations
-    function initializeAnimations() {
-        // Animate cards on load
-        const cards = document.querySelectorAll('.info-card');
-        cards.forEach((card, index) => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
+    document.querySelectorAll('.verify-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const personId = this.dataset.personId;
             
-            setTimeout(() => {
-                card.style.transition = 'all 0.6s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-        
-        // Animate floating buttons
-        const floatingBtns = document.querySelectorAll('.floating-btn');
-        floatingBtns.forEach((btn, index) => {
-            btn.style.opacity = '0';
-            btn.style.transform = 'scale(0)';
-            
-            setTimeout(() => {
-                btn.style.transition = 'all 0.3s ease';
-                btn.style.opacity = '1';
-                btn.style.transform = 'scale(1)';
-            }, 1000 + (index * 100));
-        });
-    }
-    
-    // Toast notifications
-    function showToast(type, message) {
-        const toastContainer = getOrCreateToastContainer();
-        const toast = document.createElement('div');
-        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
-        toast.setAttribute('role', 'alert');
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-                    ${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-        
-        toastContainer.appendChild(toast);
-        const bsToast = new bootstrap.Toast(toast);
-        bsToast.show();
-        
-        toast.addEventListener('hidden.bs.toast', () => {
-            toast.remove();
-        });
-    }
-    
-    function getOrCreateToastContainer() {
-        let container = document.querySelector('.toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.className = 'toast-container position-fixed top-0 end-0 p-3';
-            container.style.zIndex = '1055';
-            document.body.appendChild(container);
-        }
-        return container;
-    }
-    
-    // Smooth scroll for internal links
-    document.querySelectorAll('a[href^="#"]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
+            fetch(`/admin/person/${personId}/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating verification status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error updating verification status');
+            });
         });
     });
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        // E for edit
-        if (e.key === 'e' || e.key === 'E') {
-            if (!e.target.matches('input, textarea, select')) {
-                e.preventDefault();
-                window.location.href = '{{ path('admin_person_edit', {'id': person.id}) }}';
-            }
-        }
-        
-        // Escape to go back
-        if (e.key === 'Escape') {
-            window.location.href = '{{ path('admin_person_index') }}';
-        }
+
+    // Delete button functionality
+    document.querySelectorAll('.delete-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
     });
 });
 </script>
