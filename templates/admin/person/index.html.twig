@@ -2,242 +2,521 @@
 
 {% block title %}Citizens Registry{% endblock %}
 
-{% block body %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0">
-        <i class="bi-person-vcard me-2"></i>
-        Citizens Registry Management
-    </h1>
-    <div class="btn-group">
-        <a href="{{ path('admin_person_new') }}" class="btn btn-primary">
-            <i class="bi-person-plus me-2"></i>
-            Register New Citizen
-        </a>
-        <a href="{{ path('admin_person_export') }}" class="btn btn-outline-secondary">
-            <i class="bi-download me-2"></i>
-            Export
-        </a>
-    </div>
-</div>
+{% block stylesheets %}
+<style>
+    .citizen-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .citizen-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .citizen-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .citizen-avatar-placeholder {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .verification-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        border: 2px solid white;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(30px, -30px);
+    }
+    
+    .quick-filters {
+        background: rgba(255,255,255,0.8);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .filter-chip {
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 25px;
+        padding: 8px 16px;
+        margin: 4px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
+    }
+    
+    .filter-chip:hover, .filter-chip.active {
+        background: #667eea;
+        color: white;
+        transform: translateY(-1px);
+    }
+    
+    .action-buttons .btn {
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin: 0 2px;
+        transition: all 0.3s ease;
+    }
+    
+    .action-buttons .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .search-container {
+        position: relative;
+    }
+    
+    .search-input {
+        border-radius: 25px;
+        padding-left: 50px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: 18px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .citizen-info-badge {
+        background: rgba(255,255,255,0.9);
+        border-radius: 8px;
+        padding: 4px 8px;
+        margin: 2px;
+        font-size: 0.75rem;
+        backdrop-filter: blur(5px);
+    }
+    
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 8px;
+    }
+    
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 15px;
+        border: 2px dashed #dee2e6;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .citizen-avatar, .citizen-avatar-placeholder {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+        
+        .quick-filters {
+            padding: 1rem;
+        }
+        
+        .filter-chip {
+            margin: 2px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+        }
+    }
+</style>
+{% endblock %}
 
-<!-- Filters -->
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-light">
-        <h6 class="card-title mb-0">
-            <i class="bi-funnel me-2"></i>
-            Search & Filter Citizens
-        </h6>
+{% block body %}
+<div class="container-fluid px-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="mb-2 fw-bold text-primary">
+                <i class="bi-people-fill me-3"></i>
+                Citizens Registry
+            </h1>
+            <p class="text-muted mb-0">Manage and monitor citizen information and documentation</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('admin_person_export') }}" class="btn btn-outline-primary">
+                <i class="bi-download me-2"></i>
+                Export Data
+            </a>
+            <a href="{{ path('admin_person_new') }}" class="btn btn-primary">
+                <i class="bi-person-plus me-2"></i>
+                Register Citizen
+            </a>
+        </div>
     </div>
-    <div class="card-body">
-        <form method="GET" class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label fw-bold">Search</label>
-                <input type="text" name="search" class="form-control" 
-                       placeholder="Name, Email, or National ID" 
-                       value="{{ filters.search }}">
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold">Region</label>
-                <select name="region" class="form-select">
-                    <option value="">All Regions</option>
-                    {% for region in regions %}
-                        <option value="{{ region }}" {% if filters.region == region %}selected{% endif %}>
-                            {{ region }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label fw-bold">Gender</label>
-                <select name="gender" class="form-select">
-                    <option value="">All</option>
-                    <option value="M" {% if filters.gender == 'M' %}selected{% endif %}>Male</option>
-                    <option value="F" {% if filters.gender == 'F' %}selected{% endif %}>Female</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label fw-bold">&nbsp;</label>
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi-search me-1"></i> Search
-                    </button>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ persons|length }}</h3>
+                            <p class="mb-0 opacity-75">Total Citizens</p>
+                        </div>
+                        <i class="bi-people fs-1 opacity-25"></i>
+                    </div>
                 </div>
             </div>
-        </form>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ persons|filter(p => p.verifiedAt)|length }}</h3>
+                            <p class="mb-0 opacity-75">Verified</p>
+                        </div>
+                        <i class="bi-shield-check fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100" style="background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ persons|filter(p => p.gender == 'F')|length }}</h3>
+                            <p class="mb-0 opacity-75">Female</p>
+                        </div>
+                        <i class="bi-person-dress fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card stats-card h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ persons|filter(p => p.gender == 'M')|length }}</h3>
+                            <p class="mb-0 opacity-75">Male</p>
+                        </div>
+                        <i class="bi-person fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
-{% if persons|length > 0 %}
-<div class="card shadow-sm">
-    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-        <h5 class="card-title mb-0">
-            <i class="bi-list-ul me-2"></i>
-            All Citizens ({{ persons|length }})
-        </h5>
-        <small class="text-muted">Page {{ currentPage }}</small>
+    <!-- Search and Filters -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body quick-filters">
+            <form method="GET" id="filterForm">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            <i class="bi-search me-1"></i>Search Citizens
+                        </label>
+                        <div class="search-container">
+                            <i class="bi-search search-icon"></i>
+                            <input type="text" name="search" class="form-control search-input" 
+                                   placeholder="Name, Email, National ID..." 
+                                   value="{{ filters.search }}"
+                                   autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Region</label>
+                        <select name="region" class="form-select">
+                            <option value="">All Regions</option>
+                            {% for region in regions %}
+                                <option value="{{ region }}" {% if filters.region == region %}selected{% endif %}>
+                                    {{ region }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Gender</label>
+                        <select name="gender" class="form-select">
+                            <option value="">All</option>
+                            <option value="M" {% if filters.gender == 'M' %}selected{% endif %}>Male</option>
+                            <option value="F" {% if filters.gender == 'F' %}selected{% endif %}>Female</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select name="verified" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="yes">Verified</option>
+                            <option value="no">Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="bi-funnel me-1"></i>Filter
+                            </button>
+                            <a href="{{ path('admin_person_index') }}" class="btn btn-outline-secondary">
+                                <i class="bi-arrow-clockwise"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th width="5%">#</th>
-                        <th width="8%">Photo</th>
-                        <th width="18%">Full Name</th>
-                        <th width="12%">Contact</th>
-                        <th width="10%">Identity</th>
-                        <th width="8%">Age/Gender</th>
-                        <th width="10%">Location</th>
-                        <th width="8%">Documents</th>
-                        <th width="6%">Status</th>
-                        <th width="15%">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for person in persons %}
-                    <tr>
-                        <td class="text-muted">#{{ person.id }}</td>
-                        <td>
+
+    <!-- Citizens Grid -->
+    {% if persons|length > 0 %}
+    <div class="row" id="citizensGrid">
+        {% for person in persons %}
+        <div class="col-xl-4 col-lg-6 mb-4 citizen-item" 
+             data-name="{{ person.fullName|lower }}" 
+             data-region="{{ person.region|lower }}"
+             data-gender="{{ person.gender }}"
+             data-verified="{{ person.verifiedAt ? 'yes' : 'no' }}">
+            <div class="card citizen-card h-100 shadow-sm">
+                <div class="card-body p-4">
+                    <!-- Citizen Header -->
+                    <div class="d-flex align-items-start mb-3">
+                        <div class="position-relative me-3">
                             {% if person.image %}
                                 <img src="{{ asset('uploads/persons/' ~ person.image) }}" 
                                      alt="{{ person.fullName }}" 
-                                     class="img-thumbnail rounded-circle" 
-                                     style="width: 45px; height: 45px; object-fit: cover;">
+                                     class="citizen-avatar">
                             {% else %}
-                                <div class="bg-primary d-flex align-items-center justify-content-center rounded-circle text-white"
-                                     style="width: 45px; height: 45px;">
-                                    <i class="bi-person"></i>
+                                <div class="citizen-avatar-placeholder">
+                                    {{ person.firstName|first|upper }}{{ person.lastName|first|upper }}
                                 </div>
                             {% endif %}
-                        </td>
-                        <td>
-                            <strong>{{ person.fullName }}</strong>
+                            
+                            <!-- Verification Badge -->
+                            <div class="verification-badge bg-{{ person.verifiedAt ? 'success' : 'warning' }}">
+                                <i class="bi-{{ person.verifiedAt ? 'check' : 'clock' }} text-white"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-grow-1">
+                            <h5 class="mb-1 fw-bold text-primary">{{ person.fullName }}</h5>
+                            <p class="text-muted mb-1 small">
+                                <i class="bi-credit-card me-1"></i>{{ person.nationalId }}
+                            </p>
                             {% if person.profession %}
-                                <div class="text-muted small">{{ person.profession }}</div>
+                            <p class="text-muted mb-0 small">
+                                <i class="bi-briefcase me-1"></i>{{ person.profession }}
+                            </p>
                             {% endif %}
-                            <div class="small text-muted">
-                                <i class="bi-calendar me-1"></i>{{ person.createdAt|date('M d, Y') }}
-                            </div>
-                        </td>
-                        <td>
-                            <div class="small">
-                                <i class="bi-envelope me-1"></i>{{ person.email|slice(0, 20) }}{% if person.email|length > 20 %}...{% endif %}
-                            </div>
-                            <div class="small text-muted">
-                                <i class="bi-telephone me-1"></i>{{ person.phoneNumber }}
-                            </div>
-                        </td>
-                        <td>
-                            <div class="small">
-                                <strong>{{ person.nationalId }}</strong>
-                            </div>
-                            {% if person.nationality %}
-                                <div class="small text-muted">{{ person.nationality }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="badge bg-{{ person.gender == 'M' ? 'primary' : 'pink' }}">
-                                {{ person.age }} / {{ person.genderText }}
+                        </div>
+                        
+                        <!-- Actions Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                <i class="bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{{ path('admin_person_show', {'id': person.id}) }}">
+                                    <i class="bi-eye me-2"></i>View Details
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ path('admin_person_edit', {'id': person.id}) }}">
+                                    <i class="bi-pencil me-2"></i>Edit Info
+                                </a></li>
+                                <li><a class="dropdown-item" href="mailto:{{ person.email }}">
+                                    <i class="bi-envelope me-2"></i>Send Email
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><button class="dropdown-item text-danger delete-btn" 
+                                           data-person-id="{{ person.id }}" data-person-name="{{ person.fullName }}">
+                                    <i class="bi-trash me-2"></i>Delete
+                                </button></li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Citizen Info Badges -->
+                    <div class="mb-3">
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <span class="citizen-info-badge border">
+                                <i class="bi-cake me-1 text-primary"></i>{{ person.age }} years
                             </span>
-                            {% if person.maritalStatus %}
-                                <div class="small text-muted">{{ person.maritalStatus|title }}</div>
-                            {% endif %}
-                        </td>
-                        <td>
+                            <span class="citizen-info-badge border">
+                                <i class="bi-{{ person.gender == 'M' ? 'person' : 'person-dress' }} me-1 text-{{ person.gender == 'M' ? 'primary' : 'danger' }}"></i>{{ person.genderText }}
+                            </span>
                             {% if person.region %}
-                                <div class="small"><strong>{{ person.region }}</strong></div>
+                            <span class="citizen-info-badge border">
+                                <i class="bi-geo-alt me-1 text-success"></i>{{ person.region }}
+                            </span>
                             {% endif %}
-                            {% if person.city %}
-                                <div class="small text-muted">{{ person.city }}</div>
-                            {% endif %}
-                        </td>
-                        <td class="text-center">
-                            {% if person.documents|length > 0 %}
-                                <span class="badge bg-info">{{ person.documents|length }}</span>
-                            {% else %}
-                                <span class="text-muted">-</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="d-flex flex-column gap-1">
-                                <!-- Verification Status -->
-                                <button class="btn btn-sm btn-outline-{{ person.verifiedAt ? 'success' : 'warning' }} verify-toggle"
-                                        data-person-id="{{ person.id }}"
-                                        title="{{ person.verifiedAt ? 'Verified' : 'Not Verified' }}">
-                                    <i class="bi-{{ person.verifiedAt ? 'check-circle-fill' : 'exclamation-circle' }}"></i>
-                                    <span class="verification-text">{{ person.verifiedAt ? 'Verified' : 'Pending' }}</span>
-                                </button>
-                                {% if person.verifiedAt %}
-                                    <small class="text-muted">{{ person.verifiedAt|date('M d') }}</small>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ path('admin_person_show', {'id': person.id}) }}" 
-                                   class="btn btn-outline-info" title="View">
-                                    <i class="bi-eye"></i>
-                                </a>
-                                <a href="{{ path('admin_person_edit', {'id': person.id}) }}" 
-                                   class="btn btn-outline-warning" title="Edit">
-                                    <i class="bi-pencil"></i>
-                                </a>
-                                <button type="button" 
-                                        class="btn btn-outline-danger delete-btn" 
-                                        data-person-id="{{ person.id }}"
-                                        data-person-name="{{ person.fullName }}"
-                                        title="Delete">
-                                    <i class="bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        </div>
+                        
+                        {% if person.documents|length > 0 %}
+                        <span class="citizen-info-badge bg-info text-white">
+                            <i class="bi-files me-1"></i>{{ person.documents|length }} Document{{ person.documents|length > 1 ? 's' : '' }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Contact Info -->
+                    <div class="mb-3">
+                        <div class="small text-muted mb-1">
+                            <i class="bi-envelope me-2"></i>{{ person.email|slice(0, 30) }}{% if person.email|length > 30 %}...{% endif %}
+                        </div>
+                        <div class="small text-muted">
+                            <i class="bi-telephone me-2"></i>{{ person.phoneNumber }}
+                        </div>
+                    </div>
+                    
+                    <!-- Footer Actions -->
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <div class="small text-muted">
+                            <i class="bi-calendar me-1"></i>{{ person.createdAt|date('M d, Y') }}
+                        </div>
+                        
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-outline-{{ person.verifiedAt ? 'success' : 'warning' }} verify-toggle"
+                                    data-person-id="{{ person.id }}"
+                                    title="{{ person.verifiedAt ? 'Verified' : 'Verify Citizen' }}">
+                                <i class="bi-{{ person.verifiedAt ? 'check-circle-fill' : 'clock' }}"></i>
+                                <span class="verification-text d-none d-sm-inline">{{ person.verifiedAt ? 'Verified' : 'Verify' }}</span>
+                            </button>
+                            
+                            <a href="{{ path('admin_person_show', {'id': person.id}) }}" 
+                               class="btn btn-sm btn-primary">
+                                <i class="bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Load More Button (if pagination needed) -->
+    {% if persons|length >= 20 %}
+    <div class="text-center mt-4">
+        <button class="btn btn-outline-primary" id="loadMoreBtn">
+            <i class="bi-arrow-down-circle me-2"></i>
+            Load More Citizens
+        </button>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+        <i class="bi-people empty-state-icon"></i>
+        <h3 class="fw-bold text-muted">No Citizens Found</h3>
+        <p class="text-muted mb-4">
+            {% if filters.search or filters.region or filters.gender %}
+                No citizens match your current filters. Try adjusting your search criteria.
+            {% else %}
+                You haven't registered any citizens yet. Start by adding your first citizen to the registry.
+            {% endif %}
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            {% if filters.search or filters.region or filters.gender %}
+                <a href="{{ path('admin_person_index') }}" class="btn btn-outline-primary">
+                    <i class="bi-arrow-clockwise me-2"></i>Clear Filters
+                </a>
+            {% endif %}
+            <a href="{{ path('admin_person_new') }}" class="btn btn-primary">
+                <i class="bi-person-plus me-2"></i>Register First Citizen
+            </a>
         </div>
     </div>
+    {% endif %}
 </div>
-{% else %}
-<div class="text-center py-5">
-    <i class="bi-person-vcard text-muted" style="font-size: 4rem;"></i>
-    <h3 class="text-muted mt-3">No citizens found</h3>
-    <p class="text-muted">
-        {% if filters.search or filters.region or filters.gender %}
-            Try adjusting your search criteria or filters
-        {% else %}
-            Start by registering your first citizen
-        {% endif %}
-    </p>
-    <a href="{{ path('admin_person_new') }}" class="btn btn-primary">
-        <i class="bi-person-plus me-2"></i>
-        Register First Citizen
-    </a>
-</div>
-{% endif %}
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title">
                     <i class="bi-exclamation-triangle me-2"></i>
                     Confirm Deletion
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete the citizen <strong id="personName"></strong>?</p>
-                <p class="text-muted small">This action will remove the citizen from active registry but preserve their data for auditing purposes.</p>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <i class="bi-person-x text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p class="text-center mb-3">Are you sure you want to delete <strong id="personName"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    This action will remove the citizen from the active registry but preserve data for auditing.
+                </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer border-0">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <form id="deleteForm" method="post" style="display: inline;">
                     <input type="hidden" name="_token" id="deleteToken">
                     <button type="submit" class="btn btn-danger">
-                        <i class="bi-trash me-1"></i>
-                        Delete Citizen
+                        <i class="bi-trash me-1"></i>Delete Citizen
                     </button>
                 </form>
             </div>
@@ -245,58 +524,261 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block javascripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Verification toggle functionality
-    document.querySelectorAll('.verify-toggle').forEach(function(button) {
-        button.addEventListener('click', function() {
-            const personId = this.dataset.personId;
+    // Initialize components
+    initializeSearch();
+    initializeVerificationToggle();
+    initializeDeleteModal();
+    initializeFilters();
+    
+    // Search functionality
+    function initializeSearch() {
+        const searchInput = document.querySelector('.search-input');
+        let searchTimeout;
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    filterCitizens();
+                }, 300);
+            });
+        }
+    }
+    
+    // Real-time filtering
+    function filterCitizens() {
+        const searchTerm = document.querySelector('.search-input').value.toLowerCase();
+        const citizenItems = document.querySelectorAll('.citizen-item');
+        let visibleCount = 0;
+        
+        citizenItems.forEach(item => {
+            const name = item.dataset.name;
+            const isVisible = name.includes(searchTerm);
             
-            fetch(`/admin/person/${personId}/verify`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    const icon = this.querySelector('i');
-                    const text = this.querySelector('.verification-text');
-                    
-                    if (data.verified) {
-                        this.className = 'btn btn-sm btn-outline-success verify-toggle';
-                        icon.className = 'bi-check-circle-fill';
-                        text.textContent = 'Verified';
-                    } else {
-                        this.className = 'btn btn-sm btn-outline-warning verify-toggle';
-                        icon.className = 'bi-exclamation-circle';
-                        text.textContent = 'Pending';
+            if (isVisible) {
+                item.style.display = 'block';
+                item.style.animation = 'fadeIn 0.3s ease';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Update results count
+        updateResultsCount(visibleCount);
+    }
+    
+    function updateResultsCount(count) {
+        const existingCount = document.querySelector('.results-count');
+        if (existingCount) {
+            existingCount.remove();
+        }
+        
+        if (count !== document.querySelectorAll('.citizen-item').length) {
+            const grid = document.getElementById('citizensGrid');
+            const countElement = document.createElement('div');
+            countElement.className = 'col-12 results-count mb-3';
+            countElement.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="bi-info-circle me-2"></i>
+                    Showing ${count} of ${document.querySelectorAll('.citizen-item').length} citizens
+                </div>
+            `;
+            grid.parentNode.insertBefore(countElement, grid);
+        }
+    }
+    
+    // Verification toggle
+    function initializeVerificationToggle() {
+        document.querySelectorAll('.verify-toggle').forEach(button => {
+            button.addEventListener('click', function() {
+                const personId = this.dataset.personId;
+                const button = this;
+                
+                // Show loading state
+                const originalHTML = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<i class="bi-hourglass-split"></i> <span class="d-none d-sm-inline">Processing...</span>';
+                
+                fetch(`/admin/person/${personId}/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     }
-                } else {
-                    alert('Error updating verification status: ' + data.message);
-                }
-            })
-            .catch(error => {
-                alert('Error updating verification status');
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update button appearance
+                        if (data.verified) {
+                            button.className = 'btn btn-sm btn-outline-success verify-toggle';
+                            button.innerHTML = '<i class="bi-check-circle-fill"></i> <span class="verification-text d-none d-sm-inline">Verified</span>';
+                            button.title = 'Verified';
+                            
+                            // Update verification badge
+                            const badge = button.closest('.card').querySelector('.verification-badge');
+                            badge.className = 'verification-badge bg-success';
+                            badge.innerHTML = '<i class="bi-check text-white"></i>';
+                        } else {
+                            button.className = 'btn btn-sm btn-outline-warning verify-toggle';
+                            button.innerHTML = '<i class="bi-clock"></i> <span class="verification-text d-none d-sm-inline">Verify</span>';
+                            button.title = 'Verify Citizen';
+                            
+                            // Update verification badge
+                            const badge = button.closest('.card').querySelector('.verification-badge');
+                            badge.className = 'verification-badge bg-warning';
+                            badge.innerHTML = '<i class="bi-clock text-white"></i>';
+                        }
+                        
+                        // Show success message
+                        showToast('success', data.message);
+                    } else {
+                        showToast('error', data.message);
+                        button.innerHTML = originalHTML;
+                    }
+                })
+                .catch(error => {
+                    showToast('error', 'Error updating verification status');
+                    button.innerHTML = originalHTML;
+                })
+                .finally(() => {
+                    button.disabled = false;
+                });
             });
         });
-    });
-
-    // Delete modal functionality
-    document.querySelectorAll('.delete-btn').forEach(function(button) {
-        button.addEventListener('click', function() {
-            const personId = this.dataset.personId;
-            const personName = this.dataset.personName;
-            
-            document.getElementById('personName').textContent = personName;
-            document.getElementById('deleteForm').action = `/admin/person/${personId}/delete`;
-            document.getElementById('deleteToken').value = '{{ csrf_token("delete") }}';
-            
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    }
+    
+    // Delete modal
+    function initializeDeleteModal() {
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const personId = this.dataset.personId;
+                const personName = this.dataset.personName;
+                
+                document.getElementById('personName').textContent = personName;
+                document.getElementById('deleteForm').action = `/admin/person/${personId}/delete`;
+                document.getElementById('deleteToken').value = '{{ csrf_token("delete") }}';
+                
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            });
         });
+    }
+    
+    // Filter chips functionality
+    function initializeFilters() {
+        const form = document.getElementById('filterForm');
+        const selects = form.querySelectorAll('select');
+        
+        selects.forEach(select => {
+            select.addEventListener('change', function() {
+                // Auto-submit form when filter changes
+                form.submit();
+            });
+        });
+    }
+    
+    // Toast notifications
+    function showToast(type, message) {
+        const toastContainer = getOrCreateToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        toast.addEventListener('hidden.bs.toast', () => {
+            toast.remove();
+        });
+    }
+    
+    function getOrCreateToastContainer() {
+        let container = document.querySelector('.toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'toast-container position-fixed top-0 end-0 p-3';
+            container.style.zIndex = '1055';
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + K for search focus
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            document.querySelector('.search-input').focus();
+        }
+        
+        // Escape to clear search
+        if (e.key === 'Escape') {
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput.value) {
+                searchInput.value = '';
+                filterCitizens();
+            }
+        }
+    });
+    
+    // Load more functionality (if needed)
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', function() {
+            // Implement load more logic here
+            console.log('Load more clicked');
+        });
+    }
+    
+    // Animation on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animation = 'slideInUp 0.6s ease forwards';
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('.citizen-card').forEach(card => {
+        observer.observe(card);
     });
 });
+
+// CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
