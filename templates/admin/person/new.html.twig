@@ -1,13 +1,56 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}New project{% endblock %}
+{% block title %}Register New Citizen{% endblock %}
 
 {% block body %}
-<h1>Create a new person</h1>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi-person-plus me-2"></i>
+        Register New Citizen
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ path('admin_person_index') }}">Citizens</a></li>
+            <li class="breadcrumb-item active" aria-current="page">New</li>
+        </ol>
+    </nav>
+</div>
 
-<div class="card">
-    <div class="card-body">
-        {{ include('admin/person/_form.html.twig') }}
+<div class="alert alert-info">
+    <div class="d-flex align-items-center">
+        <i class="bi-info-circle me-3" style="font-size: 1.5rem;"></i>
+        <div>
+            <h6 class="alert-heading mb-1">Citizen Registration Guidelines</h6>
+            <p class="mb-0">Please ensure all required information is accurate. Fields marked with <span class="text-danger">*</span> are mandatory. The citizen will receive a confirmation email once registered.</p>
+        </div>
     </div>
 </div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+            <i class="bi-person-vcard me-2"></i>
+            Citizen Information
+        </h5>
+    </div>
+    <div class="card-body">
+        {{ include('admin/person/_form.html.twig', {'button_label': 'Register Citizen'}) }}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate display order
+    const displayOrderField = document.querySelector('input[name="person[displayOrder]"]');
+    if (displayOrderField && displayOrderField.value == 0) {
+        displayOrderField.value = Math.floor(Date.now() / 1000);
+    }
+    
+    // Focus on first name field
+    const firstNameField = document.querySelector('input[name="person[firstName]"]');
+    if (firstNameField) {
+        firstNameField.focus();
+    }
+});
+</script>
 {% endblock %}

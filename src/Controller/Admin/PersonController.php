@@ -8,6 +8,7 @@ use App\Repository\PersonRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -17,66 +18,86 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 class PersonController extends AbstractController
 {
     #[Route('/', name: 'admin_person_index', methods: ['GET'])]
-    public function index(personRepository $personRepository): Response
+    public function index(PersonRepository $personRepository, Request $request): Response
     {
-        // Optimisation : récupération avec une limite pour éviter les problèmes de mémoire
-        $persons = $personRepository->findBy([], ['displayOrder' => 'ASC', 'createdAt' => 'DESC'], 100);
+        $search = $request->query->get('search', '');
+        $region = $request->query->get('region', '');
+        $gender = $request->query->get('gender', '');
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 20;
+
+        $filters = [
+            'search' => $search,
+            'region' => $region,
+            'gender' => $gender
+        ];
+
+        $persons = $personRepository->findWithFilters($filters, $page, $limit);
+        
+        // Get unique regions for filter
+        $regions = [
+            'Adamawa', 'Centre', 'East', 'Far North', 'Littoral',
+            'North', 'Northwest', 'South', 'Southwest', 'West'
+        ];
         
         return $this->render('admin/person/index.html.twig', [
             'persons' => $persons,
+            'filters' => $filters,
+            'regions' => $regions,
+            'currentPage' => $page,
         ]);
     }
 
     #[Route('/new', name: 'admin_person_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
-        $person = new person();
-        
-        // Configuration optimisée du formulaire pour réduire l'utilisation mémoire
-        $form = $this->createForm(personType::class, $person, [
-            'validation_groups' => ['Default'],
-        ]);
-        
+        $person = new Person();
+        $form = $this->createForm(PersonType::class, $person);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
-
-                // Gestion de l'upload d'image avec optimisation mémoire
+                // Handle photo upload
                 $photoFile = $form->get('photoFile')->getData();
                 if ($photoFile) {
                     $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
                     $safeFilename = $slugger->slug($originalFilename);
                     $newFilename = $safeFilename.'-'.uniqid().'.'.$photoFile->guessExtension();
 
-                    try {
-                        // Vérification de l'existence du répertoire
-                        $uploadsDirectory = $this->getParameter('photoFile');
-                        if (!is_dir($uploadsDirectory)) {
-                            mkdir($uploadsDirectory, 0755, true);
-                        }
-                        
-                        $photoFile->move($uploadsDirectory, $newFilename);
-                        $person->setImage($newFilename);
-                    } catch (FileException $e) {
-                        $this->addFlash('error', 'Erreur lors du téléchargement de l\'image : ' . $e->getMessage());
-                        return $this->redirectToRoute('admin_person_new');
+                    $uploadsDirectory = $this->getParameter('kernel.project_dir').'/public/uploads/persons';
+                    if (!is_dir($uploadsDirectory)) {
+                        mkdir($uploadsDirectory, 0755, true);
                     }
+                    
+                    $photoFile->move($uploadsDirectory, $newFilename);
+                    $person->setImage($newFilename);
                 }
 
-                // Sauvegarde optimisée avec gestion d'erreur
+                // Handle emergency contact
+                $emergencyContactData = [];
+                $emergencyName = $form->get('emergencyContactName')->getData();
+                $emergencyEmail = $form->get('emergencyContactEmail')->getData();
+                $emergencyPhone = $form->get('emergencyContactPhone')->getData();
+                $emergencyRelation = $form->get('emergencyContactRelation')->getData();
+
+                if ($emergencyName || $emergencyEmail || $emergencyPhone) {
+                    $emergencyContactData = [
+                        'name' => $emergencyName,
+                        'email' => $emergencyEmail,
+                        'phone' => $emergencyPhone,
+                        'relation' => $emergencyRelation
+                    ];
+                    $person->setEmergencyContact($emergencyContactData);
+                }
+
                 $entityManager->persist($person);
                 $entityManager->flush();
-                
-                // Libération de la mémoire
-                $entityManager->clear();
 
-                $this->addFlash('success', 'Le projet a été créé avec succès.');
+                $this->addFlash('success', 'Person has been created successfully.');
                 return $this->redirectToRoute('admin_person_index', [], Response::HTTP_SEE_OTHER);
                 
             } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la création du projet : ' . $e->getMessage());
-                return $this->redirectToRoute('admin_person_new');
+                $this->addFlash('error', 'Error creating person: ' . $e->getMessage());
             }
         }
 
@@ -87,69 +108,93 @@ class PersonController extends AbstractController
     }
 
     #[Route('/{id}', name: 'admin_person_show', methods: ['GET'])]
-    public function show(person $person): Response
+    public function show(Person $person): Response
     {
+        // Check if person is deleted
+        if ($person->isDeleted()) {
+            throw $this->createNotFoundException('Person not found.');
+        }
+
         return $this->render('admin/person/show.html.twig', [
             'person' => $person,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'admin_person_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, person $person, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
+    public function edit(Request $request, Person $person, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
-        // Configuration optimisée du formulaire
-        $form = $this->createForm(personType::class, $person, [
-            'validation_groups' => ['Default'],
-        ]);
-        
+        // Check if person is deleted
+        if ($person->isDeleted()) {
+            throw $this->createNotFoundException('Person not found.');
+        }
+
+        $form = $this->createForm(PersonType::class, $person);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
-
-                // Gestion de l'upload d'image avec optimisation mémoire
-                $photoFile = $form->get('photoFile')->getData();  
-                         
-
-                if ($photoFile) {
-                    // Supprimer l'ancienne image si elle existe
+                // Handle photo removal
+                $removePhoto = $form->get('removePhoto')->getData();
+                if ($removePhoto) {
                     if ($person->getImage()) {
-                        $oldImagePath = $this->getParameter('projects_directory').'/'.$person->getImage();
-                        if (file_exists($oldImagePath)) {
-                            unlink($oldImagePath);
+                        $oldPhotoPath = $this->getParameter('kernel.project_dir').'/public/uploads/persons/'.$person->getImage();
+                        if (file_exists($oldPhotoPath)) {
+                            unlink($oldPhotoPath);
                         }
                     }
+                    $person->setImage(null);
+                } else {
+                    // Handle photo upload
+                    $photoFile = $form->get('photoFile')->getData();
+                    if ($photoFile) {
+                        // Delete old photo if exists
+                        if ($person->getImage()) {
+                            $oldPhotoPath = $this->getParameter('kernel.project_dir').'/public/uploads/persons/'.$person->getImage();
+                            if (file_exists($oldPhotoPath)) {
+                                unlink($oldPhotoPath);
+                            }
+                        }
 
-                    $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
-                    $safeFilename = $slugger->slug($originalFilename);
-                    $newFilename = $safeFilename.'-'.uniqid().'.'.$photoFile->guessExtension();
+                        $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_FILENAME);
+                        $safeFilename = $slugger->slug($originalFilename);
+                        $newFilename = $safeFilename.'-'.uniqid().'.'.$photoFile->guessExtension();
 
-                    try {
-                        // Vérification de l'existence du répertoire
-                        $uploadsDirectory = $this->getParameter('projects_directory');
+                        $uploadsDirectory = $this->getParameter('kernel.project_dir').'/public/uploads/persons';
                         if (!is_dir($uploadsDirectory)) {
                             mkdir($uploadsDirectory, 0755, true);
                         }
                         
                         $photoFile->move($uploadsDirectory, $newFilename);
                         $person->setImage($newFilename);
-                    } catch (FileException $e) {
-                        $this->addFlash('error', 'Erreur lors du téléchargement de l\'image : ' . $e->getMessage());
-                        return $this->redirectToRoute('admin_person_edit', ['id' => $person->getId()]);
                     }
                 }
-                // Sauvegarde optimisée
-                $entityManager->flush();
-                
-                // Libération de la mémoire
-                $entityManager->clear();
 
-                $this->addFlash('success', 'Family has been modified successfully.');
+                // Handle emergency contact
+                $emergencyContactData = [];
+                $emergencyName = $form->get('emergencyContactName')->getData();
+                $emergencyEmail = $form->get('emergencyContactEmail')->getData();
+                $emergencyPhone = $form->get('emergencyContactPhone')->getData();
+                $emergencyRelation = $form->get('emergencyContactRelation')->getData();
+
+                if ($emergencyName || $emergencyEmail || $emergencyPhone) {
+                    $emergencyContactData = [
+                        'name' => $emergencyName,
+                        'email' => $emergencyEmail,
+                        'phone' => $emergencyPhone,
+                        'relation' => $emergencyRelation
+                    ];
+                    $person->setEmergencyContact($emergencyContactData);
+                } else {
+                    $person->setEmergencyContact(null);
+                }
+
+                $entityManager->flush();
+
+                $this->addFlash('success', 'Person has been updated successfully.');
                 return $this->redirectToRoute('admin_person_index', [], Response::HTTP_SEE_OTHER);
                 
             } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la modification du projet : ' . $e->getMessage());
-                return $this->redirectToRoute('admin_person_edit', ['id' => $person->getId()]);
+                $this->addFlash('error', 'Error updating person: ' . $e->getMessage());
             }
         }
 
@@ -159,32 +204,136 @@ class PersonController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'admin_person_delete', methods: ['POST'])]
-    public function delete(Request $request, person $person, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}/delete', name: 'admin_person_delete', methods: ['POST'])]
+    public function delete(Request $request, Person $person, EntityManagerInterface $entityManager): Response
     {
         if ($this->isCsrfTokenValid('delete'.$person->getId(), $request->request->get('_token'))) {
             try {
-
-                // Supprimer l'image si elle existe
-                if ($person->getImage()) {
-                    $imagePath = $this->getParameter('procedures_directory').'/'.$person->getImage();
-                    if (file_exists($imagePath)) {
-                        unlink($imagePath);
-                    }
-                }
-
-                $entityManager->remove($person);
+                // Soft delete - set isDeleted to true instead of removing from database
+                $person->setIsDeleted(true);
                 $entityManager->flush();
-                
-                // Libération de la mémoire
-                $entityManager->clear();
 
                 $this->addFlash('success', 'Person has been deleted successfully.');
             } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la suppression du projet : ' . $e->getMessage());
+                $this->addFlash('error', 'Error deleting person: ' . $e->getMessage());
             }
         }
 
         return $this->redirectToRoute('admin_person_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/verify', name: 'admin_person_verify', methods: ['POST'])]
+    public function verify(Person $person, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            if ($person->getVerifiedAt()) {
+                $person->setVerifiedAt(null);
+                $message = 'Person verification removed successfully.';
+            } else {
+                $person->setVerifiedAt(new \DateTime());
+                $message = 'Person verified successfully.';
+            }
+            
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'verified' => $person->getVerifiedAt() !== null,
+                'verifiedAt' => $person->getVerifiedAt()?->format('Y-m-d H:i:s'),
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error updating verification status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/{id}/restore', name: 'admin_person_restore', methods: ['POST'])]
+    public function restore(Person $person, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $person->setIsDeleted(false);
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Person restored successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error restoring person: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/search', name: 'admin_person_search', methods: ['GET'])]
+    public function search(Request $request, PersonRepository $personRepository): JsonResponse
+    {
+        $query = $request->query->get('q', '');
+        
+        if (strlen($query) < 2) {
+            return new JsonResponse(['results' => []]);
+        }
+
+        $persons = $personRepository->searchByNameOrId($query, 10);
+        
+        $results = [];
+        foreach ($persons as $person) {
+            $results[] = [
+                'id' => $person->getId(),
+                'text' => sprintf('%s (%s)', $person->getFullName(), $person->getNationalId()),
+                'email' => $person->getEmail(),
+                'phone' => $person->getPhoneNumber()
+            ];
+        }
+
+        return new JsonResponse(['results' => $results]);
+    }
+
+    #[Route('/export', name: 'admin_person_export', methods: ['GET'])]
+    public function export(PersonRepository $personRepository): Response
+    {
+        $persons = $personRepository->findBy(['isDeleted' => false], ['lastName' => 'ASC']);
+        
+        $csvData = [];
+        $csvData[] = [
+            'ID', 'First Name', 'Last Name', 'Middle Name', 'Email', 'Phone', 
+            'Gender', 'Date of Birth', 'National ID', 'Region', 'City', 
+            'Profession', 'Marital Status', 'Created At'
+        ];
+
+        foreach ($persons as $person) {
+            $csvData[] = [
+                $person->getId(),
+                $person->getFirstName(),
+                $person->getLastName(),
+                $person->getMiddleName(),
+                $person->getEmail(),
+                $person->getPhoneNumber(),
+                $person->getGenderText(),
+                $person->getDateOfBirth()?->format('Y-m-d'),
+                $person->getNationalId(),
+                $person->getRegion(),
+                $person->getCity(),
+                $person->getProfession(),
+                $person->getMaritalStatus(),
+                $person->getCreatedAt()?->format('Y-m-d H:i:s')
+            ];
+        }
+
+        $response = new Response();
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="persons_export_'.date('Y-m-d').'.csv"');
+
+        $output = fopen('php://output', 'w');
+        foreach ($csvData as $row) {
+            fputcsv($output, $row);
+        }
+        fclose($output);
+
+        return $response;
     }
 }

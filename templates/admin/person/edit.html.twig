@@ -1,13 +1,163 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Update the person{% endblock %}
+{% block title %}Edit Citizen{% endblock %}
 
 {% block body %}
-<h1>Update the person</h1>
-
-<div class="card">
-    <div class="card-body">
-        {{ include('admin/person/_form.html.twig', {'button_label': 'Update'}) }}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi-pencil me-2"></i>
+        Edit Citizen: {{ person.fullName }}
+    </h1>
+    <div class="btn-group">
+        <a href="{{ path('admin_person_show', {'id': person.id}) }}" class="btn btn-outline-info">
+            <i class="bi-eye me-2"></i>
+            View Profile
+        </a>
+        <button type="button" 
+                class="btn btn-{{ person.verifiedAt ? 'success' : 'outline-success' }} verify-btn"
+                data-person-id="{{ person.id }}">
+            <i class="bi-{{ person.verifiedAt ? 'check-circle-fill' : 'check-circle' }} me-2"></i>
+            {{ person.verifiedAt ? 'Verified' : 'Verify' }}
+        </button>
     </div>
 </div>
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('admin_person_index') }}">Citizens</a></li>
+        <li class="breadcrumb-item"><a href="{{ path('admin_person_show', {'id': person.id}) }}">{{ person.fullName }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Edit</li>
+    </ol>
+</nav>
+
+{% if person.verifiedAt %}
+<div class="alert alert-warning">
+    <div class="d-flex align-items-center">
+        <i class="bi-exclamation-triangle me-3" style="font-size: 1.5rem;"></i>
+        <div>
+            <h6 class="alert-heading mb-1">Verified Citizen</h6>
+            <p class="mb-0">This citizen has been verified on {{ person.verifiedAt|date('F d, Y \\a\\t H:i') }}. Please ensure any changes are necessary and accurate.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-md-9">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="bi-person-vcard me-2"></i>
+                    Update Citizen Information
+                </h5>
+            </div>
+            <div class="card-body">
+                {{ include('admin/person/_form.html.twig', {'button_label': 'Update Citizen'}) }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <!-- Quick Stats -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-graph-up me-2"></i>
+                    Quick Stats
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted">Documents:</span>
+                    <span class="badge bg-info">{{ person.documents|length }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted">Age:</span>
+                    <span class="badge bg-secondary">{{ person.age }} years</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-muted">Member since:</span>
+                    <span class="small">{{ person.createdAt|date('M Y') }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small text-muted">Last update:</span>
+                    <span class="small">{{ person.updatedAt|date('M d') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        {% if person.documents|length > 0 %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-clock-history me-2"></i>
+                    Recent Documents
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for document in person.documents|slice(0, 3) %}
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi-file-earmark text-muted me-2"></i>
+                    <div class="flex-grow-1">
+                        <div class="small fw-bold">{{ document.name|slice(0, 20) }}{% if document.name|length > 20 %}...{% endif %}</div>
+                        <div class="small text-muted">{{ document.createdAt|date('M d, Y') }}</div>
+                    </div>
+                    <span class="badge bg-{{ document.statusBadgeClass }} badge-sm">{{ document.status }}</span>
+                </div>
+                {% endfor %}
+                {% if person.documents|length > 3 %}
+                <div class="text-center mt-2">
+                    <a href="{{ path('admin_person_show', {'id': person.id}) }}" class="btn btn-sm btn-outline-primary">
+                        View All ({{ person.documents|length }})
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verify button functionality
+    document.querySelectorAll('.verify-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const personId = this.dataset.personId;
+            
+            fetch(`/admin/person/${personId}/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating verification status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error updating verification status');
+            });
+        });
+    });
+
+    // Highlight changed fields
+    const form = document.getElementById('personForm');
+    if (form) {
+        const originalData = new FormData(form);
+        
+        form.addEventListener('change', function(e) {
+            if (e.target.type !== 'hidden') {
+                e.target.classList.add('border-warning');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

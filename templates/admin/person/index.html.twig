@@ -1,84 +1,302 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Persons Management{% endblock %}
+{% block title %}Citizens Registry{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Persons Management</h1>
-    <a href="{{ path('admin_person_new') }}" class="btn btn-primary">
-        <i class="fas fa-plus"></i> New person
-    </a>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Photo</th>
-                    <th>First name</th>
-                    <th>Last name</th>
-                    <th>Middle Name</th>
-                    <th>Gender</th>
-                    <th>Date of birth</th>
-                    <th>Place of birth</th>
-                    <th>National ID</th>
-                    <th>Email</th>
-                    <th>Phone number</th>
-                    <th>Marital status</th>
-                    <th>Region</th>
-                    <th>Address</th>
-                    <th>Profession</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            {% for person in persons %}
-                <tr>
-                    <td>{{ person.id }}</td>
-                    <td>
-                        {% if person.image %}
-                            <img src="{{ asset('uploads/procedures/' ~ procedure.image) }}" alt="{{ person.firstName }}" style="height: 50px;">
-                        {% else %}
-                            <span class="text-muted">No photo</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ person.firstName }}</td>
-                    <td>{{ person.lastName }}</td>
-                    <td>{{ person.middleName }}</td>
-                    <td>{{ person.gender }}</td>
-                    <td>{{ person.dateOfBirth|date('d/m/Y') }}</td>
-                    <td>{{ person.placeOfBirth }}</td>
-                    <td>{{ person.nationalId }}</td>
-                    <td>{{ person.email }}</td>
-                    <td>{{ person.phoneNumber }}</td>
-                    <td>{{ person.maritalStatus }}</td>
-                    <td>{{ person.region }}</td>
-                    <td>{{ person.address }}</td>
-                    <td>{{ person.profession }}</td>
-                    <td>
-                        <a href="{{ path('admin_person_show', {'id': person.id}) }}" class="btn btn-sm btn-info">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="{{ path('admin_person_edit', {'id': person.id}) }}" class="btn btn-sm btn-warning">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form method="post" action="{{ path('admin_person_delete', {'id': person.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette procedure ?');" style="display: inline-block;">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ person.id) }}">
-                            <button class="btn btn-sm btn-danger">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            {% else %}
-                <tr>
-                    <td colspan="8" class="text-center">No person found</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+    <h1 class="mb-0">
+        <i class="bi-person-vcard me-2"></i>
+        Citizens Registry Management
+    </h1>
+    <div class="btn-group">
+        <a href="{{ path('admin_person_new') }}" class="btn btn-primary">
+            <i class="bi-person-plus me-2"></i>
+            Register New Citizen
+        </a>
+        <a href="{{ path('admin_person_export') }}" class="btn btn-outline-secondary">
+            <i class="bi-download me-2"></i>
+            Export
+        </a>
     </div>
 </div>
+
+<!-- Filters -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h6 class="card-title mb-0">
+            <i class="bi-funnel me-2"></i>
+            Search & Filter Citizens
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label fw-bold">Search</label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Name, Email, or National ID" 
+                       value="{{ filters.search }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">Region</label>
+                <select name="region" class="form-select">
+                    <option value="">All Regions</option>
+                    {% for region in regions %}
+                        <option value="{{ region }}" {% if filters.region == region %}selected{% endif %}>
+                            {{ region }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold">Gender</label>
+                <select name="gender" class="form-select">
+                    <option value="">All</option>
+                    <option value="M" {% if filters.gender == 'M' %}selected{% endif %}>Male</option>
+                    <option value="F" {% if filters.gender == 'F' %}selected{% endif %}>Female</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi-search me-1"></i> Search
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if persons|length > 0 %}
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="bi-list-ul me-2"></i>
+            All Citizens ({{ persons|length }})
+        </h5>
+        <small class="text-muted">Page {{ currentPage }}</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="8%">Photo</th>
+                        <th width="18%">Full Name</th>
+                        <th width="12%">Contact</th>
+                        <th width="10%">Identity</th>
+                        <th width="8%">Age/Gender</th>
+                        <th width="10%">Location</th>
+                        <th width="8%">Documents</th>
+                        <th width="6%">Status</th>
+                        <th width="15%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for person in persons %}
+                    <tr>
+                        <td class="text-muted">#{{ person.id }}</td>
+                        <td>
+                            {% if person.image %}
+                                <img src="{{ asset('uploads/persons/' ~ person.image) }}" 
+                                     alt="{{ person.fullName }}" 
+                                     class="img-thumbnail rounded-circle" 
+                                     style="width: 45px; height: 45px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-primary d-flex align-items-center justify-content-center rounded-circle text-white"
+                                     style="width: 45px; height: 45px;">
+                                    <i class="bi-person"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ person.fullName }}</strong>
+                            {% if person.profession %}
+                                <div class="text-muted small">{{ person.profession }}</div>
+                            {% endif %}
+                            <div class="small text-muted">
+                                <i class="bi-calendar me-1"></i>{{ person.createdAt|date('M d, Y') }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small">
+                                <i class="bi-envelope me-1"></i>{{ person.email|slice(0, 20) }}{% if person.email|length > 20 %}...{% endif %}
+                            </div>
+                            <div class="small text-muted">
+                                <i class="bi-telephone me-1"></i>{{ person.phoneNumber }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="small">
+                                <strong>{{ person.nationalId }}</strong>
+                            </div>
+                            {% if person.nationality %}
+                                <div class="small text-muted">{{ person.nationality }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ person.gender == 'M' ? 'primary' : 'pink' }}">
+                                {{ person.age }} / {{ person.genderText }}
+                            </span>
+                            {% if person.maritalStatus %}
+                                <div class="small text-muted">{{ person.maritalStatus|title }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if person.region %}
+                                <div class="small"><strong>{{ person.region }}</strong></div>
+                            {% endif %}
+                            {% if person.city %}
+                                <div class="small text-muted">{{ person.city }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if person.documents|length > 0 %}
+                                <span class="badge bg-info">{{ person.documents|length }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <!-- Verification Status -->
+                                <button class="btn btn-sm btn-outline-{{ person.verifiedAt ? 'success' : 'warning' }} verify-toggle"
+                                        data-person-id="{{ person.id }}"
+                                        title="{{ person.verifiedAt ? 'Verified' : 'Not Verified' }}">
+                                    <i class="bi-{{ person.verifiedAt ? 'check-circle-fill' : 'exclamation-circle' }}"></i>
+                                    <span class="verification-text">{{ person.verifiedAt ? 'Verified' : 'Pending' }}</span>
+                                </button>
+                                {% if person.verifiedAt %}
+                                    <small class="text-muted">{{ person.verifiedAt|date('M d') }}</small>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ path('admin_person_show', {'id': person.id}) }}" 
+                                   class="btn btn-outline-info" title="View">
+                                    <i class="bi-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_person_edit', {'id': person.id}) }}" 
+                                   class="btn btn-outline-warning" title="Edit">
+                                    <i class="bi-pencil"></i>
+                                </a>
+                                <button type="button" 
+                                        class="btn btn-outline-danger delete-btn" 
+                                        data-person-id="{{ person.id }}"
+                                        data-person-name="{{ person.fullName }}"
+                                        title="Delete">
+                                    <i class="bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi-person-vcard text-muted" style="font-size: 4rem;"></i>
+    <h3 class="text-muted mt-3">No citizens found</h3>
+    <p class="text-muted">
+        {% if filters.search or filters.region or filters.gender %}
+            Try adjusting your search criteria or filters
+        {% else %}
+            Start by registering your first citizen
+        {% endif %}
+    </p>
+    <a href="{{ path('admin_person_new') }}" class="btn btn-primary">
+        <i class="bi-person-plus me-2"></i>
+        Register First Citizen
+    </a>
+</div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the citizen <strong id="personName"></strong>?</p>
+                <p class="text-muted small">This action will remove the citizen from active registry but preserve their data for auditing purposes.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <input type="hidden" name="_token" id="deleteToken">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi-trash me-1"></i>
+                        Delete Citizen
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verification toggle functionality
+    document.querySelectorAll('.verify-toggle').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const personId = this.dataset.personId;
+            
+            fetch(`/admin/person/${personId}/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const icon = this.querySelector('i');
+                    const text = this.querySelector('.verification-text');
+                    
+                    if (data.verified) {
+                        this.className = 'btn btn-sm btn-outline-success verify-toggle';
+                        icon.className = 'bi-check-circle-fill';
+                        text.textContent = 'Verified';
+                    } else {
+                        this.className = 'btn btn-sm btn-outline-warning verify-toggle';
+                        icon.className = 'bi-exclamation-circle';
+                        text.textContent = 'Pending';
+                    }
+                } else {
+                    alert('Error updating verification status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error updating verification status');
+            });
+        });
+    });
+
+    // Delete modal functionality
+    document.querySelectorAll('.delete-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const personId = this.dataset.personId;
+            const personName = this.dataset.personName;
+            
+            document.getElementById('personName').textContent = personName;
+            document.getElementById('deleteForm').action = `/admin/person/${personId}/delete`;
+            document.getElementById('deleteToken').value = '{{ csrf_token("delete") }}';
+            
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+});
+</script>
 {% endblock %}

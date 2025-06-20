@@ -1,114 +1,498 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ person.firstName }}{% endblock %}
+{% block title %}{{ person.fullName }}{% endblock %}
 
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>{{ person.firstName }}</h1>
-    <div>
+    <h1 class="mb-0">
+        <i class="bi-eye me-2"></i>
+        {{ person.fullName }}
+    </h1>
+    <div class="btn-group">
         <a href="{{ path('admin_person_edit', {'id': person.id}) }}" class="btn btn-warning">
-            <i class="fas fa-edit"></i> Update
+            <i class="bi-pencil me-2"></i>
+            Edit
         </a>
-        <a href="{{ path('admin_person_index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Back to the list
-        </a>
+        <button type="button" 
+                class="btn btn-{{ person.verifiedAt ? 'success' : 'outline-success' }} verify-btn"
+                data-person-id="{{ person.id }}">
+            <i class="bi-{{ person.verifiedAt ? 'check-circle-fill' : 'check-circle' }} me-2"></i>
+            {{ person.verifiedAt ? 'Verified' : 'Verify' }}
+        </button>
+        <button type="button" 
+                class="btn btn-danger delete-btn" 
+                data-person-id="{{ person.id }}"
+                data-person-name="{{ person.fullName }}">
+            <i class="bi-trash me-2"></i>
+            Delete
+        </button>
     </div>
 </div>
 
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('admin_person_index') }}">Citizens</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ person.fullName }}</li>
+    </ol>
+</nav>
+
 <div class="row">
     <div class="col-md-8">
-        <div class="card">
+        <!-- Personal Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-person-fill me-2"></i>
+                    Personal Information
+                </h5>
+            </div>
             <div class="card-body">
-                <h5 class="card-title">Person informations</h5>
-                <table class="table">
-                    <tbody>
-                        <tr>
-                            <th>ID</th>
-                            <td>{{ person.id }}</td>
-                        </tr>
-                        <tr>
-                            <th>First name</th>
-                            <td>{{ person.firstName }}</td>
-                        </tr>
-                        <tr>
-                            <th>Last name</th>
-                            <td>{{ person.lastName }}</td>
-                        </tr>
-                        <tr>
-                            <th>Middle name</th>
-                            <td>{{ person.middleName }}</td>
-                        </tr>
-                        <tr>
-                            <th>Gender</th>
-                            <td>{{ person.gender }}</td>
-                        </tr>
-                        <tr>
-                            <th>Date of birth</th>
-                            <td>{{ person.dateOfBirth|date('d/m/Y') }}</td>
-                        </tr>
-                        <tr>
-                            <th>Place of birth</th>
-                            <td>{{ person.placeOfBirth }}</td>
-                        </tr>
-                        <tr>
-                            <th>National ID</th>
-                            <td>{{ person.nationalId }}</td>
-                        </tr>
-                        <tr>
-                            <th>Email</th>
-                            <td>{{ person.email }}</td>
-                        </tr>
-                        <tr>
-                            <th>Phone number</th>
-                            <td>{{ person.phoneNumber }}</td>
-                        </tr>
-                        <tr>
-                            <th>Marital status</th>
-                            <td>{{ person.maritalStatus }}</td>
-                        </tr>
-                        <tr>
-                            <th>Phone number</th>
-                            <td>{{ person.phoneNumber }}</td>
-                        </tr>
-                        <tr>
-                            <th>Region</th>
-                            <td>{{ person.region }}</td>
-                        </tr>
-                        <tr>
-                            <th>Address</th>
-                            <td>{{ person.address }}</td>
-                        </tr>
-                        <tr>
-                            <th>Profession</th>
-                            <td>{{ person.profession }}</td>
-                        </tr>
-                        
-                        <tr>
-                            <th>Ordre d'affichage</th>
-                            <td>{{ person.displayOrder }}</td>
-                        </tr>
-                        <tr>
-                            <th>Créé le</th>
-                            <td>{{ person.createdAt ? person.createdAt|date('d/m/Y H:i') : '' }}</td>
-                        </tr>
-                        <tr>
-                            <th>Modifié le</th>
-                            <td>{{ person.updatedAt ? person.updatedAt|date('d/m/Y H:i') : '' }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Full Name:</label>
+                            <p class="fs-5">{{ person.fullName }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">National ID:</label>
+                            <p><span class="badge bg-dark fs-6">{{ person.nationalId }}</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Gender:</label>
+                            <p>
+                                <span class="badge bg-{{ person.gender == 'M' ? 'primary' : 'pink' }} fs-6">
+                                    <i class="bi-{{ person.gender == 'M' ? 'person' : 'person-dress' }} me-1"></i>
+                                    {{ person.genderText }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Age:</label>
+                            <p><span class="badge bg-info fs-6">{{ person.age }} years old</span></p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Date of Birth:</label>
+                            <p>{{ person.dateOfBirth|date('F d, Y') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {% if person.placeOfBirth or person.nationality %}
+                <div class="row">
+                    {% if person.placeOfBirth %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Place of Birth:</label>
+                            <p>{{ person.placeOfBirth }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if person.nationality %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Nationality:</label>
+                            <p>{{ person.nationality }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% if person.maritalStatus %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted">Marital Status:</label>
+                    <p><span class="badge bg-secondary fs-6">{{ person.maritalStatus|title }}</span></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-telephone-fill me-2"></i>
+                    Contact Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Email:</label>
+                            <p>
+                                <a href="mailto:{{ person.email }}" class="text-decoration-none">
+                                    <i class="bi-envelope me-1"></i>{{ person.email }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Phone:</label>
+                            <p>
+                                <a href="tel:{{ person.phoneNumber }}" class="text-decoration-none">
+                                    <i class="bi-telephone me-1"></i>{{ person.phoneNumber }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted">Address:</label>
+                    <div class="border rounded p-3 bg-light">
+                        {{ person.fullAddress }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Information -->
+        {% if person.profession or person.employer %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-briefcase-fill me-2"></i>
+                    Professional Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if person.profession %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Profession:</label>
+                            <p>{{ person.profession }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if person.employer %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Employer:</label>
+                            <p>{{ person.employer }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Emergency Contact -->
+        {% if person.emergencyContact %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="bi-exclamation-triangle-fill me-2"></i>
+                    Emergency Contact
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Name:</label>
+                            <p>{{ person.emergencyContact.name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Relation:</label>
+                            <p><span class="badge bg-warning text-dark">{{ person.emergencyContact.relation|title }}</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    {% if person.emergencyContact.phone %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Phone:</label>
+                            <p>
+                                <a href="tel:{{ person.emergencyContact.phone }}" class="text-decoration-none">
+                                    <i class="bi-telephone me-1"></i>{{ person.emergencyContact.phone }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if person.emergencyContact.email %}
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Email:</label>
+                            <p>
+                                <a href="mailto:{{ person.emergencyContact.email }}" class="text-decoration-none">
+                                    <i class="bi-envelope me-1"></i>{{ person.emergencyContact.email }}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Associated Documents -->
+        {% if person.activeDocuments|length > 0 %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-files me-2"></i>
+                    Associated Documents ({{ person.activeDocuments|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Expiry</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in person.activeDocuments %}
+                            <tr>
+                                <td>
+                                    <strong>{{ document.name }}</strong>
+                                    {% if document.description %}
+                                        <div class="text-muted small">{{ document.description|slice(0, 50) }}...</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ document.type == 'input' ? 'warning' : 'success' }}">
+                                        {{ document.type|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ document.statusBadgeClass }}">
+                                        {{ document.status|title }}
+                                    </span>
+                                    {% if document.isExpired %}
+                                        <span class="badge bg-danger">Expired</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if document.expirationDate %}
+                                        {{ document.expirationDate|date('M d, Y') }}
+                                        {% if document.isExpired %}
+                                            <i class="bi-exclamation-triangle text-danger"></i>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">No expiry</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('admin_document_show', {'id': document.id}) }}" 
+                                           class="btn btn-outline-info">
+                                            <i class="bi-eye"></i>
+                                        </a>
+                                        {% if document.filePath %}
+                                            <a href="{{ asset('uploads/documents/' ~ document.filePath) }}" 
+                                               target="_blank" 
+                                               class="btn btn-outline-secondary">
+                                                <i class="bi-download"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Photo -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-camera me-2"></i>
+                    Photo
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                {% if person.image %}
+                    <img src="{{ asset('uploads/persons/' ~ person.image) }}" 
+                         alt="{{ person.fullName }}" 
+                         class="img-fluid rounded border"
+                         style="max-width: 100%; max-height: 300px;">
+                {% else %}
+                    <div class="text-muted">
+                        <i class="bi-person-circle" style="font-size: 8rem;"></i>
+                        <p class="mt-3 mb-0">No photo uploaded</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Status & Metadata -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-info-circle me-2"></i>
+                    Status & Metadata
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">ID:</label>
+                    <p class="mb-0">#{{ person.id }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Verification Status:</label>
+                    <p class="mb-0">
+                        {% if person.verifiedAt %}
+                            <span class="badge bg-success">
+                                <i class="bi-check-circle-fill me-1"></i>
+                                Verified
+                            </span>
+                            <small class="text-muted d-block">{{ person.verifiedAt|date('F d, Y \\a\\t H:i') }}</small>
+                        {% else %}
+                            <span class="badge bg-warning">
+                                <i class="bi-exclamation-circle me-1"></i>
+                                Pending Verification
+                            </span>
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Display Order:</label>
+                    <p class="mb-0"><span class="badge bg-secondary">{{ person.displayOrder }}</span></p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Registered:</label>
+                    <p class="mb-0">{{ person.createdAt|date('F d, Y \\a\\t H:i') }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Last Updated:</label>
+                    <p class="mb-0">{{ person.updatedAt|date('F d, Y \\a\\t H:i') }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-lightning me-2"></i>
+                    Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="mailto:{{ person.email }}" class="btn btn-outline-primary">
+                        <i class="bi-envelope me-2"></i>
+                        Send Email
+                    </a>
+                    <a href="tel:{{ person.phoneNumber }}" class="btn btn-outline-success">
+                        <i class="bi-telephone me-2"></i>
+                        Call Phone
+                    </a>
+                    <a href="{{ path('admin_document_new') }}?person={{ person.id }}" class="btn btn-outline-info">
+                        <i class="bi-file-plus me-2"></i>
+                        Add Document
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        {% if person.image %}
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Image</h5>
-                    <img src="{{ asset('uploads/procedures/' ~ procedure.image) }}" alt="{{ person.firstName }}" class="img-fluid">
-                </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-        {% endif %}
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>{{ person.fullName }}</strong>?</p>
+                {% if person.documents|length > 0 %}
+                    <div class="alert alert-warning">
+                        <i class="bi-exclamation-triangle me-2"></i>
+                        This person has {{ person.documents|length }} associated document(s). They will remain in the system.
+                    </div>
+                {% endif %}
+                <p class="text-muted small">This action will remove the citizen from active registry but preserve their data for auditing purposes.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{{ path('admin_person_delete', {'id': person.id}) }}" style="display: inline;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ person.id) }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi-trash me-1"></i>
+                        Delete Citizen
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verify button functionality
+    document.querySelectorAll('.verify-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const personId = this.dataset.personId;
+            
+            fetch(`/admin/person/${personId}/verify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating verification status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error updating verification status');
+            });
+        });
+    });
+
+    // Delete button functionality
+    document.querySelectorAll('.delete-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+});
+</script>
 {% endblock %}

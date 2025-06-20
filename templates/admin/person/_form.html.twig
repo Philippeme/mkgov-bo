@@ -1,62 +1,383 @@
-{{ form_start(form) }}
-    <div class="row">
-        <div class="col-md-8">
-            <div class="mb-3">
-                {{ form_row(form.firstName) }}
+{{ form_start(form, {'attr': {'id': 'personForm', 'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+<div class="row">
+    <div class="col-md-8">
+        <!-- Personal Information -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="card-title mb-0">
+                    <i class="bi-person-fill me-2"></i>
+                    Personal Information
+                </h6>
             </div>
-            <div class="mb-3">
-                {{ form_row(form.lastName) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.middleName) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.nationalId) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.email) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.phoneNumber) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.dateOfBirth) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.placeOfBirth) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.gender) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.maritalStatus) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.region ) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.address) }}
-            </div>
-            <div class="mb-3">
-                {{ form_row(form.profession) }}
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form_row(form.firstName, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form_row(form.lastName, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form_row(form.middleName, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form_row(form.gender, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-select'}
+                        }) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form_row(form.dateOfBirth, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form_row(form.placeOfBirth, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_row(form.nationalId, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.nationality, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_row(form.profession, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.employer, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    {{ form_row(form.maritalStatus, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-select'}
+                    }) }}
+                </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="mb-3">
-                {{ form_row(form.photoFile) }}
-                {% if person.image %}
-                    <div class="mt-2">
-                        <p>Image actuelle :</p>
-                        <img src="{{ asset('uploads/procedures/' ~ person.image) }}" alt="{{ person.firstName }}" class="img-fluid">
+
+        <!-- Contact Information -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="bi-telephone-fill me-2"></i>
+                    Contact Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_row(form.email, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
                     </div>
-                {% endif %}
+                    <div class="col-md-6">
+                        {{ form_row(form.phoneNumber, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                </div>
+
+                {{ form_row(form.address, {
+                    'label_attr': {'class': 'form-label fw-bold'},
+                    'attr': {'class': 'form-control', 'rows': 3}
+                }) }}
+
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form_row(form.city, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form_row(form.region, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-select'}
+                        }) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form_row(form.postalCode, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                </div>
             </div>
-            <div class="mb-3">
-                {{ form_row(form.displayOrder) }}
+        </div>
+
+        <!-- Emergency Contact -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="card-title mb-0">
+                    <i class="bi-exclamation-triangle-fill me-2"></i>
+                    Emergency Contact
+                </h6>
             </div>
-            
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_row(form.emergencyContactName, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.emergencyContactRelation, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-select'}
+                        }) }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_row(form.emergencyContactPhone, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.emergencyContactEmail, {
+                            'label_attr': {'class': 'form-label fw-bold'},
+                            'attr': {'class': 'form-control'}
+                        }) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Administrative -->
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h6 class="card-title mb-0">
+                    <i class="bi-gear-fill me-2"></i>
+                    Administrative
+                </h6>
+            </div>
+            <div class="card-body">
+                {{ form_row(form.displayOrder, {
+                    'label_attr': {'class': 'form-label fw-bold'},
+                    'attr': {'class': 'form-control'}
+                }) }}
+            </div>
         </div>
     </div>
-    <button class="btn btn-primary">{{ button_label|default('Save') }}</button>
-    <a href="{{ path('admin_person_index') }}" class="btn btn-secondary">Cancel</a>
+    
+    <div class="col-md-4">
+        <!-- Photo Management -->
+        <div class="card bg-light">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-camera me-2"></i>
+                    Citizen Photo
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- Photo Preview -->
+                <div class="mb-3 text-center">
+                    <div id="photoPreview" class="border rounded p-3" style="min-height: 200px;">
+                        {% if person.image %}
+                            <img src="{{ asset('uploads/persons/' ~ person.image) }}" 
+                                 alt="{{ person.fullName }}" 
+                                 class="img-fluid rounded"
+                                 style="max-height: 180px;">
+                            <p class="mt-2 mb-0 small text-muted">Current Photo</p>
+                        {% else %}
+                            <div class="text-muted">
+                                <i class="bi-person-circle" style="font-size: 4rem;"></i>
+                                <p class="mt-2 mb-0">No photo uploaded</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Photo Upload -->
+                <div class="mb-3">
+                    {{ form_row(form.photoFile, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-control', 'accept': 'image/*', 'onchange': 'previewPhoto(this)'}
+                    }) }}
+                </div>
+
+                <!-- Remove Photo Option -->
+                {% if person.image %}
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form_widget(form.removePhoto, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form.removePhoto, 'Remove current photo', {'label_attr': {'class': 'form-check-label text-danger'}}) }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="form-text">
+                    <small>
+                        <i class="bi-info-circle me-1"></i>
+                        Upload JPEG, PNG, or WEBP. Max: 2MB
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Photo Guidelines -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-lightbulb me-2"></i>
+                    Photo Guidelines
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled small mb-0">
+                    <li class="mb-2">
+                        <i class="bi-check-circle text-success me-2"></i>
+                        Clear, recent photo of the person
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi-check-circle text-success me-2"></i>
+                        Neutral background preferred
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi-check-circle text-success me-2"></i>
+                        Face clearly visible and centered
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi-check-circle text-success me-2"></i>
+                        No sunglasses or headwear
+                    </li>
+                    <li>
+                        <i class="bi-check-circle text-success me-2"></i>
+                        High resolution (min 300x300px)
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <button type="submit" class="btn btn-primary">
+        <i class="bi-check-circle me-2"></i>
+        {{ button_label|default('Save Citizen') }}
+    </button>
+    <a href="{{ path('admin_person_index') }}" class="btn btn-secondary">
+        <i class="bi-arrow-left me-2"></i>
+        Cancel
+    </a>
+</div>
+
 {{ form_end(form) }}
+
+<script>
+function previewPhoto(input) {
+    const preview = document.getElementById('photoPreview');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            preview.innerHTML = `
+                <img src="${e.target.result}" 
+                     class="img-fluid rounded" 
+                     style="max-height: 180px;"
+                     alt="Photo preview">
+                <p class="mt-2 mb-0 small text-muted">Photo Preview</p>
+            `;
+        };
+        
+        reader.readAsDataURL(input.files[0]);
+        
+        // Clear remove checkbox if checked
+        const removeCheckbox = document.querySelector('input[name="person[removePhoto]"]');
+        if (removeCheckbox) removeCheckbox.checked = false;
+    }
+}
+
+// Form validation
+document.getElementById('personForm').addEventListener('submit', function(e) {
+    const firstName = document.querySelector('input[name="person[firstName]"]').value.trim();
+    const lastName = document.querySelector('input[name="person[lastName]"]').value.trim();
+    const email = document.querySelector('input[name="person[email]"]').value.trim();
+    const phone = document.querySelector('input[name="person[phoneNumber]"]').value.trim();
+    const nationalId = document.querySelector('input[name="person[nationalId]"]').value.trim();
+    const address = document.querySelector('textarea[name="person[address]"]').value.trim();
+    
+    if (!firstName || !lastName || !email || !phone || !nationalId || !address) {
+        e.preventDefault();
+        alert('Please fill in all required fields (marked with *).');
+        return false;
+    }
+    
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        e.preventDefault();
+        alert('Please enter a valid email address.');
+        return false;
+    }
+});
+
+// Real-time validation feedback
+document.querySelectorAll('input[required], textarea[required], select[required]').forEach(function(field) {
+    field.addEventListener('blur', function() {
+        if (this.value.trim() === '') {
+            this.classList.add('is-invalid');
+        } else {
+            this.classList.remove('is-invalid');
+            this.classList.add('is-valid');
+        }
+    });
+});
+
+// Auto-format phone number
+document.querySelector('input[name="person[phoneNumber]"]').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 0) {
+        if (value.length <= 3) {
+            value = value;
+        } else if (value.length <= 6) {
+            value = value.slice(0, 3) + '-' + value.slice(3);
+        } else if (value.length <= 10) {
+            value = value.slice(0, 3) + '-' + value.slice(3, 6) + '-' + value.slice(6);
+        }
+    }
+    e.target.value = value;
+});
+</script>

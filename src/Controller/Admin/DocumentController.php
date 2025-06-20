@@ -17,19 +17,60 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 class DocumentController extends AbstractController
 {
     #[Route('/', name: 'admin_document_index', methods: ['GET'])]
-    public function index(DocumentRepository $documentRepository): Response
+    public function index(DocumentRepository $documentRepository, Request $request): Response
     {
-        $documents = $documentRepository->createQueryBuilder('d')
+        $search = $request->query->get('search', '');
+        $type = $request->query->get('type', '');
+        $status = $request->query->get('status', '');
+        $expiring = $request->query->get('expiring', '');
+
+        $queryBuilder = $documentRepository->createQueryBuilder('d')
             ->leftJoin('d.procedure', 'p')
-            ->addSelect('p')
-            ->orderBy('d.type', 'ASC')
-            ->addOrderBy('d.displayOrder', 'ASC')
-            ->addOrderBy('d.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->leftJoin('d.person', 'per')
+            ->addSelect('p', 'per')
+            ->where('d.isActive = :active')
+            ->setParameter('active', true);
+
+        if ($search) {
+            $queryBuilder->andWhere('d.name LIKE :search OR d.description LIKE :search')
+                        ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($type) {
+            $queryBuilder->andWhere('d.type = :type')
+                        ->setParameter('type', $type);
+        }
+
+        if ($status) {
+            $queryBuilder->andWhere('d.status = :status')
+                        ->setParameter('status', $status);
+        }
+
+        if ($expiring === 'yes') {
+            $futureDate = new \DateTime();
+            $futureDate->add(new \DateInterval('P30D'));
+            $queryBuilder->andWhere('d.expirationDate BETWEEN :today AND :futureDate')
+                        ->setParameter('today', new \DateTime())
+                        ->setParameter('futureDate', $futureDate);
+        } elseif ($expiring === 'expired') {
+            $queryBuilder->andWhere('d.expirationDate < :today')
+                        ->setParameter('today', new \DateTime());
+        }
+
+        $documents = $queryBuilder->orderBy('d.type', 'ASC')
+                                 ->addOrderBy('d.displayOrder', 'ASC')
+                                 ->addOrderBy('d.createdAt', 'DESC')
+                                 ->getQuery()
+                                 ->getResult();
         
         return $this->render('admin/document/index.html.twig', [
             'documents' => $documents,
+            'filters' => [
+                'search' => $search,
+                'type' => $type,
+                'status' => $status,
+                'expiring' => $expiring
+            ]
         ]);
     }
 
@@ -37,6 +78,16 @@ class DocumentController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $document = new Document();
+        
+        // If person parameter is provided, set the person
+        $personId = $request->query->get('person');
+        if ($personId) {
+            $person = $entityManager->getRepository(\App\Entity\Person::class)->find($personId);
+            if ($person && !$person->isDeleted()) {
+                $document->setPerson($person);
+            }
+        }
+
         $form = $this->createForm(DocumentType::class, $document);
         $form->handleRequest($request);
 
@@ -48,12 +99,12 @@ class DocumentController extends AbstractController
                     $this->generateDocumentTemplate($documentTemplate);
                     $document->setFilePath($documentTemplate);
                     $document->setMimeType('application/pdf');
+                    $document->setFileSize('Template');
                 }
 
                 // Handle custom document upload
                 $documentFile = $form->get('documentFile')->getData();
                 if ($documentFile) {
-                    // Récupérer les infos AVANT de déplacer le fichier
                     $fileSize = $documentFile->getSize();
                     $mimeType = $documentFile->getMimeType();
                     
@@ -72,10 +123,26 @@ class DocumentController extends AbstractController
                     $document->setMimeType($mimeType);
                 }
 
+                // Validate expiration date
+                if ($document->getExpirationDate() && $document->getExpirationDate() <= new \DateTime()) {
+                    $this->addFlash('warning', 'Document created with past expiration date. Please review.');
+                }
+
+                // Auto-update status based on expiration
+                if ($document->getExpirationDate() && $document->getExpirationDate() <= new \DateTime()) {
+                    $document->setStatus('expired');
+                }
+
                 $entityManager->persist($document);
                 $entityManager->flush();
 
                 $this->addFlash('success', 'Document has been created successfully.');
+                
+                // Redirect based on context
+                if ($document->getPerson()) {
+                    return $this->redirectToRoute('admin_person_show', ['id' => $document->getPerson()->getId()]);
+                }
+                
                 return $this->redirectToRoute('admin_document_index', [], Response::HTTP_SEE_OTHER);
                 
             } catch (\Exception $e) {
@@ -92,6 +159,10 @@ class DocumentController extends AbstractController
     #[Route('/{id}', name: 'admin_document_show', methods: ['GET'])]
     public function show(Document $document): Response
     {
+        if (!$document->isActive()) {
+            throw $this->createNotFoundException('Document not found.');
+        }
+
         return $this->render('admin/document/show.html.twig', [
             'document' => $document,
         ]);
@@ -100,6 +171,10 @@ class DocumentController extends AbstractController
     #[Route('/{id}/edit', name: 'admin_document_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Document $document, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
+        if (!$document->isActive()) {
+            throw $this->createNotFoundException('Document not found.');
+        }
+
         $form = $this->createForm(DocumentType::class, $document);
         $form->handleRequest($request);
 
@@ -143,6 +218,9 @@ class DocumentController extends AbstractController
                             }
                         }
 
+                        $fileSize = $documentFile->getSize();
+                        $mimeType = $documentFile->getMimeType();
+                        
                         $originalFilename = pathinfo($documentFile->getClientOriginalName(), PATHINFO_FILENAME);
                         $safeFilename = $slugger->slug($originalFilename);
                         $newFilename = $safeFilename.'-'.uniqid().'.'.$documentFile->guessExtension();
@@ -154,8 +232,19 @@ class DocumentController extends AbstractController
                         
                         $documentFile->move($uploadsDirectory, $newFilename);
                         $document->setFilePath($newFilename);
-                        $document->setFileSize($this->formatFileSize($documentFile->getSize()));
-                        $document->setMimeType($documentFile->getMimeType());
+                        $document->setFileSize($this->formatFileSize($fileSize));
+                        $document->setMimeType($mimeType);
+                    }
+                }
+
+                // Auto-update status based on expiration
+                if ($document->getExpirationDate()) {
+                    if ($document->getExpirationDate() <= new \DateTime()) {
+                        $document->setStatus('expired');
+                        $this->addFlash('warning', 'Document status updated to expired due to past expiration date.');
+                    } elseif ($document->getStatus() === 'expired' && $document->getExpirationDate() > new \DateTime()) {
+                        $document->setStatus('active');
+                        $this->addFlash('info', 'Document status updated from expired to active due to future expiration date.');
                     }
                 }
 
@@ -221,15 +310,75 @@ class DocumentController extends AbstractController
         }
     }
 
+    #[Route('/{id}/update-status', name: 'admin_document_update_status', methods: ['POST'])]
+    public function updateStatus(Request $request, Document $document, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $newStatus = $request->request->get('status');
+            $validStatuses = ['draft', 'pending', 'approved', 'rejected', 'expired', 'active'];
+            
+            if (!in_array($newStatus, $validStatuses)) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Invalid status'
+                ], 400);
+            }
+
+            $document->setStatus($newStatus);
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'status' => $newStatus,
+                'badgeClass' => $document->getStatusBadgeClass(),
+                'message' => 'Document status updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error updating status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/expiring-soon', name: 'admin_document_expiring_soon', methods: ['GET'])]
+    public function expiringSoon(DocumentRepository $documentRepository): JsonResponse
+    {
+        $documents = $documentRepository->findExpiringSoon(30);
+        
+        $result = [];
+        foreach ($documents as $document) {
+            $result[] = [
+                'id' => $document->getId(),
+                'name' => $document->getName(),
+                'expirationDate' => $document->getExpirationDate()?->format('Y-m-d'),
+                'daysUntilExpiry' => $document->getExpirationDate() ? 
+                    (new \DateTime())->diff($document->getExpirationDate())->days : null,
+                'person' => $document->getPerson() ? $document->getPerson()->getFullName() : null,
+                'procedure' => $document->getProcedure() ? $document->getProcedure()->getPname() : null
+            ];
+        }
+
+        return new JsonResponse($result);
+    }
+
     private function isDocumentTemplate(string $filename): bool
     {
         $templateFiles = [
             'birth-certificate-template.pdf', 'national-id-template.pdf', 'passport-template.pdf',
-            'marriage-certificate-template.pdf', 'death-certificate-template.pdf', 'divorce-certificate-template.pdf',
-            'business-license-template.pdf', 'tax-certificate-template.pdf', 'commercial-registration-template.pdf',
-            'diploma-certificate-template.pdf', 'transcript-template.pdf', 'equivalence-certificate-template.pdf',
-            'criminal-background-template.pdf', 'legal-certificate-template.pdf', 'court-document-template.pdf',
-            'medical-certificate-template.pdf', 'health-permit-template.pdf', 'vaccination-record-template.pdf'
+            'nationality-certificate-template.pdf', 'marriage-certificate-template.pdf', 
+            'death-certificate-template.pdf', 'divorce-certificate-template.pdf',
+            'business-license-template.pdf', 'tax-certificate-template.pdf', 
+            'commercial-registration-template.pdf', 'import-license-template.pdf',
+            'export-license-template.pdf', 'diploma-certificate-template.pdf', 
+            'transcript-template.pdf', 'equivalence-certificate-template.pdf',
+            'translation-certificate-template.pdf', 'criminal-background-template.pdf', 
+            'legal-certificate-template.pdf', 'court-document-template.pdf',
+            'loss-declaration-template.pdf', 'medical-certificate-template.pdf', 
+            'health-permit-template.pdf', 'vaccination-record-template.pdf',
+            'driving-license-template.pdf', 'vehicle-registration-template.pdf',
+            'transport-license-template.pdf', 'land-title-template.pdf',
+            'building-permit-template.pdf', 'property-certificate-template.pdf'
         ];
         
         return in_array($filename, $templateFiles);

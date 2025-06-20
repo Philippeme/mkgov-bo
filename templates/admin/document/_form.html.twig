@@ -1,61 +1,113 @@
 {{ form_start(form, {'attr': {'id': 'documentForm', 'enctype': 'multipart/form-data'}}) }}
 <div class="row">
     <div class="col-md-8">
-        <div class="mb-3">
-            {{ form_row(form.name, {
-                'label_attr': {'class': 'form-label fw-bold'},
-                'attr': {'class': 'form-control'}
-            }) }}
-        </div>
-        
-        <div class="row">
-            <div class="col-md-6">
-                <div class="mb-3">
-                    {{ form_row(form.type, {
-                        'label_attr': {'class': 'form-label fw-bold'},
-                        'attr': {'class': 'form-select'}
-                    }) }}
-                </div>
+        <!-- Basic Information -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h6 class="card-title mb-0">
+                    <i class="bi-file-earmark me-2"></i>
+                    Basic Information
+                </h6>
             </div>
-            <div class="col-md-6">
+            <div class="card-body">
                 <div class="mb-3">
-                    {{ form_row(form.procedure, {
-                        'label_attr': {'class': 'form-label fw-bold'},
-                        'attr': {'class': 'form-select'}
-                    }) }}
-                </div>
-            </div>
-        </div>
-        
-        <div class="mb-3">
-            {{ form_row(form.description, {
-                'label_attr': {'class': 'form-label fw-bold'},
-                'attr': {'class': 'form-control', 'rows': 4}
-            }) }}
-        </div>
-        
-        <div class="row">
-            <div class="col-md-4">
-                <div class="mb-3">
-                    {{ form_row(form.displayOrder, {
+                    {{ form_row(form.name, {
                         'label_attr': {'class': 'form-label fw-bold'},
                         'attr': {'class': 'form-control'}
                     }) }}
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="mb-3">
-                    <div class="form-check form-switch mt-4">
-                        {{ form_widget(form.isRequired, {'attr': {'class': 'form-check-input'}}) }}
-                        {{ form_label(form.isRequired, 'Required Document', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_row(form.type, {
+                                'label_attr': {'class': 'form-label fw-bold'},
+                                'attr': {'class': 'form-select'}
+                            }) }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_row(form.status, {
+                                'label_attr': {'class': 'form-label fw-bold'},
+                                'attr': {'class': 'form-select'}
+                            }) }}
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="col-md-4">
+                
                 <div class="mb-3">
-                    <div class="form-check form-switch mt-4">
-                        {{ form_widget(form.isActive, {'attr': {'class': 'form-check-input'}}) }}
-                        {{ form_label(form.isActive, 'Active Status', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                    {{ form_row(form.description, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-control', 'rows': 4}
+                    }) }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Associations -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="bi-link me-2"></i>
+                    Associations
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_row(form.procedure, {
+                                'label_attr': {'class': 'form-label fw-bold'},
+                                'attr': {'class': 'form-select'}
+                            }) }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_row(form.person, {
+                                'label_attr': {'class': 'form-label fw-bold'},
+                                'attr': {'class': 'form-select person-select'}
+                            }) }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_row(form.expirationDate, {
+                                'label_attr': {'class': 'form-label fw-bold'},
+                                'attr': {'class': 'form-control'}
+                            }) }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            {{ form_row(form.displayOrder, {
+                                'label_attr': {'class': 'form-label fw-bold'},
+                                'attr': {'class': 'form-control'}
+                            }) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form_widget(form.isRequired, {'attr': {'class': 'form-check-input'}}) }}
+                                {{ form_label(form.isRequired, 'Required Document', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form_widget(form.isActive, {'attr': {'class': 'form-check-input'}}) }}
+                                {{ form_label(form.isActive, 'Active Status', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -125,12 +177,14 @@
                 </div>
 
                 <!-- Remove Document Option -->
+                {% if document.filePath %}
                 <div class="mb-3">
                     <div class="form-check">
                         {{ form_widget(form.removeDocument, {'attr': {'class': 'form-check-input'}}) }}
                         {{ form_label(form.removeDocument, 'Remove current document', {'label_attr': {'class': 'form-check-label text-danger'}}) }}
                     </div>
                 </div>
+                {% endif %}
                 
                 <div class="form-text">
                     <small>
@@ -138,6 +192,62 @@
                         Choose template or upload custom. Max: 10MB
                     </small>
                 </div>
+            </div>
+        </div>
+
+        <!-- Document Status Information -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-info-circle me-2"></i>
+                    Status Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <label class="small fw-bold text-muted">Current Status:</label>
+                    <div>
+                        <span class="badge bg-{{ document.statusBadgeClass }}">
+                            {{ document.status ? document.status|title : 'Draft' }}
+                        </span>
+                    </div>
+                </div>
+                
+                {% if document.expirationDate %}
+                <div class="mb-2">
+                    <label class="small fw-bold text-muted">Expiration:</label>
+                    <div class="small">
+                        {{ document.expirationDate|date('F d, Y') }}
+                        {% if document.isExpired %}
+                            <span class="badge bg-danger">Expired</span>
+                        {% else %}
+                            <span class="text-success">Valid</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if document.procedure %}
+                <div class="mb-2">
+                    <label class="small fw-bold text-muted">Procedure:</label>
+                    <div class="small">
+                        <a href="{{ path('admin_procedure_show', {'id': document.procedure.id}) }}" class="text-decoration-none">
+                            {{ document.procedure.pname }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if document.person %}
+                <div class="mb-2">
+                    <label class="small fw-bold text-muted">Citizen:</label>
+                    <div class="small">
+                        <a href="{{ path('admin_person_show', {'id': document.person.id}) }}" class="text-decoration-none">
+                            {{ document.person.fullName }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -222,6 +332,46 @@ function previewDocument(input) {
     }
 }
 
+// Enhanced person search functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const personSelect = document.querySelector('.person-select');
+    if (personSelect) {
+        // Add search functionality for person selection
+        personSelect.addEventListener('focus', function() {
+            this.setAttribute('data-live-search', 'true');
+        });
+    }
+
+    // Auto-update expiration warning
+    const expirationInput = document.querySelector('input[name="document[expirationDate]"]');
+    if (expirationInput) {
+        expirationInput.addEventListener('change', function() {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            const warningThreshold = new Date();
+            warningThreshold.setDate(today.getDate() + 30); // 30 days warning
+
+            // Remove existing warnings
+            const existingWarning = this.parentElement.querySelector('.expiration-warning');
+            if (existingWarning) {
+                existingWarning.remove();
+            }
+
+            if (selectedDate <= today) {
+                const warning = document.createElement('div');
+                warning.className = 'small text-danger mt-1 expiration-warning';
+                warning.innerHTML = '<i class="bi-exclamation-triangle me-1"></i>This date has already passed';
+                this.parentElement.appendChild(warning);
+            } else if (selectedDate <= warningThreshold) {
+                const warning = document.createElement('div');
+                warning.className = 'small text-warning mt-1 expiration-warning';
+                warning.innerHTML = '<i class="bi-clock me-1"></i>Expires within 30 days';
+                this.parentElement.appendChild(warning);
+            }
+        });
+    }
+});
+
 // Form validation
 document.getElementById('documentForm').addEventListener('submit', function(e) {
     const name = document.querySelector('input[name="document[name]"]').value.trim();
@@ -231,6 +381,19 @@ document.getElementById('documentForm').addEventListener('submit', function(e) {
         e.preventDefault();
         alert('Please fill in all required fields.');
         return false;
+    }
+
+    // Validate expiration date if provided
+    const expirationDate = document.querySelector('input[name="document[expirationDate]"]').value;
+    if (expirationDate) {
+        const selectedDate = new Date(expirationDate);
+        const today = new Date();
+        
+        if (selectedDate <= today) {
+            e.preventDefault();
+            alert('Expiration date cannot be in the past.');
+            return false;
+        }
     }
 });
 </script>

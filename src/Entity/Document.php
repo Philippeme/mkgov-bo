@@ -43,6 +43,20 @@ class Document
     #[ORM\JoinColumn(nullable: true)]
     private ?Procedure $procedure = null;
 
+    #[ORM\ManyToOne(targetEntity: Person::class, inversedBy: 'documents')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?Person $person = null;
+
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    private ?\DateTimeInterface $expirationDate = null;
+
+    #[ORM\Column(length: 50)]
+    #[Assert\Choice(
+        choices: ['draft', 'pending', 'approved', 'rejected', 'expired', 'active'], 
+        message: 'Invalid status'
+    )]
+    private ?string $status = 'draft';
+
     #[ORM\Column]
     private ?bool $isRequired = false;
 
@@ -150,6 +164,59 @@ class Document
     {
         $this->procedure = $procedure;
         return $this;
+    }
+
+    public function getPerson(): ?Person
+    {
+        return $this->person;
+    }
+
+    public function setPerson(?Person $person): static
+    {
+        $this->person = $person;
+        return $this;
+    }
+
+    public function getExpirationDate(): ?\DateTimeInterface
+    {
+        return $this->expirationDate;
+    }
+
+    public function setExpirationDate(?\DateTimeInterface $expirationDate): static
+    {
+        $this->expirationDate = $expirationDate;
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): static
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    public function getStatusBadgeClass(): string
+    {
+        return match($this->status) {
+            'approved', 'active' => 'success',
+            'pending' => 'warning',
+            'rejected' => 'danger',
+            'expired' => 'secondary',
+            'draft' => 'info',
+            default => 'light'
+        };
+    }
+
+    public function isExpired(): bool
+    {
+        if (!$this->expirationDate) {
+            return false;
+        }
+        return $this->expirationDate <= new \DateTime();
     }
 
     public function isRequired(): ?bool

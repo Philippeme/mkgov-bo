@@ -91,6 +91,9 @@ class Person
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $image = null;
 
+    #[ORM\Column(type: Types::JSON, nullable: true)]
+    private ?array $emergencyContact = null;
+
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $createdAt = null;
 
@@ -103,10 +106,17 @@ class Person
     #[ORM\Column]
     private ?int $displayOrder = 0;
 
+    #[ORM\Column]
+    private ?bool $isDeleted = false;
+
+    #[ORM\OneToMany(mappedBy: 'person', targetEntity: Document::class)]
+    private Collection $documents;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
+        $this->documents = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -264,6 +274,17 @@ class Person
         return $this;
     }
 
+    public function getCity(): ?string
+    {
+        return $this->city;
+    }
+
+    public function setCity(?string $city): static
+    {
+        $this->city = $city;
+        return $this;
+    }
+
     public function getRegion(): ?string
     {
         return $this->region;
@@ -272,6 +293,17 @@ class Person
     public function setRegion(?string $region): static
     {
         $this->region = $region;
+        return $this;
+    }
+
+    public function getPostalCode(): ?string
+    {
+        return $this->postalCode;
+    }
+
+    public function setPostalCode(?string $postalCode): static
+    {
+        $this->postalCode = $postalCode;
         return $this;
     }
 
@@ -328,6 +360,22 @@ class Person
         return $this;
     }
 
+    public function getEmergencyContact(): ?array
+    {
+        return $this->emergencyContact;
+    }
+
+    public function setEmergencyContact(?array $emergencyContact): static
+    {
+        $this->emergencyContact = $emergencyContact;
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
     public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
@@ -345,6 +393,17 @@ class Person
         return $this;
     }
 
+    public function getVerifiedAt(): ?\DateTimeInterface
+    {
+        return $this->verifiedAt;
+    }
+
+    public function setVerifiedAt(?\DateTimeInterface $verifiedAt): static
+    {
+        $this->verifiedAt = $verifiedAt;
+        return $this;
+    }
+
     public function getDisplayOrder(): ?int
     {
         return $this->displayOrder;
@@ -354,5 +413,55 @@ class Person
     {
         $this->displayOrder = $displayOrder;
         return $this;
+    }
+
+    public function isDeleted(): ?bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted): static
+    {
+        $this->isDeleted = $isDeleted;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Document>
+     */
+    public function getDocuments(): Collection
+    {
+        return $this->documents;
+    }
+
+    public function addDocument(Document $document): static
+    {
+        if (!$this->documents->contains($document)) {
+            $this->documents->add($document);
+            $document->setPerson($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDocument(Document $document): static
+    {
+        if ($this->documents->removeElement($document)) {
+            if ($document->getPerson() === $this) {
+                $document->setPerson(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getActiveDocuments(): Collection
+    {
+        return $this->documents->filter(fn(Document $doc) => $doc->isActive() && !$doc->isDeleted());
+    }
+
+    public function __toString(): string
+    {
+        return $this->getFullName();
     }
 }
