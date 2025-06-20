@@ -177,14 +177,12 @@
                 </div>
 
                 <!-- Remove Document Option -->
-                {% if document.filePath %}
                 <div class="mb-3">
                     <div class="form-check">
                         {{ form_widget(form.removeDocument, {'attr': {'class': 'form-check-input'}}) }}
                         {{ form_label(form.removeDocument, 'Remove current document', {'label_attr': {'class': 'form-check-label text-danger'}}) }}
                     </div>
                 </div>
-                {% endif %}
                 
                 <div class="form-text">
                     <small>
