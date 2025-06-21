@@ -2,6 +2,101 @@
 
 {% block title %}{{ person.fullName }}{% endblock %}
 
+{% block stylesheets %}
+<style>
+    .citizen-photo-circle {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        object-fit: cover;
+        object-position: center;
+        border: 6px solid #fff;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .citizen-photo-circle:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    
+    .citizen-photo-placeholder {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 4rem;
+        border: 6px solid #fff;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        transition: all 0.3s ease;
+    }
+    
+    .citizen-photo-placeholder:hover {
+        transform: scale(1.05);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    
+    .photo-container {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .photo-edit-overlay {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #667eea;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        opacity: 0;
+    }
+    
+    .photo-container:hover .photo-edit-overlay {
+        opacity: 1;
+    }
+    
+    .photo-edit-overlay:hover {
+        background: #5a67d8;
+        transform: scale(1.1);
+    }
+    
+    .info-section {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        border-radius: 15px;
+        border: 1px solid rgba(102, 126, 234, 0.1);
+    }
+    
+    .verification-badge-large {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        border: 4px solid white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">
@@ -324,26 +419,52 @@
     </div>
     
     <div class="col-md-4">
-        <!-- Photo -->
+        <!-- Photo Card with Circular Display -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light">
                 <h6 class="card-title mb-0">
                     <i class="bi-camera me-2"></i>
-                    Photo
+                    Citizen Photo
                 </h6>
             </div>
-            <div class="card-body text-center">
-                {% if person.image %}
-                    <img src="{{ asset('uploads/persons/' ~ person.image) }}" 
-                         alt="{{ person.fullName }}" 
-                         class="img-fluid rounded border"
-                         style="max-width: 100%; max-height: 300px;">
-                {% else %}
-                    <div class="text-muted">
-                        <i class="bi-person-circle" style="font-size: 8rem;"></i>
-                        <p class="mt-3 mb-0">No photo uploaded</p>
+            <div class="card-body text-center p-4">
+                <div class="photo-container position-relative">
+                    {% if person.image %}
+                        <img src="{{ asset('uploads/persons/' ~ person.image) }}" 
+                             alt="{{ person.fullName }}" 
+                             class="citizen-photo-circle">
+                    {% else %}
+                        <div class="citizen-photo-placeholder">
+                            <i class="bi-person-circle"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Verification Badge -->
+                    <div class="verification-badge-large bg-{{ person.verifiedAt ? 'success' : 'warning' }}">
+                        <i class="bi-{{ person.verifiedAt ? 'check' : 'clock' }} text-white"></i>
                     </div>
-                {% endif %}
+                    
+                    <!-- Edit Overlay -->
+                    <a href="{{ path('admin_person_edit', {'id': person.id}) }}" 
+                       class="photo-edit-overlay" 
+                       title="Edit Photo">
+                        <i class="bi-pencil"></i>
+                    </a>
+                </div>
+                
+                <div class="mt-4">
+                    {% if person.image %}
+                        <h6 class="fw-bold text-success mb-1">
+                            <i class="bi-check-circle me-1"></i>Photo Available
+                        </h6>
+                        <p class="text-muted small mb-0">Last updated: {{ person.updatedAt|date('M d, Y') }}</p>
+                    {% else %}
+                        <h6 class="fw-bold text-muted mb-1">
+                            <i class="bi-camera me-1"></i>No Photo
+                        </h6>
+                        <p class="text-muted small mb-0">Click edit to upload a photo</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
@@ -356,42 +477,53 @@
                 </h6>
             </div>
             <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small">ID:</label>
-                    <p class="mb-0">#{{ person.id }}</p>
+                <div class="info-section p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold text-muted">Citizen ID:</span>
+                        <span class="badge bg-primary">#{{ person.id }}</span>
+                    </div>
                 </div>
                 
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small">Verification Status:</label>
-                    <p class="mb-0">
-                        {% if person.verifiedAt %}
-                            <span class="badge bg-success">
+                <div class="info-section p-3 mb-3">
+                    <label class="fw-semibold text-muted mb-2">Verification Status:</label>
+                    {% if person.verifiedAt %}
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-2">
                                 <i class="bi-check-circle-fill me-1"></i>
                                 Verified
                             </span>
-                            <small class="text-muted d-block">{{ person.verifiedAt|date('F d, Y \\a\\t H:i') }}</small>
-                        {% else %}
-                            <span class="badge bg-warning">
+                        </div>
+                        <small class="text-muted">{{ person.verifiedAt|date('F d, Y \\a\\t H:i') }}</small>
+                    {% else %}
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-warning me-2">
                                 <i class="bi-exclamation-circle me-1"></i>
                                 Pending Verification
                             </span>
-                        {% endif %}
-                    </p>
+                        </div>
+                        <small class="text-muted">Requires admin verification</small>
+                    {% endif %}
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small">Display Order:</label>
-                    <p class="mb-0"><span class="badge bg-secondary">{{ person.displayOrder }}</span></p>
+                <div class="info-section p-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-muted">Display Order:</span>
+                        <span class="badge bg-secondary">{{ person.displayOrder }}</span>
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small">Registered:</label>
-                    <p class="mb-0">{{ person.createdAt|date('F d, Y \\a\\t H:i') }}</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="form-label fw-bold text-muted small">Last Updated:</label>
-                    <p class="mb-0">{{ person.updatedAt|date('F d, Y \\a\\t H:i') }}</p>
+                <div class="info-section p-3 mb-3">
+                    <label class="fw-semibold text-muted mb-2">Registration:</label>
+                    <div class="small">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Created:</span>
+                            <span>{{ person.createdAt|date('M d, Y') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Updated:</span>
+                            <span>{{ person.updatedAt|date('M d, Y') }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -417,6 +549,11 @@
                     <a href="{{ path('admin_document_new') }}?person={{ person.id }}" class="btn btn-outline-info">
                         <i class="bi-file-plus me-2"></i>
                         Add Document
+                    </a>
+                    <hr class="my-3">
+                    <a href="{{ path('admin_person_edit', {'id': person.id}) }}" class="btn btn-warning">
+                        <i class="bi-pencil me-2"></i>
+                        Edit Information
                     </a>
                 </div>
             </div>
@@ -493,6 +630,18 @@ document.addEventListener('DOMContentLoaded', function() {
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         });
     });
+
+    // Photo hover effects
+    const photoContainer = document.querySelector('.photo-container');
+    if (photoContainer) {
+        photoContainer.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(1.02)';
+        });
+        
+        photoContainer.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+        });
+    }
 });
 </script>
 {% endblock %}
