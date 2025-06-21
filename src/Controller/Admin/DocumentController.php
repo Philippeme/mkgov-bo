@@ -277,7 +277,8 @@ class DocumentController extends AbstractController
                     }
                 }
 
-                // Soft delete by setting isActive to false
+                // Soft delete by setting isDeleted to true
+                $document->setIsDeleted(true);
                 $document->setIsActive(false);
                 $entityManager->flush();
 

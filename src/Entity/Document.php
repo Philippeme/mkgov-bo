@@ -64,6 +64,9 @@ class Document
     private ?bool $isActive = true;
 
     #[ORM\Column]
+    private ?bool $isDeleted = false;
+
+    #[ORM\Column]
     private ?int $displayOrder = 0;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
@@ -238,6 +241,17 @@ class Document
     public function setIsActive(bool $isActive): static
     {
         $this->isActive = $isActive;
+        return $this;
+    }
+
+    public function isDeleted(): ?bool
+    {
+        return $this->isDeleted;
+    }
+
+    public function setIsDeleted(bool $isDeleted): static
+    {
+        $this->isDeleted = $isDeleted;
         return $this;
     }
 
