@@ -1,0 +1,22 @@
+{% extends 'admin/base.html.twig' %}
+{% block title %}Edit Department{% endblock %}
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0"><i class="bi-pencil me-2"></i>Edit Department: {{ department.name }}</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ path('admin_department_index') }}">Departments</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_department_show', {'id': department.id}) }}">{{ department.name }}</a></li>
+            <li class="breadcrumb-item active">Edit</li>
+        </ol>
+    </nav>
+</div>
+<div class="card shadow-sm">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="card-title mb-0"><i class="bi-diagram-2 me-2"></i>Update Department Information</h5>
+    </div>
+    <div class="card-body">
+        {{ include('admin/department/_form.html.twig', {'button_label': 'Update Department'}) }}
+    </div>
+</div>
+{% endblock %}

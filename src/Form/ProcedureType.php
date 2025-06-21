@@ -77,7 +77,7 @@ class ProcedureType extends AbstractType
                 ]
             ])
             ->add('imageBootstrap', ChoiceType::class, [
-                'label' => 'Bootstrap Template Image',
+                'label' => 'Template Image',
                 'mapped' => false,
                 'required' => false,
                 'choices' => $this->getBootstrapImages(),

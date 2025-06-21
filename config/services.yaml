@@ -8,12 +8,17 @@ parameters:
     projects_directory: '%kernel.project_dir%/public/uploads/projects'
     procedures_directory: '%kernel.project_dir%/public/uploads/procedures'
     pdf_directory: '%kernel.project_dir%/public/uploads/pdf_uploads'
+    families_directory: '%kernel.project_dir%/public/uploads/families'
     
     # User management uploads
     users_directory: '%kernel.project_dir%/public/uploads/users'
 
     # User management uploads
     documents_directory: '%kernel.project_dir%/public/uploads/documents'
+
+    # NEW: Department and Public Entity uploads
+    departments_directory: '%kernel.project_dir%/public/uploads/departments'
+    public_entities_directory: '%kernel.project_dir%/public/uploads/public_entities'
     
     # Maximum file sizes
     max_avatar_size: '2M'

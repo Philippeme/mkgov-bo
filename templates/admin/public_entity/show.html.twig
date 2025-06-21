@@ -1,0 +1,401 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ public_entity.institutionName }}{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi-eye me-2"></i>
+        {{ public_entity.institutionName }}
+    </h1>
+    <div class="btn-group">
+        <a href="{{ path('admin_public_entity_edit', {'id': public_entity.id}) }}" class="btn btn-warning">
+            <i class="bi-pencil me-2"></i>
+            Edit
+        </a>
+        <button type="button" 
+                class="btn btn-danger delete-btn" 
+                data-entity-id="{{ public_entity.id }}"
+                data-entity-name="{{ public_entity.institutionName }}">
+            <i class="bi-trash me-2"></i>
+            Delete
+        </button>
+    </div>
+</div>
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('admin_public_entity_index') }}">Public Entities</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ public_entity.institutionName }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Basic Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-info-circle me-2"></i>
+                    Institution Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Institution Name:</label>
+                            <p class="fs-5">{{ public_entity.institutionName }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Department:</label>
+                            <p>
+                                {% if public_entity.department %}
+                                    <a href="{{ path('admin_department_show', {'id': public_entity.department.id}) }}" 
+                                       class="badge bg-primary text-decoration-none fs-6">
+                                        {{ public_entity.department.name }}
+                                    </a>
+                                {% else %}
+                                    <span class="badge bg-warning fs-6">No Department</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted">Headquarters Address:</label>
+                    <div class="border rounded p-3 bg-light">
+                        <i class="bi-geo-alt me-2"></i>{{ public_entity.headquartersAddress|nl2br }}
+                    </div>
+                </div>
+                
+                {% if public_entity.description %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted">Description:</label>
+                    <div class="border rounded p-3 bg-light">
+                        {{ public_entity.description|nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Code:</label>
+                            <p>
+                                {% if public_entity.code %}
+                                    <span class="badge bg-info fs-6">{{ public_entity.code }}</span>
+                                {% else %}
+                                    <span class="text-muted">No code</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Status:</label>
+                            <p>
+                                <span class="badge bg-{{ public_entity.status == 'active' ? 'success' : 'secondary' }} fs-6">
+                                    <i class="bi-{{ public_entity.status == 'active' ? 'check-circle' : 'pause-circle' }} me-1"></i>
+                                    {{ public_entity.status|title }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Active Status:</label>
+                            <p>
+                                <span class="badge bg-{{ public_entity.isActive ? 'success' : 'danger' }} fs-6">
+                                    <i class="bi-{{ public_entity.isActive ? 'check-circle' : 'x-circle' }} me-1"></i>
+                                    {{ public_entity.isActive ? 'Active' : 'Inactive' }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-telephone me-2"></i>
+                    Contact Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi-building me-1"></i>
+                            Institution Contact
+                        </h6>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Phone Number:</label>
+                            <p class="mb-0">
+                                {% if public_entity.phoneNumber %}
+                                    <i class="bi-telephone me-2"></i>
+                                    <a href="tel:{{ public_entity.phoneNumber }}" class="text-decoration-none">
+                                        {{ public_entity.phoneNumber }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Email Address:</label>
+                            <p class="mb-0">
+                                {% if public_entity.email %}
+                                    <i class="bi-envelope me-2"></i>
+                                    <a href="mailto:{{ public_entity.email }}" class="text-decoration-none">
+                                        {{ public_entity.email }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Website:</label>
+                            <p class="mb-0">
+                                {% if public_entity.website %}
+                                    <i class="bi-globe me-2"></i>
+                                    <a href="{{ public_entity.website }}" target="_blank" class="text-decoration-none">
+                                        {{ public_entity.website }}
+                                        <i class="bi-box-arrow-up-right ms-1"></i>
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">
+                            <i class="bi-person me-1"></i>
+                            Contact Person
+                        </h6>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Name:</label>
+                            <p class="mb-0">
+                                {% if public_entity.contactPersonName %}
+                                    <i class="bi-person me-2"></i>{{ public_entity.contactPersonName }}
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Email:</label>
+                            <p class="mb-0">
+                                {% if public_entity.contactPersonEmail %}
+                                    <i class="bi-envelope me-2"></i>
+                                    <a href="mailto:{{ public_entity.contactPersonEmail }}" class="text-decoration-none">
+                                        {{ public_entity.contactPersonEmail }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Phone:</label>
+                            <p class="mb-0">
+                                {% if public_entity.contactPersonPhone %}
+                                    <i class="bi-telephone me-2"></i>
+                                    <a href="tel:{{ public_entity.contactPersonPhone }}" class="text-decoration-none">
+                                        {{ public_entity.contactPersonPhone }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">Not provided</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Logo -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-image me-2"></i>
+                    Institution Logo
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                {% if public_entity.logo %}
+                    <img src="{{ asset('uploads/public_entities/' ~ public_entity.logo) }}" 
+                         alt="{{ public_entity.institutionName }}" 
+                         class="img-fluid rounded border"
+                         style="max-width: 100%; max-height: 200px;">
+                    <p class="mt-3 mb-0"><span class="badge bg-info">Institution Logo</span></p>
+                {% else %}
+                    <div class="text-muted">
+                        <i class="bi-image" style="font-size: 4rem;"></i>
+                        <p class="mt-3 mb-0">No logo uploaded</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-clock me-2"></i>
+                    Metadata
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">ID:</label>
+                    <p class="mb-0">#{{ public_entity.id }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Display Order:</label>
+                    <p class="mb-0"><span class="badge bg-secondary">{{ public_entity.displayOrder }}</span></p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Created:</label>
+                    <p class="mb-0">{{ public_entity.createdAt|date('F d, Y \\a\\t H:i') }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Last Updated:</label>
+                    <p class="mb-0">{{ public_entity.updatedAt|date('F d, Y \\a\\t H:i') }}</p>
+                </div>
+                {% if public_entity.department %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Department Details:</label>
+                    <div class="border rounded p-2 bg-light">
+                        <strong>{{ public_entity.department.name }}</strong>
+                        {% if public_entity.department.code %}
+                            <div class="text-muted small mt-1">
+                                Code: <span class="badge bg-info badge-sm">{{ public_entity.department.code }}</span>
+                            </div>
+                        {% endif %}
+                        {% if public_entity.department.description %}
+                            <div class="text-muted small mt-1">
+                                {{ public_entity.department.description|slice(0, 80) }}{% if public_entity.department.description|length > 80 %}...{% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-lightning me-2"></i>
+                    Quick Actions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-{{ public_entity.isActive ? 'danger' : 'success' }} toggle-status-btn"
+                            data-entity-id="{{ public_entity.id }}">
+                        <i class="bi-{{ public_entity.isActive ? 'pause' : 'play' }} me-2"></i>
+                        {{ public_entity.isActive ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    {% if public_entity.email %}
+                    <a href="mailto:{{ public_entity.email }}" class="btn btn-outline-primary">
+                        <i class="bi-envelope me-2"></i>
+                        Send Email
+                    </a>
+                    {% endif %}
+                    {% if public_entity.website %}
+                    <a href="{{ public_entity.website }}" target="_blank" class="btn btn-outline-info">
+                        <i class="bi-globe me-2"></i>
+                        Visit Website
+                    </a>
+                    {% endif %}
+                    {% if public_entity.department %}
+                    <a href="{{ path('admin_department_show', {'id': public_entity.department.id}) }}" class="btn btn-outline-secondary">
+                        <i class="bi-diagram-3 me-2"></i>
+                        View Department
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the public entity <strong>{{ public_entity.institutionName }}</strong>?</p>
+                <p class="text-muted small">This action will deactivate the public entity and cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{{ path('admin_public_entity_delete', {'id': public_entity.id}) }}" style="display: inline;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ public_entity.id) }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi-trash me-1"></i>
+                        Delete Public Entity
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Delete button functionality
+    document.querySelectorAll('.delete-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+
+    // Toggle status functionality
+    document.querySelectorAll('.toggle-status-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const entityId = this.dataset.entityId;
+            
+            fetch(`/admin/public-entity/${entityId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error updating status');
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

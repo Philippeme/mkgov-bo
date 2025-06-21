@@ -1,0 +1,70 @@
+{{ form_start(form, {'attr': {'id': 'departmentForm', 'enctype': 'multipart/form-data'}}) }}
+<div class="row">
+    <div class="col-md-8">
+        <div class="mb-3">
+            {{ form_row(form.name, {
+                'label_attr': {'class': 'form-label fw-bold'},
+                'attr': {'class': 'form-control'}
+            }) }}
+        </div>
+        
+        <div class="mb-3">
+            {{ form_row(form.description, {
+                'label_attr': {'class': 'form-label fw-bold'},
+                'attr': {'class': 'form-control', 'rows': 4}
+            }) }}
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.code, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.displayOrder, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            <div class="form-check form-switch">
+                {{ form_widget(form.isActive, {'attr': {'class': 'form-check-input'}}) }}
+                {{ form_label(form.isActive, 'Active Status', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="mt-4">
+    <button type="submit" class="btn btn-primary">
+        <i class="bi-check-circle me-2"></i>
+        {{ button_label|default('Save Department') }}
+    </button>
+    <a href="{{ path('admin_department_index') }}" class="btn btn-secondary">
+        <i class="bi-arrow-left me-2"></i>
+        Cancel
+    </a>
+</div>
+
+{{ form_end(form) }}
+
+<script>
+document.getElementById('departmentForm').addEventListener('submit', function(e) {
+    const name = document.querySelector('input[name="department[name]"]').value.trim();
+    
+    if (!name) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+        return false;
+    }
+});
+</script>
