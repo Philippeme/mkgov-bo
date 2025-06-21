@@ -1,0 +1,472 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Requests Management{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .request-card {
+        transition: all 0.3s ease;
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .request-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 100px;
+        height: 100px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(30px, -30px);
+    }
+    
+    .priority-badge {
+        font-size: 0.75em;
+        padding: 0.25em 0.5em;
+        border-radius: 0.25rem;
+    }
+    
+    .status-toggle {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .overdue-indicator {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: 10px;
+        height: 10px;
+        background: #dc3545;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.7; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .progress-bar-container {
+        height: 4px;
+        background-color: #e9ecef;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        transition: width 0.6s ease;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="mb-2 fw-bold text-primary">
+                <i class="bi-journal-text me-3"></i>
+                Requests Management
+            </h1>
+            <p class="text-muted mb-0">Monitor and manage citizen service requests</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('admin_request_export') }}" class="btn btn-outline-primary">
+                <i class="bi-download me-2"></i>
+                Export Data
+            </a>
+            <a href="{{ path('admin_request_new') }}" class="btn btn-primary">
+                <i class="bi-plus-circle me-2"></i>
+                New Request
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-2 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ statistics.total }}</h3>
+                            <p class="mb-0 opacity-75">Total</p>
+                        </div>
+                        <i class="bi-journal-text fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stats-card h-100" style="background: linear-gradient(135deg, #ffc107 0%, #ff8800 100%);">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ statistics.pending }}</h3>
+                            <p class="mb-0 opacity-75">Pending</p>
+                        </div>
+                        <i class="bi-clock fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stats-card h-100" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ statistics.processing }}</h3>
+                            <p class="mb-0 opacity-75">Processing</p>
+                        </div>
+                        <i class="bi-gear fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stats-card h-100" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ statistics.completed }}</h3>
+                            <p class="mb-0 opacity-75">Completed</p>
+                        </div>
+                        <i class="bi-check-circle fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stats-card h-100" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ statistics.overdue }}</h3>
+                            <p class="mb-0 opacity-75">Overdue</p>
+                        </div>
+                        <i class="bi-exclamation-triangle fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 mb-3">
+            <div class="card stats-card h-100" style="background: linear-gradient(135deg, #fd7e14 0%, #e55a4e 100%);">
+                <div class="card-body position-relative">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h3 class="mb-1 fw-bold">{{ statistics.urgent }}</h3>
+                            <p class="mb-0 opacity-75">Urgent</p>
+                        </div>
+                        <i class="bi-exclamation-circle fs-1 opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="GET" id="filterForm">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi-search me-1"></i>Search Requests
+                        </label>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Reference, Citizen name, Procedure..." 
+                               value="{{ filters.search }}"
+                               autocomplete="off">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="processing" {% if filters.status == 'processing' %}selected{% endif %}>Processing</option>
+                            <option value="completed" {% if filters.status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            <option value="cancelled" {% if filters.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-semibold">Priority</label>
+                        <select name="priority" class="form-select">
+                            <option value="">All Priorities</option>
+                            <option value="low" {% if filters.priority == 'low' %}selected{% endif %}>Low</option>
+                            <option value="normal" {% if filters.priority == 'normal' %}selected{% endif %}>Normal</option>
+                            <option value="high" {% if filters.priority == 'high' %}selected{% endif %}>High</option>
+                            <option value="urgent" {% if filters.priority == 'urgent' %}selected{% endif %}>Urgent</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Procedure</label>
+                        <select name="procedure" class="form-select">
+                            <option value="">All Procedures</option>
+                            <!-- Add procedure options here -->
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="bi-funnel me-1"></i>Filter
+                            </button>
+                            <a href="{{ path('admin_request_index') }}" class="btn btn-outline-secondary">
+                                <i class="bi-arrow-clockwise"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Requests List -->
+    {% if requests|length > 0 %}
+    <div class="row" id="requestsGrid">
+        {% for request in requests %}
+        <div class="col-xl-6 col-lg-12 mb-4">
+            <div class="card request-card h-100 shadow-sm position-relative">
+                {% if request.isOverdue %}
+                    <div class="overdue-indicator" title="Overdue"></div>
+                {% endif %}
+                
+                <div class="card-body p-4">
+                    <!-- Request Header -->
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="mb-1 fw-bold text-primary">{{ request.reference }}</h5>
+                            <p class="text-muted mb-1 small">
+                                <i class="bi-person me-1"></i>{{ request.person.fullName }}
+                            </p>
+                            <p class="text-muted mb-0 small">
+                                <i class="bi-gear me-1"></i>{{ request.procedure.pname }}
+                            </p>
+                        </div>
+                        
+                        <div class="text-end">
+                            <span class="badge bg-{{ request.statusBadgeClass }} mb-1">{{ request.status|title }}</span>
+                            <br>
+                            <span class="badge bg-{{ request.priorityBadgeClass }} priority-badge">{{ request.priority|title }}</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Progress</small>
+                            <small class="text-muted">{{ request.progressPercentage }}%</small>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar bg-{{ request.statusBadgeClass }}" 
+                                 style="width: {{ request.progressPercentage }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Request Details -->
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <div class="fw-bold text-success">{{ request.totalCost|number_format(0, '.', ',') }}</div>
+                                <small class="text-muted">XAF</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <div class="fw-bold text-info">{{ request.daysInProgress }}</div>
+                                <small class="text-muted">Days</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="border rounded p-2">
+                                <div class="fw-bold text-{{ request.paymentStatusBadgeClass }}">{{ request.paymentStatus|title }}</div>
+                                <small class="text-muted">Payment</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dates -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between text-small">
+                            <span class="text-muted">
+                                <i class="bi-calendar-plus me-1"></i>{{ request.submittedAt|date('M d, Y') }}
+                            </span>
+                            {% if request.expectedCompletionAt %}
+                            <span class="text-muted">
+                                <i class="bi-calendar-event me-1"></i>Due: {{ request.expectedCompletionAt|date('M d') }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-{{ request.statusBadgeClass }} status-toggle"
+                                    data-request-id="{{ request.id }}"
+                                    title="Toggle Status">
+                                <i class="bi-arrow-repeat"></i>
+                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ path('admin_request_show', {'id': request.id}) }}">
+                                        <i class="bi-eye me-2"></i>View Details
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('admin_request_edit', {'id': request.id}) }}">
+                                        <i class="bi-pencil me-2"></i>Edit
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><button class="dropdown-item text-danger delete-btn" 
+                                               data-request-id="{{ request.id }}" 
+                                               data-request-reference="{{ request.reference }}">
+                                        <i class="bi-trash me-2"></i>Delete
+                                    </button></li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <a href="{{ path('admin_request_show', {'id': request.id}) }}" class="btn btn-primary btn-sm">
+                            <i class="bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-5">
+        <i class="bi-journal-text text-muted" style="font-size: 4rem;"></i>
+        <h3 class="text-muted mt-3">No requests found</h3>
+        <p class="text-muted">
+            {% if filters.search or filters.status or filters.priority %}
+                No requests match your current filters. Try adjusting your search criteria.
+            {% else %}
+                No service requests have been submitted yet.
+            {% endif %}
+        </p>
+        <div class="d-flex justify-content-center gap-2">
+            {% if filters.search or filters.status or filters.priority %}
+                <a href="{{ path('admin_request_index') }}" class="btn btn-outline-primary">
+                    <i class="bi-arrow-clockwise me-2"></i>Clear Filters
+                </a>
+            {% endif %}
+            <a href="{{ path('admin_request_new') }}" class="btn btn-primary">
+                <i class="bi-plus-circle me-2"></i>Create First Request
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <i class="bi-journal-x text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p class="text-center mb-3">Are you sure you want to delete request <strong id="requestReference"></strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    This action will remove the request from the active list but preserve data for auditing.
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <input type="hidden" name="_token" id="deleteToken">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi-trash me-1"></i>Delete Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status toggle functionality
+    document.querySelectorAll('.status-toggle').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const requestId = this.dataset.requestId;
+            
+            fetch(`/admin/request/${requestId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error updating status');
+            });
+        });
+    });
+
+    // Delete modal functionality
+    document.querySelectorAll('.delete-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const requestId = this.dataset.requestId;
+            const requestReference = this.dataset.requestReference;
+            
+            document.getElementById('requestReference').textContent = requestReference;
+            document.getElementById('deleteForm').action = `/admin/request/${requestId}/delete`;
+            document.getElementById('deleteToken').value = '{{ csrf_token("delete") }}';
+            
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+
+    // Auto-submit form when filter changes
+    document.querySelectorAll('#filterForm select').forEach(function(select) {
+        select.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    });
+});
+</script>
+{% endblock %}

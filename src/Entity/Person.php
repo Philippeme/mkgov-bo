@@ -112,11 +112,15 @@ class Person
     #[ORM\OneToMany(mappedBy: 'person', targetEntity: Document::class)]
     private Collection $documents;
 
+    #[ORM\OneToMany(mappedBy: 'person', targetEntity: Request::class)]
+    private Collection $requests;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
         $this->documents = new ArrayCollection();
+        $this->requests = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -450,6 +454,47 @@ class Person
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Request>
+     */
+    public function getRequests(): Collection
+    {
+        return $this->requests;
+    }
+
+    public function addRequest(Request $request): static
+    {
+        if (!$this->requests->contains($request)) {
+            $this->requests->add($request);
+            $request->setPerson($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRequest(Request $request): static
+    {
+        if ($this->requests->removeElement($request)) {
+            if ($request->getPerson() === $this) {
+                $request->setPerson(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getActiveRequests(): Collection
+    {
+        return $this->requests->filter(fn(Request $req) => $req->isActive() && !$req->isDeleted());
+    }
+
+    public function getPendingRequests(): Collection
+    {
+        return $this->requests->filter(fn(Request $req) => 
+            $req->isActive() && !$req->isDeleted() && $req->getStatus() === 'pending'
+        );
     }
 
     public function getActiveDocuments(): Collection

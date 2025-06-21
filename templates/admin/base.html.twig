@@ -923,7 +923,7 @@
                 </li>
 
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="requests">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_request' ? 'active' : '' }}" data-dropdown="requests">
                         <span>
                             <i class="bi-journal-text me-2"></i>
                             <span class="nav-text">Requests</span>
@@ -934,25 +934,25 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{{ path('admin_request_new') }}">
                                 <i class="bi-plus-circle me-2"></i>
                                 <span class="ms-2">New Request</span>
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{{ path('admin_request_index') }}">
                                 <i class="bi-list-ul me-2"></i>
                                 <span class="ms-2">All Requests</span>
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{{ path('admin_request_index') }}?status=pending">
                                 <i class="bi-clock me-2"></i>
                                 <span class="ms-2">Pending Requests</span>
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{{ path('admin_request_index') }}?status=completed">
                                 <i class="bi-check-circle me-2"></i>
                                 <span class="ms-2">Completed</span>
                             </a>

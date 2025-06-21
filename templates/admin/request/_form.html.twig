@@ -1,0 +1,556 @@
+{{ form_start(form, {'attr': {'id': 'requestForm', 'novalidate': 'novalidate'}}) }}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <!-- Basic Information Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="bi-journal-text fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold">Request Information</h5>
+                        <small class="opacity-75">Select citizen and procedure for this request</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <!-- Citizen and Procedure Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-person me-1 text-primary"></i>{{ form_label(form.person) }}*
+                        </label>
+                        {{ form_widget(form.person, {
+                            'attr': {'class': 'form-select form-select-lg'}
+                        }) }}
+                        {{ form_errors(form.person) }}
+                        <div class="form-text">
+                            <small class="text-muted">
+                                <i class="bi-info-circle me-1"></i>
+                                Select the citizen requesting this service
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-gear me-1 text-primary"></i>{{ form_label(form.procedure) }}*
+                        </label>
+                        {{ form_widget(form.procedure, {
+                            'attr': {'class': 'form-select form-select-lg'}
+                        }) }}
+                        {{ form_errors(form.procedure) }}
+                        <div class="form-text">
+                            <small class="text-muted">
+                                <i class="bi-info-circle me-1"></i>
+                                Cost and timeline will be calculated automatically
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status and Priority Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-check-circle me-1 text-primary"></i>{{ form_label(form.status) }}
+                        </label>
+                        {{ form_widget(form.status, {
+                            'attr': {'class': 'form-select form-select-lg'}
+                        }) }}
+                        {{ form_errors(form.status) }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-exclamation-triangle me-1 text-primary"></i>{{ form_label(form.priority) }}
+                        </label>
+                        {{ form_widget(form.priority, {
+                            'attr': {'class': 'form-select form-select-lg'}
+                        }) }}
+                        {{ form_errors(form.priority) }}
+                    </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-dark mb-2">
+                        <i class="bi-chat-left-text me-1 text-primary"></i>{{ form_label(form.comments) }}
+                    </label>
+                    {{ form_widget(form.comments, {
+                        'attr': {
+                            'class': 'form-control form-control-lg',
+                            'rows': 3
+                        }
+                    }) }}
+                    {{ form_errors(form.comments) }}
+                </div>
+
+                <!-- Admin Notes -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark mb-2">
+                        <i class="bi-sticky me-1 text-primary"></i>{{ form_label(form.adminNotes) }}
+                    </label>
+                    {{ form_widget(form.adminNotes, {
+                        'attr': {
+                            'class': 'form-control form-control-lg',
+                            'rows': 4
+                        }
+                    }) }}
+                    {{ form_errors(form.adminNotes) }}
+                    <div class="form-text">
+                        <small class="text-muted">
+                            <i class="bi-info-circle me-1"></i>
+                            Internal notes for administrative purposes only
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Information Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="bi-currency-exchange fs-4"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold">Financial Details</h5>
+                        <small class="opacity-75">Cost and payment information</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <!-- Cost and Payment Row -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-cash me-1 text-primary"></i>{{ form_label(form.totalCost) }}
+                        </label>
+                        {{ form_widget(form.totalCost, {
+                            'attr': {'class': 'form-control form-control-lg'}
+                        }) }}
+                        {{ form_errors(form.totalCost) }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-credit-card me-1 text-primary"></i>{{ form_label(form.paidAmount) }}
+                        </label>
+                        {{ form_widget(form.paidAmount, {
+                            'attr': {'class': 'form-control form-control-lg'}
+                        }) }}
+                        {{ form_errors(form.paidAmount) }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-check2-square me-1 text-primary"></i>{{ form_label(form.paymentStatus) }}
+                        </label>
+                        {{ form_widget(form.paymentStatus, {
+                            'attr': {'class': 'form-select form-select-lg'}
+                        }) }}
+                        {{ form_errors(form.paymentStatus) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline Information Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333 !important;">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="bi-calendar-event fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold text-dark">Timeline</h5>
+                        <small class="text-muted">Expected completion and actual dates</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <!-- Dates Row -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-calendar-plus me-1 text-primary"></i>{{ form_label(form.expectedCompletionAt) }}
+                        </label>
+                        {{ form_widget(form.expectedCompletionAt, {
+                            'attr': {'class': 'form-control form-control-lg'}
+                        }) }}
+                        {{ form_errors(form.expectedCompletionAt) }}
+                        <div class="form-text">
+                            <small class="text-muted">
+                                <i class="bi-info-circle me-1"></i>
+                                Will be calculated automatically based on procedure
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-calendar-check me-1 text-primary"></i>{{ form_label(form.completedAt) }}
+                        </label>
+                        {{ form_widget(form.completedAt, {
+                            'attr': {'class': 'form-control form-control-lg'}
+                        }) }}
+                        {{ form_errors(form.completedAt) }}
+                        <div class="form-text">
+                            <small class="text-muted">
+                                <i class="bi-info-circle me-1"></i>
+                                Set when request is marked as completed
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Administrative Settings Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333 !important;">
+                <div class="d-flex align-items-center">
+                    <div class="icon-wrapper me-3">
+                        <i class="bi-gear-fill fs-4 text-secondary"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold text-dark">Administrative Settings</h5>
+                        <small class="text-muted">System configuration options</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold text-dark mb-2">
+                            <i class="bi-sort-numeric-up me-1 text-primary"></i>{{ form_label(form.displayOrder) }}
+                        </label>
+                        {{ form_widget(form.displayOrder, {
+                            'attr': {'class': 'form-control form-control-lg'}
+                        }) }}
+                        {{ form_errors(form.displayOrder) }}
+                        <div class="form-text">
+                            <small class="text-muted">
+                                <i class="bi-info-circle me-1"></i>
+                                Used for sorting requests in lists and reports
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Information Sidebar -->
+    <div class="col-lg-4">
+        <div class="position-sticky" style="top: 2rem;">
+            <!-- Procedure Information -->
+            <div class="card shadow-sm border-0 mb-4" id="procedureInfo" style="display: none;">
+                <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-wrapper me-3">
+                            <i class="bi-info-circle fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-0 fw-bold">Procedure Details</h5>
+                            <small class="opacity-75">Information about selected procedure</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div id="procedureDetails">
+                        <div class="text-center text-muted">
+                            <i class="bi-arrow-left-circle" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0">Select a procedure to view details</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Guidelines -->
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <div class="d-flex align-items-center">
+                        <i class="bi-lightbulb me-2 text-warning"></i>
+                        <h6 class="card-title mb-0 fw-bold">Form Guidelines</h6>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <div class="guidelines-list">
+                        <div class="guideline-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi-check-circle text-success me-2 mt-1"></i>
+                                <div>
+                                    <strong class="text-dark">Required Fields</strong>
+                                    <p class="mb-0 small text-muted">Citizen and Procedure are mandatory fields</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="guideline-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi-check-circle text-success me-2 mt-1"></i>
+                                <div>
+                                    <strong class="text-dark">Auto-calculation</strong>
+                                    <p class="mb-0 small text-muted">Cost and dates are calculated automatically</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="guideline-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi-check-circle text-success me-2 mt-1"></i>
+                                <div>
+                                    <strong class="text-dark">Priority Levels</strong>
+                                    <p class="mb-0 small text-muted">Set appropriate priority for processing order</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="guideline-item">
+                            <div class="d-flex align-items-start">
+                                <i class="bi-info-circle text-info me-2 mt-1"></i>
+                                <div>
+                                    <strong class="text-dark">Reference Number</strong>
+                                    <p class="mb-0 small text-muted">Will be generated automatically upon creation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Form Actions -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center p-4 bg-light rounded-3 border">
+            <div class="form-actions-info">
+                <h6 class="mb-1 fw-bold text-dark">Ready to submit?</h6>
+                <small class="text-muted">Make sure all required fields are completed</small>
+            </div>
+            <div class="form-actions-buttons">
+                <a href="{{ path('admin_request_index') }}" class="btn btn-outline-secondary btn-lg me-3">
+                    <i class="bi-arrow-left me-2"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-primary btn-lg px-4">
+                    <i class="bi-check-circle me-2"></i>
+                    {{ button_label|default('Save Request') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{ form_end(form) }}
+
+<style>
+/* Enhanced form styles */
+.icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.card {
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
+}
+
+.card-header.bg-gradient {
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header.bg-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    transform: translate(30px, -30px);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.guideline-item {
+    padding: 0.75rem;
+    border-radius: 8px;
+    background: rgba(102, 126, 234, 0.05);
+    border-left: 3px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+.guideline-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateX(3px);
+}
+
+.form-actions-buttons .btn {
+    min-width: 120px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .col-lg-4 .position-sticky {
+        position: relative !important;
+        top: auto !important;
+    }
+    
+    .form-actions-buttons {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .form-actions-info {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Form validation styles */
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.is-valid {
+    border-color: #28a745;
+}
+
+.invalid-feedback {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #dc3545;
+}
+</style>
+
+<script>
+// Function to update cost and time when procedure changes
+function updateCostAndTime(procedureId) {
+    if (!procedureId) {
+        document.getElementById('procedureInfo').style.display = 'none';
+        return;
+    }
+    
+    fetch(`/admin/request/api/procedure/${procedureId}/info`)
+        .then(response => response.json())
+        .then(data => {
+            // Update cost field
+            const costField = document.querySelector('input[name="request[totalCost]"]');
+            if (costField && data.cost) {
+                costField.value = data.cost;
+            }
+            
+            // Calculate expected completion date
+            if (data.processTime) {
+                const match = data.processTime.match(/(\d+)/);
+                const days = match ? parseInt(match[1]) : 7;
+                
+                const expectedDate = new Date();
+                expectedDate.setDate(expectedDate.getDate() + days);
+                
+                const expectedField = document.querySelector('input[name="request[expectedCompletionAt]"]');
+                if (expectedField) {
+                    expectedField.value = expectedDate.toISOString().slice(0, 16);
+                }
+            }
+            
+            // Update procedure info card
+            const procedureDetails = document.getElementById('procedureDetails');
+            procedureDetails.innerHTML = `
+                <div class="mb-3">
+                    <label class="fw-bold text-muted small">Service Cost:</label>
+                    <div class="fs-5 text-success fw-bold">${data.cost ? Number(data.cost).toLocaleString() : '0'} XAF</div>
+                </div>
+                <div class="mb-3">
+                    <label class="fw-bold text-muted small">Processing Time:</label>
+                    <div class="text-info">${data.processTime || 'Not specified'}</div>
+                </div>
+                <div class="mb-0">
+                    <label class="fw-bold text-muted small">Family:</label>
+                    <div class="text-primary">${data.family || 'Not specified'}</div>
+                </div>
+            `;
+            
+            document.getElementById('procedureInfo').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error fetching procedure info:', error);
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    document.getElementById('requestForm').addEventListener('submit', function(e) {
+        const person = document.querySelector('select[name="request[person]"]').value;
+        const procedure = document.querySelector('select[name="request[procedure]"]').value;
+        
+        if (!person || !procedure) {
+            e.preventDefault();
+            alert('Please select both a citizen and a procedure.');
+            return false;
+        }
+    });
+
+    // Real-time validation feedback
+    document.querySelectorAll('select[required]').forEach(function(field) {
+        field.addEventListener('change', function() {
+            if (this.value === '') {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+
+    // Auto-calculate payment status based on amounts
+    const totalCostField = document.querySelector('input[name="request[totalCost]"]');
+    const paidAmountField = document.querySelector('input[name="request[paidAmount]"]');
+    const paymentStatusField = document.querySelector('select[name="request[paymentStatus]"]');
+    
+    function updatePaymentStatus() {
+        const totalCost = parseFloat(totalCostField.value) || 0;
+        const paidAmount = parseFloat(paidAmountField.value) || 0;
+        
+        if (paidAmount === 0) {
+            paymentStatusField.value = 'pending';
+        } else if (paidAmount >= totalCost) {
+            paymentStatusField.value = 'completed';
+        } else {
+            paymentStatusField.value = 'partial';
+        }
+    }
+    
+    if (totalCostField && paidAmountField && paymentStatusField) {
+        totalCostField.addEventListener('input', updatePaymentStatus);
+        paidAmountField.addEventListener('input', updatePaymentStatus);
+    }
+
+    // Initialize procedure info if procedure is already selected
+    const procedureField = document.querySelector('select[name="request[procedure]"]');
+    if (procedureField && procedureField.value) {
+        updateCostAndTime(procedureField.value);
+    }
+});
+</script>

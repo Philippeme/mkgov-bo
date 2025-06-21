@@ -70,11 +70,15 @@ class Procedure
     #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Document::class)]
     private Collection $documents;
 
+    #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Request::class)]
+    private Collection $requests;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
         $this->documents = new ArrayCollection();
+        $this->requests = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -259,6 +263,54 @@ class Procedure
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Request>
+     */
+    public function getRequests(): Collection
+    {
+        return $this->requests;
+    }
+
+    public function addRequest(Request $request): static
+    {
+        if (!$this->requests->contains($request)) {
+            $this->requests->add($request);
+            $request->setProcedure($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRequest(Request $request): static
+    {
+        if ($this->requests->removeElement($request)) {
+            if ($request->getProcedure() === $this) {
+                $request->setProcedure(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getActiveRequests(): Collection
+    {
+        return $this->requests->filter(fn(Request $req) => $req->isActive() && !$req->isDeleted());
+    }
+
+    public function getPendingRequests(): Collection
+    {
+        return $this->requests->filter(fn(Request $req) => 
+            $req->isActive() && !$req->isDeleted() && $req->getStatus() === 'pending'
+        );
+    }
+
+    public function getCompletedRequests(): Collection
+    {
+        return $this->requests->filter(fn(Request $req) => 
+            $req->isActive() && !$req->isDeleted() && $req->getStatus() === 'completed'
+        );
     }
 
     public function getInputDocuments(): Collection

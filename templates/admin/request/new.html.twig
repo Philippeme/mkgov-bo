@@ -1,0 +1,89 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}New Request{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi-plus-circle me-2"></i>
+        Create New Request
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ path('admin_request_index') }}">Requests</a></li>
+            <li class="breadcrumb-item active" aria-current="page">New</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="alert alert-info">
+    <div class="d-flex align-items-center">
+        <i class="bi-info-circle me-3" style="font-size: 1.5rem;"></i>
+        <div>
+            <h6 class="alert-heading mb-1">Service Request Creation</h6>
+            <p class="mb-0">Create a new service request for a citizen. The system will automatically calculate costs and expected completion dates based on the selected procedure.</p>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+            <i class="bi-journal-text me-2"></i>
+            Request Information
+        </h5>
+    </div>
+    <div class="card-body">
+        {{ include('admin/request/_form.html.twig', {'button_label': 'Create Request'}) }}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate display order
+    const displayOrderField = document.querySelector('input[name="request[displayOrder]"]');
+    if (displayOrderField && displayOrderField.value == 0) {
+        displayOrderField.value = Math.floor(Date.now() / 1000);
+    }
+    
+    // Focus on person field
+    const personField = document.querySelector('select[name="request[person]"]');
+    if (personField) {
+        personField.focus();
+    }
+
+    // Auto-calculate expected completion when procedure changes
+    const procedureField = document.querySelector('select[name="request[procedure]"]');
+    if (procedureField) {
+        procedureField.addEventListener('change', function() {
+            if (this.value) {
+                fetch(`/admin/request/api/procedure/${this.value}/info`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Update cost field
+                        const costField = document.querySelector('input[name="request[totalCost]"]');
+                        if (costField && data.cost) {
+                            costField.value = data.cost;
+                        }
+                        
+                        // Calculate expected completion date
+                        if (data.processTime) {
+                            const match = data.processTime.match(/(\d+)/);
+                            const days = match ? parseInt(match[1]) : 7;
+                            
+                            const expectedDate = new Date();
+                            expectedDate.setDate(expectedDate.getDate() + days);
+                            
+                            const expectedField = document.querySelector('input[name="request[expectedCompletionAt]"]');
+                            if (expectedField) {
+                                expectedField.value = expectedDate.toISOString().slice(0, 16);
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching procedure info:', error));
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

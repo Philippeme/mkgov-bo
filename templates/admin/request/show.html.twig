@@ -1,0 +1,568 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ request.reference }}{% endblock %}
+
+{% block stylesheets %}
+<style>
+    .request-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .request-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 150px;
+        height: 150px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        transform: translate(50px, -50px);
+    }
+    
+    .status-badge-large {
+        font-size: 1.1rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 2rem;
+    }
+    
+    .priority-indicator {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+    }
+    
+    .progress-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: conic-gradient(#28a745 0deg, #28a745 {{ request.progressPercentage * 3.6 }}deg, #e9ecef {{ request.progressPercentage * 3.6 }}deg, #e9ecef 360deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .progress-circle::before {
+        content: '';
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 50%;
+    }
+    
+    .progress-text {
+        position: relative;
+        z-index: 1;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+    
+    .info-card {
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #667eea, #764ba2);
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 25px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -22px;
+        top: 5px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px currentColor;
+    }
+    
+    .timeline-content {
+        background: white;
+        padding: 15px 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-left: 4px solid currentColor;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi-eye me-2"></i>
+        {{ request.reference }}
+    </h1>
+    <div class="btn-group">
+        <a href="{{ path('admin_request_edit', {'id': request.id}) }}" class="btn btn-warning">
+            <i class="bi-pencil me-2"></i>
+            Edit
+        </a>
+        <div class="dropdown">
+            <button class="btn btn-outline-{{ request.statusBadgeClass }} dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi-gear me-2"></i>
+                Actions
+            </button>
+            <ul class="dropdown-menu">
+                <li><button class="dropdown-item status-update" data-status="pending">
+                    <i class="bi-clock me-2"></i>Set Pending
+                </button></li>
+                <li><button class="dropdown-item status-update" data-status="processing">
+                    <i class="bi-gear me-2"></i>Set Processing
+                </button></li>
+                <li><button class="dropdown-item status-update" data-status="completed">
+                    <i class="bi-check-circle me-2"></i>Mark Completed
+                </button></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><button class="dropdown-item text-danger status-update" data-status="rejected">
+                    <i class="bi-x-circle me-2"></i>Reject
+                </button></li>
+            </ul>
+        </div>
+        <button type="button" 
+                class="btn btn-danger delete-btn" 
+                data-request-id="{{ request.id }}"
+                data-request-reference="{{ request.reference }}">
+            <i class="bi-trash me-2"></i>
+            Delete
+        </button>
+    </div>
+</div>
+
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ path('admin_request_index') }}">Requests</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ request.reference }}</li>
+    </ol>
+</nav>
+
+<!-- Request Header Card -->
+<div class="card request-header mb-4 position-relative">
+    {% if request.priority == 'urgent' %}
+        <div class="priority-indicator bg-danger" title="Urgent Priority"></div>
+    {% elseif request.priority == 'high' %}
+        <div class="priority-indicator bg-warning" title="High Priority"></div>
+    {% endif %}
+    
+    <div class="card-body p-4 position-relative">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3 fw-bold">{{ request.reference }}</h2>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <i class="bi-person-fill me-2"></i>
+                            <strong>Citizen:</strong> {{ request.person.fullName }}
+                        </p>
+                        <p class="mb-2">
+                            <i class="bi-gear-fill me-2"></i>
+                            <strong>Procedure:</strong> {{ request.procedure.pname }}
+                        </p>
+                        <p class="mb-0">
+                            <i class="bi-diagram-3-fill me-2"></i>
+                            <strong>Family:</strong> {{ request.procedure.family.fname }}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-2">
+                            <i class="bi-calendar-plus-fill me-2"></i>
+                            <strong>Submitted:</strong> {{ request.submittedAt|date('F d, Y H:i') }}
+                        </p>
+                        {% if request.expectedCompletionAt %}
+                        <p class="mb-2">
+                            <i class="bi-calendar-event-fill me-2"></i>
+                            <strong>Expected:</strong> {{ request.expectedCompletionAt|date('F d, Y') }}
+                            {% if request.isOverdue %}
+                                <span class="badge bg-danger ms-2">OVERDUE</span>
+                            {% endif %}
+                        </p>
+                        {% endif %}
+                        <p class="mb-0">
+                            <i class="bi-clock-fill me-2"></i>
+                            <strong>Days in Progress:</strong> {{ request.daysInProgress }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="progress-circle mx-auto mb-3">
+                    <div class="progress-text">{{ request.progressPercentage }}%</div>
+                </div>
+                <span class="status-badge-large badge bg-{{ request.statusBadgeClass }}">
+                    {{ request.status|title }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Request Details -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-info-circle-fill me-2"></i>
+                    Request Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Priority:</label>
+                            <p><span class="badge bg-{{ request.priorityBadgeClass }} fs-6">{{ request.priority|title }}</span></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Display Order:</label>
+                            <p><span class="badge bg-secondary fs-6">{{ request.displayOrder }}</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if request.comments %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted">Citizen Comments:</label>
+                    <div class="border rounded p-3 bg-light">
+                        {{ request.comments|nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if request.adminNotes %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted">Administrative Notes:</label>
+                    <div class="border rounded p-3 bg-warning bg-opacity-10">
+                        {{ request.adminNotes|nl2br }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Financial Information -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-currency-exchange me-2"></i>
+                    Financial Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="fw-bold text-success fs-4">{{ request.totalCost|number_format(0, '.', ',') }} XAF</div>
+                            <small class="text-muted">Total Cost</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="fw-bold text-info fs-4">{{ request.paidAmount|default(0)|number_format(0, '.', ',') }} XAF</div>
+                            <small class="text-muted">Paid Amount</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3 border rounded">
+                            <div class="fw-bold text-{{ request.paymentStatusBadgeClass }} fs-6">
+                                <span class="badge bg-{{ request.paymentStatusBadgeClass }}">{{ request.paymentStatus|title }}</span>
+                            </div>
+                            <small class="text-muted">Payment Status</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if request.totalCost and request.paidAmount %}
+                <div class="mt-3">
+                    {% set balanceAmount = request.totalCost - request.paidAmount %}
+                    {% if balanceAmount > 0 %}
+                        <div class="alert alert-warning">
+                            <i class="bi-exclamation-triangle me-2"></i>
+                            Outstanding balance: <strong>{{ balanceAmount|number_format(0, '.', ',') }} XAF</strong>
+                        </div>
+                    {% elseif balanceAmount == 0 %}
+                        <div class="alert alert-success">
+                            <i class="bi-check-circle me-2"></i>
+                            Payment completed in full
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Associated Documents -->
+        {% if request.activeDocuments|length > 0 %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-files me-2"></i>
+                    Associated Documents ({{ request.activeDocuments|length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Document</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for document in request.activeDocuments %}
+                            <tr>
+                                <td>
+                                    <strong>{{ document.name }}</strong>
+                                    {% if document.description %}
+                                        <div class="text-muted small">{{ document.description|slice(0, 50) }}...</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ document.type == 'input' ? 'warning' : 'success' }}">
+                                        {{ document.type|upper }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ document.statusBadgeClass }}">
+                                        {{ document.status|title }}
+                                    </span>
+                                </td>
+                                <td>{{ document.createdAt|date('M d, Y') }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('admin_document_show', {'id': document.id}) }}" 
+                                           class="btn btn-outline-info">
+                                            <i class="bi-eye"></i>
+                                        </a>
+                                        {% if document.filePath %}
+                                            <a href="{{ asset('uploads/documents/' ~ document.filePath) }}" 
+                                               target="_blank" 
+                                               class="btn btn-outline-secondary">
+                                                <i class="bi-download"></i>
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Citizen Information -->
+        <div class="card info-card shadow-sm mb-4">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-person-vcard me-2"></i>
+                    Citizen Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    {% if request.person.image %}
+                        <img src="{{ asset('uploads/persons/' ~ request.person.image) }}" 
+                             alt="{{ request.person.fullName }}" 
+                             class="rounded-circle"
+                             style="width: 80px; height: 80px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center"
+                             style="width: 80px; height: 80px; font-size: 2rem;">
+                            {{ request.person.firstName|first|upper }}{{ request.person.lastName|first|upper }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="text-center mb-3">
+                    <h6 class="fw-bold">{{ request.person.fullName }}</h6>
+                    <small class="text-muted">{{ request.person.nationalId }}</small>
+                </div>
+                
+                <div class="mb-2">
+                    <small class="text-muted">Email:</small>
+                    <div><a href="mailto:{{ request.person.email }}">{{ request.person.email }}</a></div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Phone:</small>
+                    <div><a href="tel:{{ request.person.phoneNumber }}">{{ request.person.phoneNumber }}</a></div>
+                </div>
+                <div class="mb-2">
+                    <small class="text-muted">Region:</small>
+                    <div>{{ request.person.region ?? 'Not specified' }}</div>
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{{ path('admin_person_show', {'id': request.person.id}) }}" class="btn btn-outline-primary btn-sm w-100">
+                        <i class="bi-arrow-right me-1"></i>
+                        View Full Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card info-card shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="bi-clock-history me-2"></i>
+                    Request Timeline
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item text-primary">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content border-primary">
+                            <div class="fw-bold">Request Submitted</div>
+                            <small class="text-muted">{{ request.submittedAt|date('M d, Y H:i') }}</small>
+                            <div class="small mt-1">Initial submission by {{ request.person.fullName }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if request.status == 'processing' or request.status == 'completed' %}
+                    <div class="timeline-item text-info">
+                        <div class="timeline-marker bg-info"></div>
+                        <div class="timeline-content border-info">
+                            <div class="fw-bold">Processing Started</div>
+                            <small class="text-muted">Status changed to processing</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if request.completedAt %}
+                    <div class="timeline-item text-success">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content border-success">
+                            <div class="fw-bold">Request Completed</div>
+                            <small class="text-muted">{{ request.completedAt|date('M d, Y H:i') }}</small>
+                        </div>
+                    </div>
+                    {% elseif request.expectedCompletionAt %}
+                    <div class="timeline-item text-warning">
+                        <div class="timeline-marker bg-warning"></div>
+                        <div class="timeline-content border-warning">
+                            <div class="fw-bold">Expected Completion</div>
+                            <small class="text-muted">{{ request.expectedCompletionAt|date('M d, Y') }}</small>
+                            {% if request.isOverdue %}
+                                <div class="small text-danger mt-1">
+                                    <i class="bi-exclamation-triangle me-1"></i>
+                                    Overdue by {{ (request.expectedCompletionAt.diff('now').days * -1) }} days
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete request <strong>{{ request.reference }}</strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    This action will remove the request from active processing but preserve data for auditing.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{{ path('admin_request_delete', {'id': request.id}) }}" style="display: inline;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ request.id) }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi-trash me-1"></i>
+                        Delete Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status update functionality
+    document.querySelectorAll('.status-update').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const newStatus = this.dataset.status;
+            const requestId = {{ request.id }};
+            
+            fetch(`/admin/request/${requestId}/update-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Error updating status');
+            });
+        });
+    });
+
+    // Delete button functionality
+    document.querySelectorAll('.delete-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+});
+</script>
+{% endblock %}
