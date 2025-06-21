@@ -54,21 +54,57 @@
                 </h6>
             </div>
             <div class="card-body">
+                <!-- Request Association (Priority 1) -->
+                <div class="alert alert-info border-0 mb-3">
+                    <div class="d-flex align-items-center">
+                        <i class="bi-info-circle me-2"></i>
+                        <small>
+                            <strong>Association Priority:</strong> Request → Procedure → Person. 
+                            Selecting a request will automatically populate related fields.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    {{ form_row(form.request, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-select request-select'}
+                    }) }}
+                    <div class="form-text">
+                        <small class="text-muted">
+                            <i class="bi-info-circle me-1"></i>
+                            Primary association. When selected, related procedure and person are inherited.
+                        </small>
+                    </div>
+                </div>
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             {{ form_row(form.procedure, {
                                 'label_attr': {'class': 'form-label fw-bold'},
-                                'attr': {'class': 'form-select'}
+                                'attr': {'class': 'form-select procedure-field'}
                             }) }}
+                            <div class="form-text">
+                                <small class="text-muted">
+                                    <i class="bi-gear me-1"></i>
+                                    Secondary association (automatically filled when request is selected)
+                                </small>
+                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             {{ form_row(form.person, {
                                 'label_attr': {'class': 'form-label fw-bold'},
-                                'attr': {'class': 'form-select person-select'}
+                                'attr': {'class': 'form-select person-select person-field'}
                             }) }}
+                            <div class="form-text">
+                                <small class="text-muted">
+                                    <i class="bi-person me-1"></i>
+                                    Tertiary association (automatically filled when request is selected)
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -115,6 +151,66 @@
     </div>
     
     <div class="col-md-4">
+        <!-- Association Context Info -->
+        <div class="card mb-4 bg-light">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-diagram-3 me-2"></i>
+                    Association Context
+                </h6>
+            </div>
+            <div class="card-body" id="associationContext">
+                {% if document.request %}
+                    <div class="context-item request-context">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi-journal-text text-primary me-2"></i>
+                            <strong>Request</strong>
+                        </div>
+                        <div class="ps-4">
+                            <div class="fw-bold text-primary">{{ document.request.reference }}</div>
+                            <small class="text-muted">Status: {{ document.request.status|title }}</small>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if document.procedure %}
+                    <div class="context-item procedure-context {% if document.request %}mt-3{% endif %}">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi-gear text-secondary me-2"></i>
+                            <strong>Procedure</strong>
+                        </div>
+                        <div class="ps-4">
+                            <div class="fw-bold">{{ document.procedure.pname }}</div>
+                            {% if document.procedure.family %}
+                                <small class="text-muted">Family: {{ document.procedure.family.fname }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if document.person %}
+                    <div class="context-item person-context {% if document.procedure or document.request %}mt-3{% endif %}">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi-person text-info me-2"></i>
+                            <strong>Citizen</strong>
+                        </div>
+                        <div class="ps-4">
+                            <div class="fw-bold">{{ document.person.fullName }}</div>
+                            <small class="text-muted">ID: {{ document.person.nationalId }}</small>
+                        </div>
+                    </div>
+                {% endif %}
+                
+                {% if not document.request and not document.procedure and not document.person %}
+                    <div class="text-center text-muted">
+                        <i class="bi-slash-circle" style="font-size: 2rem;"></i>
+                        <p class="mt-2 mb-0">No associations</p>
+                        <small>Select a request, procedure, or citizen to establish context</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
         <!-- Document File Section -->
         <div class="card bg-light">
             <div class="card-header">
@@ -225,6 +321,17 @@
                 </div>
                 {% endif %}
 
+                {% if document.request %}
+                <div class="mb-2">
+                    <label class="small fw-bold text-muted">Request:</label>
+                    <div class="small">
+                        <a href="{{ path('admin_request_show', {'id': document.request.id}) }}" class="text-decoration-none">
+                            {{ document.request.reference }}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% if document.procedure %}
                 <div class="mb-2">
                     <label class="small fw-bold text-muted">Procedure:</label>
@@ -260,6 +367,12 @@
         <i class="bi-arrow-left me-2"></i>
         Cancel
     </a>
+    {% if document.request %}
+        <a href="{{ path('admin_request_show', {'id': document.request.id}) }}" class="btn btn-info">
+            <i class="bi-journal-text me-2"></i>
+            Back to Request
+        </a>
+    {% endif %}
 </div>
 
 {{ form_end(form) }}
@@ -330,6 +443,113 @@ function previewDocument(input) {
     }
 }
 
+// Function to update request-related fields
+function updateRequestRelatedFields(requestId) {
+    if (requestId) {
+        fetch(`/admin/request/${requestId}/info`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update procedure field
+                    const procedureField = document.querySelector('select[name="document[procedure]"]');
+                    if (procedureField && data.procedure_id) {
+                        procedureField.value = data.procedure_id;
+                        procedureField.disabled = true;
+                    }
+                    
+                    // Update person field
+                    const personField = document.querySelector('select[name="document[person]"]');
+                    if (personField && data.person_id) {
+                        personField.value = data.person_id;
+                        personField.disabled = true;
+                    }
+                    
+                    // Update context display
+                    updateAssociationContext(data);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching request info:', error);
+            });
+    } else {
+        // Re-enable fields when no request is selected
+        const procedureField = document.querySelector('select[name="document[procedure]"]');
+        const personField = document.querySelector('select[name="document[person]"]');
+        
+        if (procedureField) {
+            procedureField.disabled = false;
+            procedureField.value = '';
+        }
+        
+        if (personField) {
+            personField.disabled = false;
+            personField.value = '';
+        }
+    }
+}
+
+function updateAssociationContext(data) {
+    const contextDiv = document.getElementById('associationContext');
+    let html = '';
+    
+    if (data.request_reference) {
+        html += `
+            <div class="context-item request-context">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi-journal-text text-primary me-2"></i>
+                    <strong>Request</strong>
+                </div>
+                <div class="ps-4">
+                    <div class="fw-bold text-primary">${data.request_reference}</div>
+                    <small class="text-muted">Status: ${data.request_status}</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (data.procedure_name) {
+        html += `
+            <div class="context-item procedure-context ${data.request_reference ? 'mt-3' : ''}">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi-gear text-secondary me-2"></i>
+                    <strong>Procedure</strong>
+                </div>
+                <div class="ps-4">
+                    <div class="fw-bold">${data.procedure_name}</div>
+                    ${data.family_name ? `<small class="text-muted">Family: ${data.family_name}</small>` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    if (data.person_name) {
+        html += `
+            <div class="context-item person-context ${(data.procedure_name || data.request_reference) ? 'mt-3' : ''}">
+                <div class="d-flex align-items-center mb-2">
+                    <i class="bi-person text-info me-2"></i>
+                    <strong>Citizen</strong>
+                </div>
+                <div class="ps-4">
+                    <div class="fw-bold">${data.person_name}</div>
+                    <small class="text-muted">ID: ${data.person_national_id}</small>
+                </div>
+            </div>
+        `;
+    }
+    
+    if (!html) {
+        html = `
+            <div class="text-center text-muted">
+                <i class="bi-slash-circle" style="font-size: 2rem;"></i>
+                <p class="mt-2 mb-0">No associations</p>
+                <small>Select a request, procedure, or citizen to establish context</small>
+            </div>
+        `;
+    }
+    
+    contextDiv.innerHTML = html;
+}
+
 // Enhanced person search functionality
 document.addEventListener('DOMContentLoaded', function() {
     const personSelect = document.querySelector('.person-select');
@@ -366,6 +586,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 warning.innerHTML = '<i class="bi-clock me-1"></i>Expires within 30 days';
                 this.parentElement.appendChild(warning);
             }
+        });
+    }
+
+    // Request selection handler
+    const requestSelect = document.querySelector('select[name="document[request]"]');
+    if (requestSelect) {
+        requestSelect.addEventListener('change', function() {
+            updateRequestRelatedFields(this.value);
         });
     }
 });

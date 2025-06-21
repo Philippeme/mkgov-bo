@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Document;
 use App\Form\DocumentType;
 use App\Repository\DocumentRepository;
+use App\Repository\RequestRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -23,73 +24,58 @@ class DocumentController extends AbstractController
         $type = $request->query->get('type', '');
         $status = $request->query->get('status', '');
         $expiring = $request->query->get('expiring', '');
+        $requestFilter = $request->query->get('request', '');
 
-        $queryBuilder = $documentRepository->createQueryBuilder('d')
-            ->leftJoin('d.procedure', 'p')
-            ->leftJoin('d.person', 'per')
-            ->addSelect('p', 'per')
-            ->where('d.isActive = :active')
-            ->setParameter('active', true);
+        $filters = [
+            'search' => $search,
+            'type' => $type,
+            'status' => $status,
+            'expiring' => $expiring,
+            'request' => $requestFilter
+        ];
 
-        if ($search) {
-            $queryBuilder->andWhere('d.name LIKE :search OR d.description LIKE :search')
-                        ->setParameter('search', '%' . $search . '%');
-        }
-
-        if ($type) {
-            $queryBuilder->andWhere('d.type = :type')
-                        ->setParameter('type', $type);
-        }
-
-        if ($status) {
-            $queryBuilder->andWhere('d.status = :status')
-                        ->setParameter('status', $status);
-        }
-
-        if ($expiring === 'yes') {
-            $futureDate = new \DateTime();
-            $futureDate->add(new \DateInterval('P30D'));
-            $queryBuilder->andWhere('d.expirationDate BETWEEN :today AND :futureDate')
-                        ->setParameter('today', new \DateTime())
-                        ->setParameter('futureDate', $futureDate);
-        } elseif ($expiring === 'expired') {
-            $queryBuilder->andWhere('d.expirationDate < :today')
-                        ->setParameter('today', new \DateTime());
-        }
-
-        $documents = $queryBuilder->orderBy('d.type', 'ASC')
-                                 ->addOrderBy('d.displayOrder', 'ASC')
-                                 ->addOrderBy('d.createdAt', 'DESC')
-                                 ->getQuery()
-                                 ->getResult();
+        $documents = $documentRepository->findWithFilters($filters);
+        $statistics = $documentRepository->getStatistics();
         
         return $this->render('admin/document/index.html.twig', [
             'documents' => $documents,
-            'filters' => [
-                'search' => $search,
-                'type' => $type,
-                'status' => $status,
-                'expiring' => $expiring
-            ]
+            'statistics' => $statistics,
+            'filters' => $filters
         ]);
     }
 
     #[Route('/new', name: 'admin_document_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
+    public function new(Request $httpRequest, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $document = new Document();
         
-        // If person parameter is provided, set the person
-        $personId = $request->query->get('person');
-        if ($personId) {
+        // Auto-populate based on query parameters
+        $requestId = $httpRequest->query->get('request');
+        $personId = $httpRequest->query->get('person');
+        $procedureId = $httpRequest->query->get('procedure');
+        
+        if ($requestId) {
+            $serviceRequest = $entityManager->getRepository(\App\Entity\Request::class)->find($requestId);
+            if ($serviceRequest && !$serviceRequest->isDeleted()) {
+                $document->setRequest($serviceRequest);
+                // Auto-populate related fields from request
+                $document->setProcedure($serviceRequest->getProcedure());
+                $document->setPerson($serviceRequest->getPerson());
+            }
+        } elseif ($personId) {
             $person = $entityManager->getRepository(\App\Entity\Person::class)->find($personId);
             if ($person && !$person->isDeleted()) {
                 $document->setPerson($person);
             }
+        } elseif ($procedureId) {
+            $procedure = $entityManager->getRepository(\App\Entity\Procedure::class)->find($procedureId);
+            if ($procedure && $procedure->isActive()) {
+                $document->setProcedure($procedure);
+            }
         }
 
         $form = $this->createForm(DocumentType::class, $document);
-        $form->handleRequest($request);
+        $form->handleRequest($httpRequest);
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
@@ -133,13 +119,20 @@ class DocumentController extends AbstractController
                     $document->setStatus('expired');
                 }
 
+                // Auto-set display order if not provided
+                if (!$document->getDisplayOrder()) {
+                    $document->setDisplayOrder((int) (new \DateTime())->format('U'));
+                }
+
                 $entityManager->persist($document);
                 $entityManager->flush();
 
                 $this->addFlash('success', 'Document has been created successfully.');
                 
                 // Redirect based on context
-                if ($document->getPerson()) {
+                if ($document->getRequest()) {
+                    return $this->redirectToRoute('admin_request_show', ['id' => $document->getRequest()->getId()]);
+                } elseif ($document->getPerson()) {
                     return $this->redirectToRoute('admin_person_show', ['id' => $document->getPerson()->getId()]);
                 }
                 
@@ -169,14 +162,14 @@ class DocumentController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'admin_document_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Document $document, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
+    public function edit(Request $httpRequest, Document $document, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         if (!$document->isActive()) {
             throw $this->createNotFoundException('Document not found.');
         }
 
         $form = $this->createForm(DocumentType::class, $document);
-        $form->handleRequest($request);
+        $form->handleRequest($httpRequest);
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
@@ -251,6 +244,12 @@ class DocumentController extends AbstractController
                 $entityManager->flush();
 
                 $this->addFlash('success', 'Document has been updated successfully.');
+                
+                // Smart redirect based on context
+                if ($document->getRequest()) {
+                    return $this->redirectToRoute('admin_request_show', ['id' => $document->getRequest()->getId()]);
+                }
+                
                 return $this->redirectToRoute('admin_document_index', [], Response::HTTP_SEE_OTHER);
                 
             } catch (\Exception $e) {
@@ -265,10 +264,13 @@ class DocumentController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'admin_document_delete', methods: ['POST'])]
-    public function delete(Request $request, Document $document, EntityManagerInterface $entityManager): Response
+    public function delete(Request $httpRequest, Document $document, EntityManagerInterface $entityManager): Response
     {
-        if ($this->isCsrfTokenValid('delete'.$document->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete'.$document->getId(), $httpRequest->request->get('_token'))) {
             try {
+                // Store context for redirect
+                $redirectToRequest = $document->getRequest();
+                
                 // Delete custom file if exists
                 if ($document->getFilePath() && !$this->isDocumentTemplate($document->getFilePath())) {
                     $filePath = $this->getParameter('kernel.project_dir').'/public/uploads/documents/'.$document->getFilePath();
@@ -283,6 +285,11 @@ class DocumentController extends AbstractController
                 $entityManager->flush();
 
                 $this->addFlash('success', 'Document has been deleted successfully.');
+                
+                // Smart redirect
+                if ($redirectToRequest) {
+                    return $this->redirectToRoute('admin_request_show', ['id' => $redirectToRequest->getId()]);
+                }
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Error deleting document: ' . $e->getMessage());
             }
@@ -312,10 +319,10 @@ class DocumentController extends AbstractController
     }
 
     #[Route('/{id}/update-status', name: 'admin_document_update_status', methods: ['POST'])]
-    public function updateStatus(Request $request, Document $document, EntityManagerInterface $entityManager): JsonResponse
+    public function updateStatus(Request $httpRequest, Document $document, EntityManagerInterface $entityManager): JsonResponse
     {
         try {
-            $newStatus = $request->request->get('status');
+            $newStatus = $httpRequest->request->get('status');
             $validStatuses = ['draft', 'pending', 'approved', 'rejected', 'expired', 'active'];
             
             if (!in_array($newStatus, $validStatuses)) {
@@ -356,11 +363,41 @@ class DocumentController extends AbstractController
                 'daysUntilExpiry' => $document->getExpirationDate() ? 
                     (new \DateTime())->diff($document->getExpirationDate())->days : null,
                 'person' => $document->getPerson() ? $document->getPerson()->getFullName() : null,
-                'procedure' => $document->getProcedure() ? $document->getProcedure()->getPname() : null
+                'procedure' => $document->getProcedure() ? $document->getProcedure()->getPname() : null,
+                'request' => $document->getRequest() ? $document->getRequest()->getReference() : null
             ];
         }
 
         return new JsonResponse($result);
+    }
+
+    #[Route('/by-request/{id}', name: 'admin_document_by_request', methods: ['GET'])]
+    public function byRequest(\App\Entity\Request $request, DocumentRepository $documentRepository): JsonResponse
+    {
+        $documents = $documentRepository->findByRequest($request);
+        
+        $result = [];
+        foreach ($documents as $document) {
+            $result[] = [
+                'id' => $document->getId(),
+                'name' => $document->getName(),
+                'type' => $document->getType(),
+                'status' => $document->getStatus(),
+                'isRequired' => $document->isRequired(),
+                'filePath' => $document->getFilePath(),
+                'url' => $this->generateUrl('admin_document_show', ['id' => $document->getId()])
+            ];
+        }
+
+        return new JsonResponse($result);
+    }
+
+    #[Route('/request/{id}/add-document', name: 'admin_document_add_to_request', methods: ['GET'])]
+    public function addToRequest(\App\Entity\Request $request): Response
+    {
+        return $this->redirectToRoute('admin_document_new', [
+            'request' => $request->getId()
+        ]);
     }
 
     private function isDocumentTemplate(string $filename): bool

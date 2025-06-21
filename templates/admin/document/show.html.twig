@@ -17,6 +17,7 @@
             {% if document.isRequired %}
                 <span class="badge bg-danger ms-1">Required</span>
             {% endif %}
+            <span class="badge bg-{{ document.statusBadgeClass }} ms-1">{{ document.status|title }}</span>
         </div>
     </div>
     <div class="btn-group">
@@ -37,6 +38,11 @@
                 <i class="bi-three-dots"></i>
             </button>
             <ul class="dropdown-menu">
+                {% if document.request %}
+                    <li><a class="dropdown-item" href="{{ path('admin_request_show', {'id': document.request.id}) }}">
+                        <i class="bi-journal-text me-2"></i>View Request
+                    </a></li>
+                {% endif %}
                 {% if document.person %}
                     <li><a class="dropdown-item" href="{{ path('admin_person_show', {'id': document.person.id}) }}">
                         <i class="bi-person me-2"></i>View Citizen
@@ -66,6 +72,11 @@
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
         <li class="breadcrumb-item"><a href="{{ path('admin_document_index') }}">Documents</a></li>
+        {% if document.request %}
+            <li class="breadcrumb-item">
+                <a href="{{ path('admin_request_show', {'id': document.request.id}) }}">{{ document.request.reference }}</a>
+            </li>
+        {% endif %}
         <li class="breadcrumb-item active" aria-current="page">{{ document.name }}</li>
     </ol>
 </nav>
@@ -260,51 +271,66 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
-                        {% if document.person %}
-                        <div class="association-item mb-3">
-                            <label class="info-label">Associated Citizen</label>
-                            <div class="association-container p-3 border rounded bg-light">
+                    <!-- Primary Association: Request -->
+                    <div class="col-md-12 mb-4">
+                        {% if document.request %}
+                        <div class="association-item">
+                            <label class="info-label">
+                                <i class="bi-journal-text text-primary me-1"></i>
+                                Associated Request (Primary)
+                            </label>
+                            <div class="association-container p-3 border rounded bg-primary bg-opacity-10 border-primary">
                                 <div class="d-flex align-items-center">
-                                    {% if document.person.image %}
-                                        <img src="{{ asset('uploads/persons/' ~ document.person.image) }}" 
-                                             alt="{{ document.person.fullName }}" 
-                                             class="rounded-circle me-3" 
-                                             style="width: 40px; height: 40px; object-fit: cover;">
-                                    {% else %}
-                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white me-3"
+                                    <div class="request-icon me-3">
+                                        <div class="bg-primary rounded d-flex align-items-center justify-content-center text-white"
                                              style="width: 40px; height: 40px;">
-                                            <i class="bi-person"></i>
+                                            <i class="bi-journal-text"></i>
                                         </div>
-                                    {% endif %}
+                                    </div>
                                     <div class="flex-grow-1">
                                         <h6 class="mb-1">
-                                            <a href="{{ path('admin_person_show', {'id': document.person.id}) }}" 
-                                               class="text-decoration-none">
-                                                {{ document.person.fullName }}
+                                            <a href="{{ path('admin_request_show', {'id': document.request.id}) }}" 
+                                               class="text-decoration-none fw-bold">
+                                                {{ document.request.reference }}
                                             </a>
                                         </h6>
                                         <small class="text-muted">
-                                            <i class="bi-credit-card me-1"></i>{{ document.person.nationalId }}
+                                            <i class="bi-person me-1"></i>{{ document.request.person.fullName }}
                                         </small>
                                         <div class="small text-muted">
-                                            <i class="bi-envelope me-1"></i>{{ document.person.email }}
+                                            <i class="bi-gear me-1"></i>{{ document.request.procedure.pname }}
+                                        </div>
+                                        <div class="mt-1">
+                                            <span class="badge bg-{{ document.request.statusBadgeClass }}">
+                                                {{ document.request.status|title }}
+                                            </span>
+                                            <span class="badge bg-{{ document.request.priorityBadgeClass }} ms-1">
+                                                {{ document.request.priority|title }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         {% else %}
-                        <div class="no-association text-center text-muted py-3">
-                            <i class="bi-person-x" style="font-size: 2rem;"></i>
-                            <p class="mt-2 mb-0">No citizen associated</p>
+                        <div class="no-association text-center text-muted py-3 border rounded">
+                            <i class="bi-journal-x" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0">No request associated</p>
+                            <small>This document is not linked to any specific request</small>
                         </div>
                         {% endif %}
                     </div>
+                </div>
+
+                <div class="row">
+                    <!-- Secondary Association: Procedure -->
                     <div class="col-md-6">
                         {% if document.procedure %}
                         <div class="association-item mb-3">
-                            <label class="info-label">Associated Procedure</label>
+                            <label class="info-label">
+                                <i class="bi-gear text-secondary me-1"></i>
+                                Associated Procedure
+                            </label>
                             <div class="association-container p-3 border rounded bg-light">
                                 <div class="d-flex align-items-start">
                                     <div class="procedure-icon me-3">
@@ -346,6 +372,52 @@
                         </div>
                         {% endif %}
                     </div>
+
+                    <!-- Tertiary Association: Person -->
+                    <div class="col-md-6">
+                        {% if document.person %}
+                        <div class="association-item mb-3">
+                            <label class="info-label">
+                                <i class="bi-person text-info me-1"></i>
+                                Associated Citizen
+                            </label>
+                            <div class="association-container p-3 border rounded bg-light">
+                                <div class="d-flex align-items-center">
+                                    {% if document.person.image %}
+                                        <img src="{{ asset('uploads/persons/' ~ document.person.image) }}" 
+                                             alt="{{ document.person.fullName }}" 
+                                             class="rounded-circle me-3" 
+                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center text-white me-3"
+                                             style="width: 40px; height: 40px;">
+                                            <i class="bi-person"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="{{ path('admin_person_show', {'id': document.person.id}) }}" 
+                                               class="text-decoration-none">
+                                                {{ document.person.fullName }}
+                                            </a>
+                                        </h6>
+                                        <small class="text-muted">
+                                            <i class="bi-credit-card me-1"></i>{{ document.person.nationalId }}
+                                        </small>
+                                        <div class="small text-muted">
+                                            <i class="bi-envelope me-1"></i>{{ document.person.email }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="no-association text-center text-muted py-3">
+                            <i class="bi-person-x" style="font-size: 2rem;"></i>
+                            <p class="mt-2 mb-0">No citizen associated</p>
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -370,6 +442,19 @@
                             <small class="timeline-time">{{ document.createdAt|date('F d, Y \\a\\t H:i') }}</small>
                         </div>
                     </div>
+                    
+                    {% if document.request %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary">
+                            <i class="bi-link"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h6 class="timeline-title">Linked to Request</h6>
+                            <p class="timeline-text">Document was associated with request {{ document.request.reference }}</p>
+                            <small class="timeline-time">Request submitted: {{ document.request.submittedAt|date('F d, Y \\a\\t H:i') }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
                     
                     {% if document.updatedAt != document.createdAt %}
                     <div class="timeline-item">
@@ -520,10 +605,23 @@
                         <span class="stat-value">{{ document.isRequired ? 'Yes' : 'No' }}</span>
                     </div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item mb-3">
                     <div class="d-flex justify-content-between">
                         <span class="stat-label">Active</span>
                         <span class="stat-value">{{ document.isActive ? 'Yes' : 'No' }}</span>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="d-flex justify-content-between">
+                        <span class="stat-label">Context</span>
+                        <span class="stat-value">
+                            {% set mainAssoc = document.mainAssociation %}
+                            {% if mainAssoc.type != 'none' %}
+                                <span class="badge bg-primary">{{ mainAssoc.type|title }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">None</span>
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
             </div>

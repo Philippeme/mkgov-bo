@@ -315,4 +315,140 @@ class RequestController extends AbstractController
             'family' => $procedure->getFamily()?->getFname()
         ]);
     }
+
+    #[Route('/{id}/info', name: 'admin_request_info', methods: ['GET'])]
+    public function getRequestInfo(Request $request): JsonResponse
+    {
+        try {
+            return new JsonResponse([
+                'success' => true,
+                'request_id' => $request->getId(),
+                'request_reference' => $request->getReference(),
+                'request_status' => $request->getStatus(),
+                'procedure_id' => $request->getProcedure()?->getId(),
+                'procedure_name' => $request->getProcedure()?->getPname(),
+                'family_name' => $request->getProcedure()?->getFamily()?->getFname(),
+                'person_id' => $request->getPerson()?->getId(),
+                'person_name' => $request->getPerson()?->getFullName(),
+                'person_national_id' => $request->getPerson()?->getNationalId(),
+                'submitted_at' => $request->getSubmittedAt()?->format('Y-m-d H:i:s'),
+                'expected_completion_at' => $request->getExpectedCompletionAt()?->format('Y-m-d H:i:s'),
+                'total_cost' => $request->getTotalCost(),
+                'priority' => $request->getPriority()
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error retrieving request information: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/{id}/documents', name: 'admin_request_documents', methods: ['GET'])]
+    public function getRequestDocuments(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $documents = $entityManager->getRepository(\App\Entity\Document::class)->findByRequest($request);
+            
+            $result = [];
+            foreach ($documents as $document) {
+                $result[] = [
+                    'id' => $document->getId(),
+                    'name' => $document->getName(),
+                    'type' => $document->getType(),
+                    'status' => $document->getStatus(),
+                    'isRequired' => $document->isRequired(),
+                    'filePath' => $document->getFilePath(),
+                    'fileSize' => $document->getFileSize(),
+                    'mimeType' => $document->getMimeType(),
+                    'expirationDate' => $document->getExpirationDate()?->format('Y-m-d'),
+                    'createdAt' => $document->getCreatedAt()?->format('Y-m-d H:i:s'),
+                    'url' => $this->generateUrl('admin_document_show', ['id' => $document->getId()])
+                ];
+            }
+
+            return new JsonResponse([
+                'success' => true,
+                'documents' => $result,
+                'count' => count($result)
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error retrieving documents: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/{id}/add-document', name: 'admin_request_add_document', methods: ['GET'])]
+    public function addDocument(Request $request): Response
+    {
+        return $this->redirectToRoute('admin_document_new', [
+            'request' => $request->getId()
+        ]);
+    }
+
+    #[Route('/{id}/timeline', name: 'admin_request_timeline', methods: ['GET'])]
+    public function getTimeline(Request $request): JsonResponse
+    {
+        try {
+            $timeline = [];
+            
+            // Request submitted
+            $timeline[] = [
+                'type' => 'submitted',
+                'title' => 'Request Submitted',
+                'description' => 'Request was submitted by ' . $request->getPerson()->getFullName(),
+                'date' => $request->getSubmittedAt()?->format('Y-m-d H:i:s'),
+                'icon' => 'bi-plus-circle',
+                'color' => 'primary'
+            ];
+
+            // Status changes
+            if ($request->getStatus() === 'processing' || $request->getStatus() === 'completed') {
+                $timeline[] = [
+                    'type' => 'processing',
+                    'title' => 'Processing Started',
+                    'description' => 'Request status changed to processing',
+                    'date' => $request->getUpdatedAt()?->format('Y-m-d H:i:s'),
+                    'icon' => 'bi-gear',
+                    'color' => 'info'
+                ];
+            }
+
+            // Completion
+            if ($request->getCompletedAt()) {
+                $timeline[] = [
+                    'type' => 'completed',
+                    'title' => 'Request Completed',
+                    'description' => 'Request was completed successfully',
+                    'date' => $request->getCompletedAt()?->format('Y-m-d H:i:s'),
+                    'icon' => 'bi-check-circle',
+                    'color' => 'success'
+                ];
+            }
+
+            // Expected completion
+            if ($request->getExpectedCompletionAt() && !$request->getCompletedAt()) {
+                $timeline[] = [
+                    'type' => 'expected',
+                    'title' => 'Expected Completion',
+                    'description' => 'Target completion date',
+                    'date' => $request->getExpectedCompletionAt()?->format('Y-m-d H:i:s'),
+                    'icon' => 'bi-calendar-event',
+                    'color' => $request->isOverdue() ? 'danger' : 'warning'
+                ];
+            }
+
+            return new JsonResponse([
+                'success' => true,
+                'timeline' => $timeline
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error retrieving timeline: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

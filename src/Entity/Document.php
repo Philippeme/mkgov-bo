@@ -47,6 +47,10 @@ class Document
     #[ORM\JoinColumn(nullable: true)]
     private ?Person $person = null;
 
+    #[ORM\ManyToOne(targetEntity: Request::class, inversedBy: 'documents')]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?Request $request = null;
+
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $expirationDate = null;
 
@@ -180,6 +184,17 @@ class Document
         return $this;
     }
 
+    public function getRequest(): ?Request
+    {
+        return $this->request;
+    }
+
+    public function setRequest(?Request $request): static
+    {
+        $this->request = $request;
+        return $this;
+    }
+
     public function getExpirationDate(): ?\DateTimeInterface
     {
         return $this->expirationDate;
@@ -286,6 +301,80 @@ class Document
     {
         $this->updatedAt = $updatedAt;
         return $this;
+    }
+
+    /**
+     * Get the main association (Request > Procedure > Person in priority order)
+     */
+    public function getMainAssociation(): array
+    {
+        if ($this->request) {
+            return [
+                'type' => 'request',
+                'entity' => $this->request,
+                'label' => $this->request->getReference(),
+                'route' => 'admin_request_show',
+                'icon' => 'bi-journal-text'
+            ];
+        }
+        
+        if ($this->procedure) {
+            return [
+                'type' => 'procedure',
+                'entity' => $this->procedure,
+                'label' => $this->procedure->getPname(),
+                'route' => 'admin_procedure_show',
+                'icon' => 'bi-gear'
+            ];
+        }
+        
+        if ($this->person) {
+            return [
+                'type' => 'person',
+                'entity' => $this->person,
+                'label' => $this->person->getFullName(),
+                'route' => 'admin_person_show',
+                'icon' => 'bi-person'
+            ];
+        }
+        
+        return [
+            'type' => 'none',
+            'entity' => null,
+            'label' => 'No associations',
+            'route' => null,
+            'icon' => 'bi-slash-circle'
+        ];
+    }
+
+    /**
+     * Check if document is associated with a specific request
+     */
+    public function belongsToRequest(Request $request): bool
+    {
+        return $this->request && $this->request->getId() === $request->getId();
+    }
+
+    /**
+     * Get context info for display
+     */
+    public function getContextInfo(): string
+    {
+        $parts = [];
+        
+        if ($this->request) {
+            $parts[] = "Request: {$this->request->getReference()}";
+        }
+        
+        if ($this->procedure) {
+            $parts[] = "Procedure: {$this->procedure->getPname()}";
+        }
+        
+        if ($this->person) {
+            $parts[] = "Citizen: {$this->person->getFullName()}";
+        }
+        
+        return !empty($parts) ? implode(' | ', $parts) : 'No context';
     }
 
     public function __toString(): string

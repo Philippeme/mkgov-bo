@@ -27,6 +27,60 @@
     </div>
 </div>
 
+<!-- Statistics Cards -->
+{% if statistics is defined %}
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <h3 class="mb-1">{{ statistics.total }}</h3>
+                <small>Total Documents</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center bg-warning text-white">
+            <div class="card-body">
+                <h3 class="mb-1">{{ statistics.input }}</h3>
+                <small>Input Documents</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <h3 class="mb-1">{{ statistics.output }}</h3>
+                <small>Output Documents</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center bg-info text-white">
+            <div class="card-body">
+                <h3 class="mb-1">{{ statistics.with_request }}</h3>
+                <small>With Request</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center bg-danger text-white">
+            <div class="card-body">
+                <h3 class="mb-1">{{ statistics.expiring_soon }}</h3>
+                <small>Expiring Soon</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center bg-secondary text-white">
+            <div class="card-body">
+                <h3 class="mb-1">{{ documents|length }}</h3>
+                <small>Filtered Results</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Enhanced Filters -->
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-light">
@@ -40,7 +94,7 @@
             <div class="col-md-3">
                 <label class="form-label fw-bold">Search</label>
                 <input type="text" name="search" class="form-control" 
-                       placeholder="Document name or description" 
+                       placeholder="Document name, request, or citizen..." 
                        value="{{ filters.search }}">
             </div>
             <div class="col-md-2">
@@ -64,11 +118,13 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label fw-bold">Expiration</label>
-                <select name="expiring" class="form-select">
+                <label class="form-label fw-bold">Association</label>
+                <select name="association" class="form-select">
                     <option value="">All</option>
-                    <option value="yes" {% if filters.expiring == 'yes' %}selected{% endif %}>Expiring Soon</option>
-                    <option value="expired" {% if filters.expiring == 'expired' %}selected{% endif %}>Already Expired</option>
+                    <option value="with_request" {% if filters.association == 'with_request' %}selected{% endif %}>With Request</option>
+                    <option value="procedure_only" {% if filters.association == 'procedure_only' %}selected{% endif %}>Procedure Only</option>
+                    <option value="person_only" {% if filters.association == 'person_only' %}selected{% endif %}>Person Only</option>
+                    <option value="orphan" {% if filters.association == 'orphan' %}selected{% endif %}>No Associations</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -112,12 +168,12 @@
                         <th width="8%">File</th>
                         <th width="18%">Name</th>
                         <th width="8%">Type</th>
-                        <th width="12%">Associations</th>
+                        <th width="15%">Associations</th>
                         <th width="10%">File Info</th>
                         <th width="8%">Status</th>
                         <th width="10%">Expiration</th>
                         <th width="6%">Required</th>
-                        <th width="12%">Actions</th>
+                        <th width="9%">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -162,26 +218,44 @@
                             </span>
                         </td>
                         <td>
+                            <!-- Priority: Request > Procedure > Person -->
+                            {% if document.request %}
+                                <div class="small mb-1">
+                                    <i class="bi-journal-text text-primary me-1"></i>
+                                    <a href="{{ path('admin_request_show', {'id': document.request.id}) }}" 
+                                       class="text-decoration-none fw-bold">
+                                        {{ document.request.reference }}
+                                    </a>
+                                    <small class="text-muted d-block">
+                                        {{ document.request.status|title }} • {{ document.request.person.fullName }}
+                                    </small>
+                                </div>
+                            {% endif %}
+                            
                             {% if document.procedure %}
-                                <div class="small">
-                                    <i class="bi-gear me-1"></i>
+                                <div class="small mb-1">
+                                    <i class="bi-gear text-secondary me-1"></i>
                                     <a href="{{ path('admin_procedure_show', {'id': document.procedure.id}) }}" 
                                        class="text-decoration-none">
-                                        {{ document.procedure.pname|slice(0, 20) }}{% if document.procedure.pname|length > 20 %}...{% endif %}
+                                        {{ document.procedure.pname|slice(0, 25) }}{% if document.procedure.pname|length > 25 %}...{% endif %}
                                     </a>
                                 </div>
                             {% endif %}
-                            {% if document.person %}
+                            
+                            {% if document.person and not document.request %}
                                 <div class="small">
-                                    <i class="bi-person me-1"></i>
+                                    <i class="bi-person text-info me-1"></i>
                                     <a href="{{ path('admin_person_show', {'id': document.person.id}) }}" 
                                        class="text-decoration-none">
                                         {{ document.person.fullName }}
                                     </a>
                                 </div>
                             {% endif %}
-                            {% if not document.procedure and not document.person %}
-                                <span class="text-muted small">No associations</span>
+                            
+                            {% if not document.request and not document.procedure and not document.person %}
+                                <span class="text-muted small">
+                                    <i class="bi-slash-circle me-1"></i>No associations
+                                </span>
                             {% endif %}
                         </td>
                         <td>
@@ -284,7 +358,7 @@
     <i class="bi-files text-muted" style="font-size: 4rem;"></i>
     <h3 class="text-muted mt-3">No documents found</h3>
     <p class="text-muted">
-        {% if filters.search or filters.type or filters.status or filters.expiring %}
+        {% if filters.search or filters.type or filters.status or filters.association %}
             Try adjusting your search criteria or filters
         {% else %}
             Start by creating your first document
@@ -376,12 +450,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const documentCheckboxes = document.querySelectorAll('.document-checkbox');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
 
-    selectAllCheckbox.addEventListener('change', function() {
-        documentCheckboxes.forEach(checkbox => {
-            checkbox.checked = this.checked;
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            documentCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateBulkActionButtons();
         });
-        updateBulkActionButtons();
-    });
+    }
 
     documentCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', updateBulkActionButtons);
@@ -389,12 +465,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateBulkActionButtons() {
         const checkedBoxes = document.querySelectorAll('.document-checkbox:checked');
-        bulkDeleteBtn.disabled = checkedBoxes.length === 0;
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.disabled = checkedBoxes.length === 0;
+        }
     }
 
     window.selectAll = function() {
-        selectAllCheckbox.checked = true;
-        selectAllCheckbox.dispatchEvent(new Event('change'));
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.dispatchEvent(new Event('change'));
+        }
     };
 
     window.bulkAction = function(action) {

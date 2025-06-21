@@ -5,6 +5,7 @@ namespace App\Form;
 use App\Entity\Document;
 use App\Entity\Person;
 use App\Entity\Procedure;
+use App\Entity\Request;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -15,6 +16,8 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\File;
 
@@ -40,6 +43,33 @@ class DocumentType extends AbstractType
                     'class' => 'form-select'
                 ],
                 'placeholder' => 'Select document type'
+            ])
+            ->add('request', EntityType::class, [
+                'class' => Request::class,
+                'choice_label' => function(Request $request) {
+                    return sprintf('%s - %s (%s)', 
+                        $request->getReference(), 
+                        $request->getPerson()->getFullName(),
+                        $request->getProcedure()->getPname()
+                    );
+                },
+                'label' => 'Associated Request',
+                'placeholder' => 'Select a request (optional)',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-select request-select',
+                    'data-search' => 'true',
+                    'onchange' => 'updateRequestRelatedFields(this.value)'
+                ],
+                'query_builder' => function ($repository) {
+                    return $repository->createQueryBuilder('r')
+                        ->leftJoin('r.person', 'p')
+                        ->leftJoin('r.procedure', 'proc')
+                        ->addSelect('p', 'proc')
+                        ->where('r.isDeleted = :deleted')
+                        ->setParameter('deleted', false)
+                        ->orderBy('r.submittedAt', 'DESC');
+                }
             ])
             ->add('procedure', EntityType::class, [
                 'class' => Procedure::class,
@@ -179,6 +209,15 @@ class DocumentType extends AbstractType
                 ],
                 'data' => $options['data']->isActive() !== false
             ]);
+
+        // Add event listener to handle request selection
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+            $data = $event->getData();
+            if (isset($data['request']) && !empty($data['request'])) {
+                // If a request is selected, we might want to auto-populate related fields
+                // This will be handled in the controller or via JavaScript
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void
