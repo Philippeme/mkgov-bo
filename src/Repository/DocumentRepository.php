@@ -290,6 +290,30 @@ class DocumentRepository extends ServiceEntityRepository
                ->setParameter('person', $filters['person']);
         }
 
+        // Gestion du filtre association
+        if (!empty($filters['association'])) {
+            switch ($filters['association']) {
+                case 'with_request':
+                    $qb->andWhere('d.request IS NOT NULL');
+                    break;
+                case 'procedure_only':
+                    $qb->andWhere('d.procedure IS NOT NULL')
+                       ->andWhere('d.request IS NULL')
+                       ->andWhere('d.person IS NULL');
+                    break;
+                case 'person_only':
+                    $qb->andWhere('d.person IS NOT NULL')
+                       ->andWhere('d.request IS NULL')
+                       ->andWhere('d.procedure IS NULL');
+                    break;
+                case 'orphan':
+                    $qb->andWhere('d.procedure IS NULL')
+                       ->andWhere('d.request IS NULL')
+                       ->andWhere('d.person IS NULL');
+                    break;
+            }
+        }
+
         if (isset($filters['expiring'])) {
             if ($filters['expiring'] === 'yes') {
                 $futureDate = new \DateTime();

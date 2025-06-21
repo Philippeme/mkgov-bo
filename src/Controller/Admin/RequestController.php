@@ -88,147 +88,87 @@ class RequestController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'admin_request_show', methods: ['GET'])]
-    public function show(Request $request): Response
-    {
-        // Check if request is deleted
-        if ($request->isDeleted()) {
-            throw $this->createNotFoundException('Request not found.');
-        }
-
-        return $this->render('admin/request/show.html.twig', [
-            'request' => $request,
-        ]);
-    }
-
-    #[Route('/{id}/edit', name: 'admin_request_edit', methods: ['GET', 'POST'])]
-    public function edit(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): Response
-    {
-        // Check if request is deleted
-        if ($request->isDeleted()) {
-            throw $this->createNotFoundException('Request not found.');
-        }
-
-        $form = $this->createForm(RequestType::class, $request);
-        $form->handleRequest($httpRequest);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            try {
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Request has been updated successfully.');
-                return $this->redirectToRoute('admin_request_index', [], Response::HTTP_SEE_OTHER);
-                
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Error updating request: ' . $e->getMessage());
-            }
-        }
-
-        return $this->render('admin/request/edit.html.twig', [
-            'request' => $request,
-            'form' => $form,
-        ]);
-    }
-
-    #[Route('/{id}/delete', name: 'admin_request_delete', methods: ['POST'])]
-    public function delete(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$request->getId(), $httpRequest->request->get('_token'))) {
-            try {
-                // Soft delete - set isDeleted to true instead of removing from database
-                $request->setIsDeleted(true);
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Request has been deleted successfully.');
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Error deleting request: ' . $e->getMessage());
-            }
-        }
-
-        return $this->redirectToRoute('admin_request_index', [], Response::HTTP_SEE_OTHER);
-    }
-
-    #[Route('/{id}/toggle-status', name: 'admin_request_toggle_status', methods: ['POST'])]
-    public function toggleStatus(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    // DÉPLACER LA ROUTE EXPORT AVANT LES ROUTES AVEC {id}
+    #[Route('/export', name: 'admin_request_export', methods: ['GET'])]
+    public function export(RequestRepository $requestRepository, HttpRequest $httpRequest): Response
     {
         try {
-            $currentStatus = $request->getStatus();
-            $newStatus = match($currentStatus) {
-                'pending' => 'processing',
-                'processing' => 'completed',
-                'completed' => 'pending',
-                'rejected' => 'pending',
-                'cancelled' => 'pending',
-                default => 'pending'
-            };
-            
-            $request->setStatus($newStatus);
-            $entityManager->flush();
+            // Récupérer les filtres depuis la requête
+            $search = $httpRequest->query->get('search', '');
+            $status = $httpRequest->query->get('status', '');
+            $priority = $httpRequest->query->get('priority', '');
+            $procedure = $httpRequest->query->get('procedure', '');
+            $family = $httpRequest->query->get('family', '');
 
-            return new JsonResponse([
-                'success' => true,
-                'status' => $request->getStatus(),
-                'message' => 'Status updated successfully.'
-            ]);
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Error updating status: ' . $e->getMessage()
-            ], 500);
-        }
-    }
+            $filters = [
+                'search' => $search,
+                'status' => $status,
+                'priority' => $priority,
+                'procedure' => $procedure,
+                'family' => $family
+            ];
 
-    #[Route('/{id}/update-status', name: 'admin_request_update_status', methods: ['POST'])]
-    public function updateStatus(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): JsonResponse
-    {
-        try {
-            $data = json_decode($httpRequest->getContent(), true);
-            $newStatus = $data['status'] ?? null;
-            
-            if (!in_array($newStatus, ['pending', 'processing', 'completed', 'rejected', 'cancelled'])) {
-                throw new \InvalidArgumentException('Invalid status');
+            // Si des filtres sont appliqués, utiliser findWithFilters, sinon exporter toutes les requêtes
+            if (array_filter($filters)) {
+                $requests = $requestRepository->findWithFilters($filters);
+            } else {
+                $requests = $requestRepository->findBy(['isDeleted' => false], ['submittedAt' => 'DESC']);
             }
             
-            $request->setStatus($newStatus);
-            $entityManager->flush();
+            $csvData = [];
+            $csvData[] = [
+                'Reference', 'Citizen', 'National ID', 'Procedure', 'Family', 'Status', 'Priority', 
+                'Total Cost (XAF)', 'Paid Amount (XAF)', 'Payment Status', 'Submitted At', 
+                'Expected Completion', 'Completed At', 'Days in Progress', 'Comments'
+            ];
 
-            return new JsonResponse([
-                'success' => true,
-                'status' => $request->getStatus(),
-                'message' => 'Status updated successfully.'
-            ]);
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Error updating status: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    #[Route('/{id}/update-priority', name: 'admin_request_update_priority', methods: ['POST'])]
-    public function updatePriority(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): JsonResponse
-    {
-        try {
-            $data = json_decode($httpRequest->getContent(), true);
-            $newPriority = $data['priority'] ?? null;
-            
-            if (!in_array($newPriority, ['low', 'normal', 'high', 'urgent'])) {
-                throw new \InvalidArgumentException('Invalid priority');
+            foreach ($requests as $request) {
+                $csvData[] = [
+                    $request->getReference(),
+                    $request->getPerson()->getFullName(),
+                    $request->getPerson()->getNationalId(),
+                    $request->getProcedure()->getPname(),
+                    $request->getProcedure()->getFamily() ? $request->getProcedure()->getFamily()->getFname() : '',
+                    ucfirst($request->getStatus()),
+                    ucfirst($request->getPriority()),
+                    $request->getTotalCost() ?? '0',
+                    $request->getPaidAmount() ?? '0',
+                    ucfirst($request->getPaymentStatus()),
+                    $request->getSubmittedAt()?->format('Y-m-d H:i:s'),
+                    $request->getExpectedCompletionAt()?->format('Y-m-d H:i:s'),
+                    $request->getCompletedAt()?->format('Y-m-d H:i:s'),
+                    $request->getDaysInProgress(),
+                    $request->getComments() ? strip_tags($request->getComments()) : ''
+                ];
             }
-            
-            $request->setPriority($newPriority);
-            $entityManager->flush();
 
-            return new JsonResponse([
-                'success' => true,
-                'priority' => $request->getPriority(),
-                'message' => 'Priority updated successfully.'
-            ]);
+            $filename = 'requests_export_' . date('Y-m-d_H-i-s') . '.csv';
+
+            $response = new Response();
+            $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
+            $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            $response->headers->set('Cache-Control', 'must-revalidate');
+            $response->headers->set('Pragma', 'public');
+
+            // Ajouter BOM UTF-8 pour Excel
+            $csvContent = "\xEF\xBB\xBF";
+            
+            // Créer le contenu CSV
+            $output = fopen('php://temp', 'w');
+            foreach ($csvData as $row) {
+                fputcsv($output, $row, ';'); // Utiliser point-virgule pour Excel français
+            }
+            rewind($output);
+            $csvContent .= stream_get_contents($output);
+            fclose($output);
+
+            $response->setContent($csvContent);
+
+            return $response;
+            
         } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Error updating priority: ' . $e->getMessage()
-            ], 500);
+            $this->addFlash('error', 'Error exporting data: ' . $e->getMessage());
+            return $this->redirectToRoute('admin_request_index');
         }
     }
 
@@ -258,48 +198,6 @@ class RequestController extends AbstractController
         return new JsonResponse(['results' => $results]);
     }
 
-    #[Route('/export', name: 'admin_request_export', methods: ['GET'])]
-    public function export(RequestRepository $requestRepository): Response
-    {
-        $requests = $requestRepository->findBy(['isDeleted' => false], ['submittedAt' => 'DESC']);
-        
-        $csvData = [];
-        $csvData[] = [
-            'Reference', 'Citizen', 'Procedure', 'Status', 'Priority', 
-            'Total Cost', 'Paid Amount', 'Payment Status', 'Submitted At', 
-            'Expected Completion', 'Completed At', 'Days in Progress'
-        ];
-
-        foreach ($requests as $request) {
-            $csvData[] = [
-                $request->getReference(),
-                $request->getPerson()->getFullName(),
-                $request->getProcedure()->getPname(),
-                $request->getStatus(),
-                $request->getPriority(),
-                $request->getTotalCost() ?? '0',
-                $request->getPaidAmount() ?? '0',
-                $request->getPaymentStatus(),
-                $request->getSubmittedAt()?->format('Y-m-d H:i:s'),
-                $request->getExpectedCompletionAt()?->format('Y-m-d H:i:s'),
-                $request->getCompletedAt()?->format('Y-m-d H:i:s'),
-                $request->getDaysInProgress()
-            ];
-        }
-
-        $response = new Response();
-        $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="requests_export_'.date('Y-m-d').'.csv"');
-
-        $output = fopen('php://output', 'w');
-        foreach ($csvData as $row) {
-            fputcsv($output, $row);
-        }
-        fclose($output);
-
-        return $response;
-    }
-
     #[Route('/api/procedure/{id}/info', name: 'admin_request_procedure_info', methods: ['GET'])]
     public function getProcedureInfo(int $id, EntityManagerInterface $entityManager): JsonResponse
     {
@@ -316,7 +214,152 @@ class RequestController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/info', name: 'admin_request_info', methods: ['GET'])]
+    // ROUTES AVEC {id} APRÈS LES ROUTES STATIQUES
+    #[Route('/{id}', name: 'admin_request_show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function show(Request $request): Response
+    {
+        // Check if request is deleted
+        if ($request->isDeleted()) {
+            throw $this->createNotFoundException('Request not found.');
+        }
+
+        return $this->render('admin/request/show.html.twig', [
+            'request' => $request,
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'admin_request_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function edit(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        // Check if request is deleted
+        if ($request->isDeleted()) {
+            throw $this->createNotFoundException('Request not found.');
+        }
+
+        $form = $this->createForm(RequestType::class, $request);
+        $form->handleRequest($httpRequest);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $entityManager->flush();
+
+                $this->addFlash('success', 'Request has been updated successfully.');
+                return $this->redirectToRoute('admin_request_index', [], Response::HTTP_SEE_OTHER);
+                
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Error updating request: ' . $e->getMessage());
+            }
+        }
+
+        return $this->render('admin/request/edit.html.twig', [
+            'request' => $request,
+            'form' => $form,
+        ]);
+    }
+
+    #[Route('/{id}/delete', name: 'admin_request_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function delete(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->isCsrfTokenValid('delete'.$request->getId(), $httpRequest->request->get('_token'))) {
+            try {
+                // Soft delete - set isDeleted to true instead of removing from database
+                $request->setIsDeleted(true);
+                $entityManager->flush();
+
+                $this->addFlash('success', 'Request has been deleted successfully.');
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Error deleting request: ' . $e->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('admin_request_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route('/{id}/toggle-status', name: 'admin_request_toggle_status', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function toggleStatus(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $currentStatus = $request->getStatus();
+            $newStatus = match($currentStatus) {
+                'pending' => 'processing',
+                'processing' => 'completed',
+                'completed' => 'pending',
+                'rejected' => 'pending',
+                'cancelled' => 'pending',
+                default => 'pending'
+            };
+            
+            $request->setStatus($newStatus);
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'status' => $request->getStatus(),
+                'message' => 'Status updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error updating status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/{id}/update-status', name: 'admin_request_update_status', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function updateStatus(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $data = json_decode($httpRequest->getContent(), true);
+            $newStatus = $data['status'] ?? null;
+            
+            if (!in_array($newStatus, ['pending', 'processing', 'completed', 'rejected', 'cancelled'])) {
+                throw new \InvalidArgumentException('Invalid status');
+            }
+            
+            $request->setStatus($newStatus);
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'status' => $request->getStatus(),
+                'message' => 'Status updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error updating status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/{id}/update-priority', name: 'admin_request_update_priority', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function updatePriority(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        try {
+            $data = json_decode($httpRequest->getContent(), true);
+            $newPriority = $data['priority'] ?? null;
+            
+            if (!in_array($newPriority, ['low', 'normal', 'high', 'urgent'])) {
+                throw new \InvalidArgumentException('Invalid priority');
+            }
+            
+            $request->setPriority($newPriority);
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'priority' => $request->getPriority(),
+                'message' => 'Priority updated successfully.'
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error updating priority: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/{id}/info', name: 'admin_request_info', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function getRequestInfo(Request $request): JsonResponse
     {
         try {
@@ -344,7 +387,7 @@ class RequestController extends AbstractController
         }
     }
 
-    #[Route('/{id}/documents', name: 'admin_request_documents', methods: ['GET'])]
+    #[Route('/{id}/documents', name: 'admin_request_documents', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function getRequestDocuments(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
         try {
@@ -380,7 +423,7 @@ class RequestController extends AbstractController
         }
     }
 
-    #[Route('/{id}/add-document', name: 'admin_request_add_document', methods: ['GET'])]
+    #[Route('/{id}/add-document', name: 'admin_request_add_document', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function addDocument(Request $request): Response
     {
         return $this->redirectToRoute('admin_document_new', [
@@ -388,7 +431,7 @@ class RequestController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/timeline', name: 'admin_request_timeline', methods: ['GET'])]
+    #[Route('/{id}/timeline', name: 'admin_request_timeline', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function getTimeline(Request $request): JsonResponse
     {
         try {

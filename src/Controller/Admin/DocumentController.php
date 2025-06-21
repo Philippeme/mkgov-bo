@@ -25,13 +25,15 @@ class DocumentController extends AbstractController
         $status = $request->query->get('status', '');
         $expiring = $request->query->get('expiring', '');
         $requestFilter = $request->query->get('request', '');
+        $association = $request->query->get('association', ''); // Ajout du filtre association manquant
 
         $filters = [
             'search' => $search,
             'type' => $type,
             'status' => $status,
             'expiring' => $expiring,
-            'request' => $requestFilter
+            'request' => $requestFilter,
+            'association' => $association // Inclusion du filtre association
         ];
 
         $documents = $documentRepository->findWithFilters($filters);
