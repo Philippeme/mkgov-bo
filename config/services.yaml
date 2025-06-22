@@ -47,6 +47,12 @@ services:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
+    # Dashboard Controller - Configuration explicite pour injection du service
+    App\Controller\Admin\DashboardController:
+        arguments:
+            $dashboardService: '@App\Service\DashboardService'
+        tags: ['controller.service_arguments']
+
     # CORRECTION PRINCIPALE: Désactivation complète de l'extracteur PHPStan
     # Cette ligne désactive définitivement le service problématique
     Symfony\Component\PropertyInfo\Extractor\PhpStanExtractor: ~

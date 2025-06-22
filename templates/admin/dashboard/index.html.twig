@@ -1,0 +1,482 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .dashboard-header {
+            background: linear-gradient(135deg, #1a4b8f 0%, #2c5282 50%, #3182ce 100%);
+            color: white;
+            padding: 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: none;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stats-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            font-size: 0.95rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-icon {
+            font-size: 2.5rem;
+            opacity: 0.7;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            height: 100%;
+            position: relative;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-controls {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .map-container {
+            height: 400px;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d6eaf8 100%);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .region-marker {
+            position: absolute;
+            background: #1a4b8f;
+            color: white;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .region-marker:hover {
+            transform: scale(1.2);
+            background: #f18221;
+            z-index: 10;
+        }
+
+        .region-tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .region-marker:hover .region-tooltip {
+            opacity: 1;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .filter-badge {
+            background: #e2e8f0;
+            color: #2d3748;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .filter-badge .remove {
+            cursor: pointer;
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        #lineChart, #donutChart, #barChart {
+            max-height: 300px;
+        }
+
+        .chart-legend {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1rem;
+                margin: -2rem -1rem 1rem -1rem;
+            }
+            
+            .stats-value {
+                font-size: 2rem;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-2">
+                <i class="bi-speedometer2 me-3"></i>
+                MK Gov Dashboard
+            </h1>
+            <p class="mb-0 opacity-75">Administrative portal overview and statistics</p>
+        </div>
+        <div class="text-end">
+            <div class="h4 mb-1">{{ "now"|date("F d, Y") }}</div>
+            <div class="small opacity-75">{{ "now"|date("H:i T") }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Controls -->
+<div class="filter-controls">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="regionFilter" class="form-label fw-bold small">Region</label>
+                    <select id="regionFilter" class="form-select form-select-sm">
+                        <option value="">All Regions</option>
+                        <option value="Bissau">Bissau</option>
+                        <option value="Biombo">Biombo</option>
+                        <option value="Bolama">Bolama</option>
+                        <option value="Cacheu">Cacheu</option>
+                        <option value="Gabu">Gabu</option>
+                        <option value="Oio">Oio</option>
+                        <option value="Quinara">Quinara</option>
+                        <option value="Tombali">Tombali</option>
+                        <option value="Bafata">Bafata</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="familyFilter" class="form-label fw-bold small">Service Family</label>
+                    <select id="familyFilter" class="form-select form-select-sm">
+                        <option value="">All Families</option>
+                        <option value="1">Police & Justice</option>
+                        <option value="2">Family</option>
+                        <option value="3">Transport</option>
+                        <option value="4">Education</option>
+                        <option value="5">Enterprises</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="requestFilter" class="form-label fw-bold small">Request Type</label>
+                    <select id="requestFilter" class="form-select form-select-sm">
+                        <option value="">All Requests</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="yearFilter" class="form-label fw-bold small">Year</label>
+                    <select id="yearFilter" class="form-select form-select-sm">
+                        <option value="">All Years</option>
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <button type="button" class="btn btn-primary btn-sm" onclick="applyFilters()">
+                <i class="bi-funnel me-2"></i>Apply Filters
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="clearFilters()">
+                <i class="bi-x-circle me-2"></i>Clear
+            </button>
+        </div>
+    </div>
+    
+    <!-- Active Filters -->
+    <div id="activeFilters" class="mt-3" style="display: none;">
+        <span class="small text-muted me-2">Active filters:</span>
+        <div class="d-inline-block" id="filterBadges"></div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-primary">{{ stats.institutions }}</div>
+                    <div class="stats-label">Number of Institutions</div>
+                </div>
+                <i class="bi-building stats-icon text-primary"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-success">{{ stats.procedures }}</div>
+                    <div class="stats-label">Number of Procedures</div>
+                </div>
+                <i class="bi-gear stats-icon text-success"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-info">{{ stats.families }}</div>
+                    <div class="stats-label">Procedure Families</div>
+                </div>
+                <i class="bi-collection stats-icon text-info"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-warning">{{ stats.requests }}</div>
+                    <div class="stats-label">Number of Requests</div>
+                </div>
+                <i class="bi-journal-text stats-icon text-warning"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-danger">{{ stats.pending_admin }}</div>
+                    <div class="stats-label">Pending (Administration)</div>
+                </div>
+                <i class="bi-clock-history stats-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-secondary">{{ stats.pending_requestor }}</div>
+                    <div class="stats-label">Pending (Requestor)</div>
+                </div>
+                <i class="bi-person-clock stats-icon text-secondary"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Requests per Family (Donut Chart) -->
+    <div class="col-lg-4 col-md-6">
+        <div class="chart-container">
+            <div class="chart-title">
+                <i class="bi-pie-chart text-primary"></i>
+                Requests per Family
+            </div>
+            <canvas id="donutChart" width="300" height="300"></canvas>
+            <div class="loading-spinner" id="donutLoading">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Requests per Gender (Bar Chart) -->
+    <div class="col-lg-4 col-md-6">
+        <div class="chart-container">
+            <div class="chart-title">
+                <i class="bi-bar-chart text-success"></i>
+                Requests per Gender
+            </div>
+            <canvas id="barChart" width="300" height="300"></canvas>
+            <div class="loading-spinner" id="barLoading">
+                <div class="spinner-border text-success" role="status"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Requests over 12 months (Line Chart) -->
+    <div class="col-lg-4 col-md-12">
+        <div class="chart-container">
+            <div class="chart-title">
+                <i class="bi-graph-up text-info"></i>
+                Requests over Last 12 Months
+            </div>
+            <canvas id="lineChart" width="400" height="300"></canvas>
+            <div class="loading-spinner" id="lineLoading">
+                <div class="spinner-border text-info" role="status"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Section -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <div class="chart-title">
+                <i class="bi-geo-alt text-warning"></i>
+                Requests per Location - Guinea-Bissau
+            </div>
+            <div class="map-container" id="mapContainer">
+                <!-- Guinea-Bissau Map with Region Markers -->
+                {% for location in requestsByLocation %}
+                <div class="region-marker" 
+                     style="left: {{ ((location.lng + 16.7) / 2.2) * 100 }}%; top: {{ (100 - ((location.lat - 10.8) / 1.8) * 100) }}%;"
+                     data-region="{{ location.region }}"
+                     data-count="{{ location.count }}">
+                    {{ location.count }}
+                    <div class="region-tooltip">{{ location.region }}: {{ location.count }} requests</div>
+                </div>
+                {% endfor %}
+                
+                <!-- Map Background -->
+                <div style="position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); padding: 10px; border-radius: 5px; font-size: 0.8rem;">
+                    <strong>Guinea-Bissau</strong><br>
+                    <small class="text-muted">Click markers for details</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Widgets -->
+{% include 'admin/dashboard/_widgets.html.twig' %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Dashboard data for JavaScript -->
+    <script>
+        window.dashboardData = {
+            requestsByFamily: {{ requestsByFamily|json_encode|raw }},
+            monthlyRequests: {{ monthlyRequests|json_encode|raw }},
+            requestsByGender: {{ requestsByGender|json_encode|raw }},
+            requestsByLocation: {{ requestsByLocation|json_encode|raw }},
+            stats: {{ stats|json_encode|raw }}
+        };
+    </script>
+    
+    <!-- Enhanced Dashboard JavaScript -->
+    <script src="{{ asset('js/dashboard.js') }}"></script>
+    
+    <!-- Legacy functions for backward compatibility -->
+    <script>
+        // Legacy function wrappers for existing onclick handlers
+        function applyFilters() {
+            if (window.mkgovDashboard) {
+                window.mkgovDashboard.applyFilters();
+            }
+        }
+        
+        function clearFilters() {
+            if (window.mkgovDashboard) {
+                window.mkgovDashboard.clearFilters();
+            }
+        }
+        
+        function removeFilter(filterKey) {
+            if (window.mkgovDashboard) {
+                window.mkgovDashboard.removeFilter(filterKey);
+            }
+        }
+        
+        // Refresh data every 5 minutes (fallback)
+        setInterval(function() {
+            if (document.visibilityState === 'visible' && window.mkgovDashboard) {
+                window.mkgovDashboard.refreshDashboard();
+            }
+        }, 300000);
+    </script>
+{% endblock %}

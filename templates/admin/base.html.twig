@@ -910,7 +910,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a href="{{ path('admin_project_index') }}" class="nav-link {{ app.request.get('_route') starts with 'admin_project' ? 'active' : '' }}">
+                    <a href="{{ path('admin_dashboard') }}" class="nav-link {{ app.request.get('_route') starts with 'admin_dashboard' ? 'active' : '' }}">
                         <i class="bi-speedometer2 me-2"></i>
                         <span class="nav-text">Dashboard</span>
                         <div class="tooltip">Dashboard</div>
@@ -1147,7 +1147,7 @@
                 </li>
 
                 <li class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="departments">
+                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_department' ? 'active' : '' }}" data-dropdown="departments">
                         <span>
                             <i class="bi bi-layers me-2"></i>
                             <span class="nav-text">Departments</span>
@@ -1229,20 +1229,24 @@
                         <!-- Breadcrumb Navigation -->
                         <div class="breadcrumb-nav">
                             <div class="breadcrumb-path">
-                                <a href="#" class="breadcrumb-item">Dashboard</a>
+                                <a href="{{ path('admin_dashboard') }}" class="breadcrumb-item">Dashboard</a>
+                                {% if app.request.get('_route') != 'admin_dashboard' %}
                                 <span class="breadcrumb-separator">/</span>
-                                <a href="#" class="breadcrumb-item">Procedures Management</a>
+                                <span class="breadcrumb-item current">{{ block('title') }}</span>
+                                {% endif %}
                             </div>
                             
                             <div class="breadcrumb-actions">
-                                <a href="#" class="breadcrumb-btn">
+                                <a href="{{ path('admin_dashboard') }}" class="breadcrumb-btn">
                                     <i class="fas fa-tachometer-alt"></i>
                                     <span class="d-none d-lg-inline">Dashboard</span>
                                 </a>
-                                <a href="#" class="breadcrumb-btn">
+                                {% if app.request.get('_route') != 'admin_dashboard' %}
+                                <a href="javascript:history.back()" class="breadcrumb-btn">
                                     <i class="fas fa-arrow-left"></i>
-                                    <span class="d-none d-lg-inline">Back to List</span>
+                                    <span class="d-none d-lg-inline">Back</span>
                                 </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
