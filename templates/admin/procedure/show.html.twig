@@ -20,6 +20,12 @@
             View Administration
         </a>
         {% endif %}
+        {% if procedure.hasWorkflows %}
+        <a href="{{ path('admin_workflow_by_procedure', {'id': procedure.id}) }}" class="btn btn-success">
+            <i class="bi-diagram-3 me-2"></i>
+            View Workflow ({{ procedure.workflowCount }} steps)
+        </a>
+        {% endif %}
         <button type="button" 
                 class="btn btn-danger delete-btn" 
                 data-procedure-id="{{ procedure.id }}"
@@ -134,10 +140,128 @@
             </div>
         </div>
 
+        <!-- NEW: Workflow Steps Section -->
+        {% if procedure.hasWorkflows %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="bi-diagram-3 me-2"></i>
+                    Workflow Steps ({{ procedure.workflowCount }})
+                </h5>
+                <div class="btn-group btn-group-sm">
+                    <a href="{{ path('admin_workflow_new', {'procedure': procedure.id}) }}" class="btn btn-light">
+                        <i class="bi-plus-circle me-1"></i>Add Step
+                    </a>
+                    <a href="{{ path('admin_workflow_by_procedure', {'id': procedure.id}) }}" class="btn btn-outline-light">
+                        <i class="bi-eye me-1"></i>View All
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% set activeWorkflows = procedure.activeWorkflows %}
+                {% if activeWorkflows|length > 0 %}
+                    <!-- Workflow Timeline -->
+                    <div class="workflow-timeline mb-4">
+                        <div class="d-flex align-items-center overflow-auto pb-3" style="min-width: {{ activeWorkflows|length * 200 }}px;">
+                            {% for workflow in activeWorkflows %}
+                            <div class="flex-fill text-center position-relative" style="min-width: 180px;">
+                                <!-- Timeline Step -->
+                                <div class="timeline-step">
+                                    <div class="step-number bg-{{ workflow.isRequired ? 'warning' : 'info' }} text-{{ workflow.isRequired ? 'dark' : 'white' }} rounded-circle d-inline-flex align-items-center justify-content-center"
+                                         style="width: 35px; height: 35px; font-weight: bold; font-size: 0.9rem;">
+                                        {{ workflow.stepOrder }}
+                                    </div>
+                                    {% if not loop.last %}
+                                    <div class="step-connector position-absolute" style="top: 17px; left: 50%; width: 100%; height: 2px; background: #28a745; z-index: -1;"></div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Step Info -->
+                                <div class="mt-2">
+                                    <h6 class="mb-1 small">{{ workflow.name|slice(0, 20) }}{% if workflow.name|length > 20 %}...{% endif %}</h6>
+                                    <small class="text-muted d-block mb-1">{{ workflow.shortDescription|slice(0, 40) }}{% if workflow.shortDescription|length > 40 %}...{% endif %}</small>
+                                    
+                                    <div class="mb-1">
+                                        {% if workflow.isRequired %}
+                                            <span class="badge bg-warning badge-sm">Required</span>
+                                        {% else %}
+                                            <span class="badge bg-info badge-sm">Optional</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ path('admin_workflow_show', {'id': workflow.id}) }}" 
+                                           class="btn btn-outline-success btn-sm" title="View Step">
+                                            <i class="bi-eye"></i>
+                                        </a>
+                                        <a href="{{ path('admin_workflow_edit', {'id': workflow.id}) }}" 
+                                           class="btn btn-outline-warning btn-sm" title="Edit Step">
+                                            <i class="bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Summary -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 bg-light">
+                                <strong class="text-success small">Required Steps:</strong>
+                                <div class="mt-1">
+                                    <span class="badge bg-warning">{{ procedure.requiredWorkflows|length }}</span>
+                                    <span class="small text-muted">out of {{ procedure.workflowCount }} total</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 bg-light">
+                                <strong class="text-info small">Optional Steps:</strong>
+                                <div class="mt-1">
+                                    <span class="badge bg-info">{{ procedure.optionalWorkflows|length }}</span>
+                                    <span class="small text-muted">can be skipped if not applicable</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="bi-diagram-3 text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-2">No active workflow steps found</p>
+                        <a href="{{ path('admin_workflow_new', {'procedure': procedure.id}) }}" class="btn btn-success btn-sm">
+                            <i class="bi-plus-circle me-1"></i>Create First Step
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- No Workflow Steps -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Workflow Steps
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="bi-diagram-3 text-muted" style="font-size: 3rem;"></i>
+                <h6 class="text-muted mt-3">No workflow steps defined</h6>
+                <p class="text-muted mb-3">Define the step-by-step process for this procedure to help citizens understand what's required.</p>
+                <a href="{{ path('admin_workflow_new', {'procedure': procedure.id}) }}" class="btn btn-success">
+                    <i class="bi-plus-circle me-2"></i>
+                    Create First Workflow Step
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Providing Administration -->
         {% if procedure.providingAdministration %}
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-success text-white">
+            <div class="card-header bg-info text-white">
                 <h5 class="card-title mb-0">
                     <i class="bi-building me-2"></i>
                     Providing Administration
@@ -158,7 +282,7 @@
                         {% endif %}
                     </div>
                     <div class="col-md-9">
-                        <h6 class="text-success">{{ procedure.providingAdministration.institutionName }}</h6>
+                        <h6 class="text-info">{{ procedure.providingAdministration.institutionName }}</h6>
                         {% if procedure.providingAdministration.department %}
                             <p class="mb-2">
                                 <span class="badge bg-primary">{{ procedure.providingAdministration.department.name }}</span>
@@ -247,7 +371,7 @@
         <!-- Legal Document -->
         {% if procedure.legaltext %}
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-secondary text-white">
                 <h5 class="card-title mb-0">
                     <i class="bi-file-pdf me-2"></i>
                     Legal Documentation
@@ -404,6 +528,43 @@
             </div>
         </div>
 
+        <!-- NEW: Workflow Summary -->
+        {% if procedure.hasWorkflows %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h6 class="card-title mb-0">
+                    <i class="bi-diagram-3 me-2"></i>
+                    Workflow Summary
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Total Steps:</label>
+                    <p class="mb-0">
+                        <span class="badge bg-secondary fs-6">{{ procedure.workflowCount }}</span>
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Required Steps:</label>
+                    <p class="mb-0">
+                        <span class="badge bg-warning fs-6">{{ procedure.requiredWorkflows|length }}</span>
+                    </p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Optional Steps:</label>
+                    <p class="mb-0">
+                        <span class="badge bg-info fs-6">{{ procedure.optionalWorkflows|length }}</span>
+                    </p>
+                </div>
+                <div class="d-grid">
+                    <a href="{{ path('admin_workflow_by_procedure', {'id': procedure.id}) }}" class="btn btn-success btn-sm">
+                        <i class="bi-eye me-1"></i>View All Steps
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Metadata -->
         <div class="card shadow-sm mb-4">
             <div class="card-header bg-light">
@@ -475,6 +636,18 @@
                         <i class="bi-{{ procedure.isPublished ? 'eye-slash' : 'globe' }} me-2"></i>
                         {{ procedure.isPublished ? 'Unpublish' : 'Publish' }}
                     </button>
+                    <!-- NEW: Workflow Actions -->
+                    {% if procedure.hasWorkflows %}
+                    <a href="{{ path('admin_workflow_new', {'procedure': procedure.id}) }}" class="btn btn-outline-success">
+                        <i class="bi-plus-circle me-2"></i>
+                        Add Workflow Step
+                    </a>
+                    {% else %}
+                    <a href="{{ path('admin_workflow_new', {'procedure': procedure.id}) }}" class="btn btn-outline-warning">
+                        <i class="bi-diagram-3 me-2"></i>
+                        Create Workflow
+                    </a>
+                    {% endif %}
                     {% if procedure.providingAdministration and procedure.providingAdministration.email %}
                     <a href="mailto:{{ procedure.providingAdministration.email }}" class="btn btn-outline-info">
                         <i class="bi-envelope me-2"></i>
@@ -501,6 +674,12 @@
             <div class="modal-body">
                 <p>Are you sure you want to delete the procedure <strong>{{ procedure.pname }}</strong>?</p>
                 <p class="text-muted small">This action will deactivate the procedure and cannot be undone.</p>
+                {% if procedure.hasWorkflows %}
+                <div class="alert alert-warning">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> This procedure has {{ procedure.workflowCount }} workflow steps that will also be deactivated.
+                </div>
+                {% endif %}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -578,4 +757,29 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+.workflow-timeline {
+    background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.timeline-step {
+    position: relative;
+}
+
+.step-number {
+    position: relative;
+    z-index: 2;
+}
+
+.step-connector {
+    transform: translateX(17px);
+}
+
+.badge-sm {
+    font-size: 0.7em;
+}
+</style>
 {% endblock %}

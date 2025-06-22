@@ -77,12 +77,18 @@ class Procedure
     #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Request::class)]
     private Collection $requests;
 
+    // NEW: Relation bidirectionnelle avec Workflow
+    #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Workflow::class, cascade: ['persist', 'remove'])]
+    #[ORM\OrderBy(['stepOrder' => 'ASC', 'displayOrder' => 'ASC'])]
+    private Collection $workflows;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
         $this->documents = new ArrayCollection();
         $this->requests = new ArrayCollection();
+        $this->workflows = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -309,6 +315,77 @@ class Procedure
         return $this;
     }
 
+    // NEW: Workflow management methods
+    /**
+     * @return Collection<int, Workflow>
+     */
+    public function getWorkflows(): Collection
+    {
+        return $this->workflows;
+    }
+
+    public function addWorkflow(Workflow $workflow): static
+    {
+        if (!$this->workflows->contains($workflow)) {
+            $this->workflows->add($workflow);
+            $workflow->setProcedure($this);
+        }
+
+        return $this;
+    }
+
+    public function removeWorkflow(Workflow $workflow): static
+    {
+        if ($this->workflows->removeElement($workflow)) {
+            if ($workflow->getProcedure() === $this) {
+                $workflow->setProcedure(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getActiveWorkflows(): Collection
+    {
+        return $this->workflows->filter(fn(Workflow $workflow) => $workflow->isActive());
+    }
+
+    public function getRequiredWorkflows(): Collection
+    {
+        return $this->workflows->filter(fn(Workflow $workflow) => 
+            $workflow->isActive() && $workflow->isRequired()
+        );
+    }
+
+    public function getOptionalWorkflows(): Collection
+    {
+        return $this->workflows->filter(fn(Workflow $workflow) => 
+            $workflow->isActive() && !$workflow->isRequired()
+        );
+    }
+
+    public function getWorkflowCount(): int
+    {
+        return $this->workflows->filter(fn(Workflow $workflow) => $workflow->isActive())->count();
+    }
+
+    public function hasWorkflows(): bool
+    {
+        return $this->getWorkflowCount() > 0;
+    }
+
+    public function getNextStepOrder(): int
+    {
+        $maxOrder = 0;
+        foreach ($this->workflows as $workflow) {
+            if ($workflow->getStepOrder() > $maxOrder) {
+                $maxOrder = $workflow->getStepOrder();
+            }
+        }
+        return $maxOrder + 1;
+    }
+
+    // Existing methods...
     public function getActiveRequests(): Collection
     {
         return $this->requests->filter(fn(Request $req) => $req->isActive() && !$req->isDeleted());

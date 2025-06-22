@@ -1,0 +1,303 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Workflow Steps{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi-diagram-3 me-2"></i>
+        Workflow Steps Management
+    </h1>
+    <a href="{{ path('admin_workflow_new') }}" class="btn btn-primary">
+        <i class="bi-plus-circle me-2"></i>
+        New Workflow Step
+    </a>
+</div>
+
+{% if workflows|length > 0 %}
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">
+            <i class="bi-list-ul me-2"></i>
+            All Workflow Steps ({{ workflows|length }})
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th width="4%">#</th>
+                        <th width="20%">Procedure</th>
+                        <th width="15%">Step Name</th>
+                        <th width="5%">Order</th>
+                        <th width="20%">Description</th>
+                        <th width="12%">Inputs</th>
+                        <th width="10%">Output</th>
+                        <th width="6%">Status</th>
+                        <th width="8%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for workflow in workflows %}
+                    <tr>
+                        <td class="text-muted">#{{ workflow.id }}</td>
+                        <td>
+                            {% if workflow.procedure %}
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <strong class="small">{{ workflow.procedure.pname }}</strong>
+                                        {% if workflow.procedure.family %}
+                                            <div class="small text-muted">{{ workflow.procedure.family.fname }}</div>
+                                        {% endif %}
+                                        {% if workflow.procedure.providingAdministration %}
+                                            <div class="small">
+                                                <span class="badge bg-info badge-sm">{{ workflow.procedure.providingAdministration.institutionName|slice(0, 20) }}{% if workflow.procedure.providingAdministration.institutionName|length > 20 %}...{% endif %}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="badge bg-warning">No Procedure</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ workflow.name }}</strong>
+                            <div class="small text-muted">
+                                Created: {{ workflow.createdAt|date('M d, Y') }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-primary fs-6">{{ workflow.stepOrder }}</span>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 200px;" title="{{ workflow.shortDescription }}">
+                                {{ workflow.shortDescription|slice(0, 80) }}{% if workflow.shortDescription|length > 80 %}...{% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if workflow.inputs|length > 0 %}
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for input in workflow.inputsLabels|slice(0, 2) %}
+                                        <span class="badge bg-warning badge-sm">{{ input|slice(0, 12) }}{% if input|length > 12 %}...{% endif %}</span>
+                                    {% endfor %}
+                                    {% if workflow.inputs|length > 2 %}
+                                        <span class="badge bg-secondary badge-sm">+{{ workflow.inputs|length - 2 }} more</span>
+                                    {% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted small">No inputs</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-success badge-sm">{{ workflow.outputLabel|slice(0, 15) }}{% if workflow.outputLabel|length > 15 %}...{% endif %}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <!-- Active Status -->
+                                <div class="form-check form-switch form-check-sm">
+                                    <input class="form-check-input status-toggle" 
+                                           type="checkbox" 
+                                           data-workflow-id="{{ workflow.id }}"
+                                           {% if workflow.isActive %}checked{% endif %}>
+                                    <label class="form-check-label small">
+                                        {{ workflow.isActive ? 'Active' : 'Inactive' }}
+                                    </label>
+                                </div>
+                                <!-- Required Status -->
+                                <div class="form-check form-switch form-check-sm">
+                                    <input class="form-check-input required-toggle" 
+                                           type="checkbox" 
+                                           data-workflow-id="{{ workflow.id }}"
+                                           {% if workflow.isRequired %}checked{% endif %}>
+                                    <label class="form-check-label small">
+                                        {{ workflow.isRequired ? 'Required' : 'Optional' }}
+                                    </label>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ path('admin_workflow_show', {'id': workflow.id}) }}" 
+                                   class="btn btn-outline-info" title="View">
+                                    <i class="bi-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_workflow_edit', {'id': workflow.id}) }}" 
+                                   class="btn btn-outline-warning" title="Edit">
+                                    <i class="bi-pencil"></i>
+                                </a>
+                                {% if workflow.procedure %}
+                                    <a href="{{ path('admin_procedure_show', {'id': workflow.procedure.id}) }}" 
+                                       class="btn btn-outline-secondary" title="View Procedure">
+                                        <i class="bi-file-earmark-text"></i>
+                                    </a>
+                                {% endif %}
+                                <button type="button" 
+                                        class="btn btn-outline-success duplicate-btn" 
+                                        data-workflow-id="{{ workflow.id }}"
+                                        data-workflow-name="{{ workflow.name }}"
+                                        title="Duplicate">
+                                    <i class="bi-files"></i>
+                                </button>
+                                <button type="button" 
+                                        class="btn btn-outline-danger delete-btn" 
+                                        data-workflow-id="{{ workflow.id }}"
+                                        data-workflow-name="{{ workflow.name }}"
+                                        title="Delete">
+                                    <i class="bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="bi-diagram-3 text-muted" style="font-size: 4rem;"></i>
+    <h3 class="text-muted mt-3">No workflow steps found</h3>
+    <p class="text-muted">Start by creating your first workflow step</p>
+    <a href="{{ path('admin_workflow_new') }}" class="btn btn-primary">
+        <i class="bi-plus-circle me-2"></i>
+        Create First Workflow Step
+    </a>
+</div>
+{% endif %}
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the workflow step <strong id="workflowName"></strong>?</p>
+                <p class="text-muted small">This action will deactivate the workflow step and cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <input type="hidden" name="_token" id="deleteToken">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi-trash me-1"></i>
+                        Delete Workflow Step
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status toggle functionality
+    document.querySelectorAll('.status-toggle').forEach(function(toggle) {
+        toggle.addEventListener('change', function() {
+            const workflowId = this.dataset.workflowId;
+            
+            fetch(`/admin/workflow/${workflowId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const label = this.parentElement.querySelector('.form-check-label');
+                    label.textContent = data.status ? 'Active' : 'Inactive';
+                } else {
+                    this.checked = !this.checked; 
+                    alert('Error updating status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                this.checked = !this.checked; 
+                alert('Error updating status');
+            });
+        });
+    });
+
+    // Required toggle functionality
+    document.querySelectorAll('.required-toggle').forEach(function(toggle) {
+        toggle.addEventListener('change', function() {
+            const workflowId = this.dataset.workflowId;
+            
+            fetch(`/admin/workflow/${workflowId}/toggle-required`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const label = this.parentElement.querySelector('.form-check-label');
+                    label.textContent = data.required ? 'Required' : 'Optional';
+                } else {
+                    this.checked = !this.checked; 
+                    alert('Error updating required status: ' + data.message);
+                }
+            })
+            .catch(error => {
+                this.checked = !this.checked; 
+                alert('Error updating required status');
+            });
+        });
+    });
+
+    // Duplicate functionality
+    document.querySelectorAll('.duplicate-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const workflowId = this.dataset.workflowId;
+            const workflowName = this.dataset.workflowName;
+            
+            if (confirm(`Are you sure you want to duplicate the workflow step "${workflowName}"?`)) {
+                fetch(`/admin/workflow/duplicate/${workflowId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error duplicating workflow step: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('Error duplicating workflow step');
+                });
+            }
+        });
+    });
+
+    // Delete modal functionality
+    document.querySelectorAll('.delete-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const workflowId = this.dataset.workflowId;
+            const workflowName = this.dataset.workflowName;
+            
+            document.getElementById('workflowName').textContent = workflowName;
+            document.getElementById('deleteForm').action = `/admin/workflow/${workflowId}/delete`;
+            document.getElementById('deleteToken').value = '{{ csrf_token("delete") }}';
+            
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+});
+</script>
+{% endblock %}

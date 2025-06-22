@@ -1,0 +1,262 @@
+{{ form_start(form, {'attr': {'id': 'workflowForm'}}) }}
+<div class="row">
+    <div class="col-md-8">
+        <div class="mb-3">
+            {{ form_row(form.name, {
+                'label_attr': {'class': 'form-label fw-bold'},
+                'attr': {'class': 'form-control'}
+            }) }}
+        </div>
+        
+        <div class="mb-3">
+            {{ form_row(form.procedure, {
+                'label_attr': {'class': 'form-label fw-bold'},
+                'attr': {'class': 'form-select', 'onchange': 'updateProcedureInfo(this)'}
+            }) }}
+            <div class="form-text">
+                <small><i class="bi-info-circle me-1"></i>Select the procedure this workflow step belongs to</small>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            {{ form_row(form.shortDescription, {
+                'label_attr': {'class': 'form-label fw-bold'},
+                'attr': {'class': 'form-control', 'rows': 3}
+            }) }}
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.stepOrder, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.displayOrder, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-control'}
+                    }) }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <div class="form-check form-switch mt-4">
+                        {{ form_widget(form.isRequired, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form.isRequired, 'Required Step', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <div class="form-check form-switch mt-4">
+                        {{ form_widget(form.isActive, {'attr': {'class': 'form-check-input'}}) }}
+                        {{ form_label(form.isActive, 'Active Status', {'label_attr': {'class': 'form-check-label fw-bold'}}) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Procedure Info Card -->
+        <div class="card bg-light mb-3" id="procedureInfoCard" style="display: none;">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-file-earmark-text me-2"></i>
+                    Procedure Info
+                </h6>
+            </div>
+            <div class="card-body" id="procedureInfo">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+        
+        <!-- Inputs Section -->
+        <div class="card bg-light mb-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-arrow-down-circle me-2"></i>
+                    Required Inputs
+                </h6>
+            </div>
+            <div class="card-body">
+                {{ form_row(form.inputs, {
+                    'label_attr': {'class': 'form-label fw-bold'},
+                    'attr': {'class': 'form-select', 'multiple': true, 'size': 8}
+                }) }}
+                <div class="form-text mt-2">
+                    <small><i class="bi-info-circle me-1"></i>Hold Ctrl/Cmd to select multiple items</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Output Section -->
+        <div class="card bg-light">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-arrow-up-circle me-2"></i>
+                    Step Output
+                </h6>
+            </div>
+            <div class="card-body">
+                {{ form_row(form.output, {
+                    'label_attr': {'class': 'form-label fw-bold'},
+                    'attr': {'class': 'form-select'}
+                }) }}
+                <div class="form-text mt-2">
+                    <small><i class="bi-info-circle me-1"></i>What is produced when this step is completed?</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <button type="submit" class="btn btn-primary">
+        <i class="bi-check-circle me-2"></i>
+        {{ button_label|default('Save Workflow Step') }}
+    </button>
+    <a href="{{ path('admin_workflow_index') }}" class="btn btn-secondary">
+        <i class="bi-arrow-left me-2"></i>
+        Cancel
+    </a>
+    {% if workflow.procedure %}
+    <a href="{{ path('admin_procedure_show', {'id': workflow.procedure.id}) }}" class="btn btn-outline-info">
+        <i class="bi-file-earmark-text me-2"></i>
+        View Procedure
+    </a>
+    {% endif %}
+</div>
+
+{{ form_end(form) }}
+
+<script>
+// Procedure info data (would be populated from controller or Ajax)
+const procedureData = {
+    {% if workflow.procedure %}
+        {{ workflow.procedure.id }}: {
+            name: "{{ workflow.procedure.pname|e('js') }}",
+            family: "{{ workflow.procedure.family ? workflow.procedure.family.fname : '' }}",
+            description: "{{ workflow.procedure.shortdesc|e('js')|slice(0, 100) }}{% if workflow.procedure.shortdesc|length > 100 %}...{% endif %}",
+            cost: "{{ workflow.procedure.servicecost|number_format(0, '.', ',') }} XAF",
+            time: "{{ workflow.procedure.processtime|e('js') }}",
+            administration: "{{ workflow.procedure.providingAdministration ? workflow.procedure.providingAdministration.institutionName : '' }}",
+            stepsCount: "{{ workflow.procedure.workflowCount }}"
+        }
+    {% endif %}
+};
+
+function updateProcedureInfo(select) {
+    const card = document.getElementById('procedureInfoCard');
+    const infoDiv = document.getElementById('procedureInfo');
+    
+    if (select.value && procedureData[select.value]) {
+        const data = procedureData[select.value];
+        infoDiv.innerHTML = `
+            <div class="mb-2">
+                <strong class="text-primary">${data.name}</strong>
+                ${data.family ? `<div class="small text-muted">Family: ${data.family}</div>` : ''}
+            </div>
+            <div class="small">
+                ${data.description ? `<div class="mb-2">${data.description}</div>` : ''}
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Cost:</strong><br>
+                        <span class="badge bg-success">${data.cost}</span>
+                    </div>
+                    <div class="col-6">
+                        <strong>Time:</strong><br>
+                        <span class="badge bg-info">${data.time}</span>
+                    </div>
+                </div>
+                ${data.administration ? `<div class="mt-2"><strong>Administration:</strong><br><small>${data.administration}</small></div>` : ''}
+                <div class="mt-2"><strong>Current Steps:</strong> <span class="badge bg-secondary">${data.stepsCount || 0}</span></div>
+            </div>
+        `;
+        card.style.display = 'block';
+        
+        // Update step order suggestion
+        const stepOrderInput = document.querySelector('input[name="workflow[stepOrder]"]');
+        if (stepOrderInput && (!stepOrderInput.value || stepOrderInput.value == '0')) {
+            const suggestedOrder = parseInt(data.stepsCount || 0) + 1;
+            stepOrderInput.value = suggestedOrder;
+        }
+    } else {
+        card.style.display = 'none';
+    }
+}
+
+// Initialize procedure info on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const procedureSelect = document.querySelector('select[name="workflow[procedure]"]');
+    if (procedureSelect && procedureSelect.value) {
+        updateProcedureInfo(procedureSelect);
+    }
+    
+    // Enhanced input selection interface
+    const inputsSelect = document.querySelector('select[name="workflow[inputs][]"]');
+    if (inputsSelect) {
+        inputsSelect.addEventListener('change', function() {
+            const selectedCount = this.selectedOptions.length;
+            const helpText = this.parentElement.querySelector('.form-text small');
+            if (helpText) {
+                helpText.innerHTML = `<i class="bi-info-circle me-1"></i>${selectedCount} input(s) selected. Hold Ctrl/Cmd to select multiple items`;
+            }
+        });
+        
+        // Initial count
+        const initialCount = inputsSelect.selectedOptions.length;
+        const helpText = inputsSelect.parentElement.querySelector('.form-text small');
+        if (helpText && initialCount > 0) {
+            helpText.innerHTML = `<i class="bi-info-circle me-1"></i>${initialCount} input(s) selected. Hold Ctrl/Cmd to select multiple items`;
+        }
+    }
+    
+    // Form validation
+    document.getElementById('workflowForm').addEventListener('submit', function(e) {
+        const name = document.querySelector('input[name="workflow[name]"]').value.trim();
+        const procedure = document.querySelector('select[name="workflow[procedure]"]').value;
+        const description = document.querySelector('textarea[name="workflow[shortDescription]"]').value.trim();
+        const inputs = document.querySelector('select[name="workflow[inputs][]"]').selectedOptions.length;
+        const output = document.querySelector('select[name="workflow[output]"]').value;
+        const stepOrder = document.querySelector('input[name="workflow[stepOrder]"]').value;
+        
+        if (!name || !procedure || !description || inputs === 0 || !output || !stepOrder) {
+            e.preventDefault();
+            alert('Please fill in all required fields:\n- Step Name\n- Procedure\n- Description\n- At least one Input\n- Output\n- Step Order');
+            return false;
+        }
+        
+        if (parseInt(stepOrder) < 1) {
+            e.preventDefault();
+            alert('Step Order must be a positive number (1 or greater).');
+            return false;
+        }
+    });
+    
+    // Auto-suggest step names based on inputs/output
+    const inputsSelect2 = document.querySelector('select[name="workflow[inputs][]"]');
+    const outputSelect = document.querySelector('select[name="workflow[output]"]');
+    const nameInput = document.querySelector('input[name="workflow[name]"]');
+    
+    function suggestStepName() {
+        if (!nameInput.value.trim() && outputSelect.value) {
+            const outputText = outputSelect.options[outputSelect.selectedIndex].text;
+            if (outputText && outputText !== 'Select the output of this step') {
+                nameInput.placeholder = `Suggested: ${outputText} Step`;
+            }
+        }
+    }
+    
+    if (outputSelect) {
+        outputSelect.addEventListener('change', suggestStepName);
+    }
+});
+</script>

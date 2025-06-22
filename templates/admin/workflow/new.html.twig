@@ -1,0 +1,118 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}New Workflow Step{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">
+        <i class="bi-plus-circle me-2"></i>
+        Create New Workflow Step
+    </h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{{ path('admin_workflow_index') }}">Workflow Steps</a></li>
+            <li class="breadcrumb-item active" aria-current="page">New</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="card-title mb-0">
+            <i class="bi-diagram-3 me-2"></i>
+            Workflow Step Information
+        </h5>
+    </div>
+    <div class="card-body">
+        {{ include('admin/workflow/_form.html.twig', {'button_label': 'Create Workflow Step'}) }}
+    </div>
+</div>
+
+<!-- Help Section -->
+<div class="card shadow-sm mt-4">
+    <div class="card-header bg-info text-white">
+        <h6 class="card-title mb-0">
+            <i class="bi-question-circle me-2"></i>
+            How to Create a Workflow Step
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <h6 class="text-info">
+                    <i class="bi-1-circle me-2"></i>
+                    Step Basics
+                </h6>
+                <ul class="small">
+                    <li><strong>Step Name:</strong> Clear, action-oriented name (e.g., "Document Submission", "Payment Processing")</li>
+                    <li><strong>Description:</strong> Explain what happens in this step</li>
+                    <li><strong>Step Order:</strong> Sequential position in the procedure (1, 2, 3...)</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-warning">
+                    <i class="bi-2-circle me-2"></i>
+                    Inputs & Outputs
+                </h6>
+                <ul class="small">
+                    <li><strong>Inputs:</strong> Documents/data required for this step</li>
+                    <li><strong>Output:</strong> What is produced when step is completed</li>
+                    <li>Choose relevant options from the predefined lists</li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-success">
+                    <i class="bi-3-circle me-2"></i>
+                    Step Properties
+                </h6>
+                <ul class="small">
+                    <li><strong>Required:</strong> Must be completed for procedure success</li>
+                    <li><strong>Optional:</strong> Can be skipped if not applicable</li>
+                    <li><strong>Active:</strong> Currently available for use</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="mt-3 pt-3 border-top">
+            <h6 class="text-muted">
+                <i class="bi-lightbulb me-2"></i>
+                Common Workflow Step Examples
+            </h6>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="border rounded p-2 bg-light mb-2">
+                        <strong class="small">Initial Application</strong>
+                        <div class="small text-muted">
+                            Inputs: Completed Form, Photo, ID Copy<br>
+                            Output: General Information Provided
+                        </div>
+                    </div>
+                    <div class="border rounded p-2 bg-light mb-2">
+                        <strong class="small">Document Verification</strong>
+                        <div class="small text-muted">
+                            Inputs: Birth Certificate, Proof of Address<br>
+                            Output: Verification Completed
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="border rounded p-2 bg-light mb-2">
+                        <strong class="small">Payment Processing</strong>
+                        <div class="small text-muted">
+                            Inputs: Payment Made<br>
+                            Output: Payment Receipt
+                        </div>
+                    </div>
+                    <div class="border rounded p-2 bg-light mb-2">
+                        <strong class="small">Final Collection</strong>
+                        <div class="small text-muted">
+                            Inputs: Receipt, ID Card<br>
+                            Output: Document Ready for Collection
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
