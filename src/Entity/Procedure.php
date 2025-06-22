@@ -29,6 +29,10 @@ class Procedure
     #[Assert\NotNull(message: 'Family is required')]
     private ?Family $family = null;
 
+    #[ORM\ManyToOne(targetEntity: PublicEntity::class, inversedBy: 'procedures')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?PublicEntity $providingAdministration = null;
+
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Short description is required')]
     private ?string $shortdesc = null;
@@ -111,6 +115,17 @@ class Procedure
     public function setFamily(?Family $family): static
     {
         $this->family = $family;
+        return $this;
+    }
+
+    public function getProvidingAdministration(): ?PublicEntity
+    {
+        return $this->providingAdministration;
+    }
+
+    public function setProvidingAdministration(?PublicEntity $providingAdministration): static
+    {
+        $this->providingAdministration = $providingAdministration;
         return $this;
     }
 

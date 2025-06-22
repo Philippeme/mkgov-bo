@@ -27,14 +27,15 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th width="5%">#</th>
-                        <th width="8%">Image</th>
-                        <th width="18%">Name</th>
-                        <th width="12%">Family</th>
-                        <th width="20%">Description</th>
-                        <th width="8%">Cost</th>
-                        <th width="8%">Time</th>
-                        <th width="6%">Order</th>
+                        <th width="4%">#</th>
+                        <th width="6%">Image</th>
+                        <th width="15%">Name</th>
+                        <th width="10%">Family</th>
+                        <th width="13%">Administration</th>
+                        <th width="18%">Description</th>
+                        <th width="7%">Cost</th>
+                        <th width="7%">Time</th>
+                        <th width="5%">Order</th>
                         <th width="6%">Status</th>
                         <th width="9%">Actions</th>
                     </tr>
@@ -77,6 +78,27 @@
                                 <span class="badge bg-primary">{{ procedure.family.fname }}</span>
                             {% else %}
                                 <span class="badge bg-warning">No Family</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if procedure.providingAdministration %}
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <strong class="small">{{ procedure.providingAdministration.institutionName }}</strong>
+                                        {% if procedure.providingAdministration.department %}
+                                            <div class="small text-muted">{{ procedure.providingAdministration.department.name }}</div>
+                                        {% endif %}
+                                        {% if procedure.providingAdministration.email %}
+                                            <div class="small">
+                                                <a href="mailto:{{ procedure.providingAdministration.email }}" class="text-decoration-none">
+                                                    <i class="bi-envelope me-1"></i>Contact
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="badge bg-secondary">No Administration</span>
                             {% endif %}
                         </td>
                         <td>
@@ -133,6 +155,12 @@
                                    class="btn btn-outline-warning" title="Edit">
                                     <i class="bi-pencil"></i>
                                 </a>
+                                {% if procedure.providingAdministration %}
+                                    <a href="{{ path('admin_public_entity_show', {'id': procedure.providingAdministration.id}) }}" 
+                                       class="btn btn-outline-secondary" title="View Administration">
+                                        <i class="bi-building"></i>
+                                    </a>
+                                {% endif %}
                                 <button type="button" 
                                         class="btn btn-outline-danger delete-btn" 
                                         data-procedure-id="{{ procedure.id }}"

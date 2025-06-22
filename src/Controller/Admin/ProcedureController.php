@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Procedure;
 use App\Form\ProcedureType;
 use App\Repository\ProcedureRepository;
+use App\Repository\PublicEntityRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -22,8 +23,10 @@ class ProcedureController extends AbstractController
     {
         $procedures = $procedureRepository->createQueryBuilder('p')
             ->leftJoin('p.family', 'f')
-            ->leftJoin('p.documents', 'd')
-            ->addSelect('f', 'd')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->leftJoin('pa.department', 'd')
+            ->leftJoin('p.documents', 'doc')
+            ->addSelect('f', 'pa', 'd', 'doc')
             ->orderBy('p.displayOrder', 'ASC')
             ->addOrderBy('p.createdAt', 'DESC')
             ->getQuery()
@@ -303,6 +306,116 @@ class ProcedureController extends AbstractController
             return new JsonResponse([
                 'success' => false,
                 'message' => 'Error updating publication status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    #[Route('/by-administration/{id}', name: 'admin_procedure_by_administration', methods: ['GET'])]
+    public function byAdministration(int $id, ProcedureRepository $procedureRepository, PublicEntityRepository $publicEntityRepository): Response
+    {
+        $administration = $publicEntityRepository->find($id);
+        
+        if (!$administration) {
+            throw $this->createNotFoundException('Public entity not found');
+        }
+
+        $procedures = $procedureRepository->findByProvidingAdministration($administration);
+
+        return $this->render('admin/procedure/by_administration.html.twig', [
+            'administration' => $administration,
+            'procedures' => $procedures,
+        ]);
+    }
+
+    #[Route('/without-administration', name: 'admin_procedure_without_administration', methods: ['GET'])]
+    public function withoutAdministration(ProcedureRepository $procedureRepository): Response
+    {
+        $procedures = $procedureRepository->findWithoutProvidingAdministration();
+
+        return $this->render('admin/procedure/without_administration.html.twig', [
+            'procedures' => $procedures,
+        ]);
+    }
+
+    #[Route('/filter', name: 'admin_procedure_filter', methods: ['GET'])]
+    public function filter(Request $request, ProcedureRepository $procedureRepository): JsonResponse
+    {
+        $filters = [
+            'family' => $request->query->get('family'),
+            'administration' => $request->query->get('administration'),
+            'department' => $request->query->get('department'),
+            'search' => $request->query->get('search')
+        ];
+
+        $procedures = $procedureRepository->findPublishedProceduresWithFilters($filters);
+
+        $data = [];
+        foreach ($procedures as $procedure) {
+            $data[] = [
+                'id' => $procedure->getId(),
+                'pname' => $procedure->getPname(),
+                'family' => $procedure->getFamily() ? $procedure->getFamily()->getFname() : null,
+                'administration' => $procedure->getProvidingAdministration() ? $procedure->getProvidingAdministration()->getInstitutionName() : null,
+                'department' => $procedure->getProvidingAdministration() && $procedure->getProvidingAdministration()->getDepartment() ? $procedure->getProvidingAdministration()->getDepartment()->getName() : null,
+                'servicecost' => $procedure->getServiceCost(),
+                'processtime' => $procedure->getProcessTime(),
+                'isPublished' => $procedure->isPublished(),
+                'isActive' => $procedure->isActive()
+            ];
+        }
+
+        return new JsonResponse($data);
+    }
+
+    #[Route('/statistics', name: 'admin_procedure_statistics', methods: ['GET'])]
+    public function statistics(ProcedureRepository $procedureRepository): JsonResponse
+    {
+        $stats = $procedureRepository->getProcedureStats();
+        $administrationCounts = $procedureRepository->countByProvidingAdministration();
+        $familyData = $procedureRepository->findUniqueFamilies();
+        $administrationData = $procedureRepository->findUniqueProvidingAdministrations();
+
+        return new JsonResponse([
+            'general_stats' => $stats,
+            'administration_counts' => $administrationCounts,
+            'families' => $familyData,
+            'administrations' => $administrationData
+        ]);
+    }
+
+    #[Route('/assign-administration', name: 'admin_procedure_assign_administration', methods: ['POST'])]
+    public function assignAdministration(Request $request, EntityManagerInterface $entityManager, ProcedureRepository $procedureRepository, PublicEntityRepository $publicEntityRepository): JsonResponse
+    {
+        try {
+            $procedureId = $request->request->get('procedure_id');
+            $administrationId = $request->request->get('administration_id');
+
+            $procedure = $procedureRepository->find($procedureId);
+            if (!$procedure) {
+                return new JsonResponse(['success' => false, 'message' => 'Procedure not found'], 404);
+            }
+
+            if ($administrationId) {
+                $administration = $publicEntityRepository->find($administrationId);
+                if (!$administration) {
+                    return new JsonResponse(['success' => false, 'message' => 'Administration not found'], 404);
+                }
+                $procedure->setProvidingAdministration($administration);
+            } else {
+                $procedure->setProvidingAdministration(null);
+            }
+
+            $entityManager->flush();
+
+            return new JsonResponse([
+                'success' => true,
+                'message' => 'Administration assignment updated successfully.',
+                'administration' => $procedure->getProvidingAdministration() ? $procedure->getProvidingAdministration()->getInstitutionName() : null
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error updating administration assignment: ' . $e->getMessage()
             ], 500);
         }
     }

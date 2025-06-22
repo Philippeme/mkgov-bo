@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\PublicEntityRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -77,10 +79,14 @@ class PublicEntity
     #[ORM\Column]
     private ?bool $isActive = true;
 
+    #[ORM\OneToMany(mappedBy: 'providingAdministration', targetEntity: Procedure::class)]
+    private Collection $procedures;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
+        $this->procedures = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -279,6 +285,75 @@ class PublicEntity
     {
         $this->isActive = $isActive;
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Procedure>
+     */
+    public function getProcedures(): Collection
+    {
+        return $this->procedures;
+    }
+
+    public function addProcedure(Procedure $procedure): static
+    {
+        if (!$this->procedures->contains($procedure)) {
+            $this->procedures->add($procedure);
+            $procedure->setProvidingAdministration($this);
+        }
+
+        return $this;
+    }
+
+    public function removeProcedure(Procedure $procedure): static
+    {
+        if ($this->procedures->removeElement($procedure)) {
+            if ($procedure->getProvidingAdministration() === $this) {
+                $procedure->setProvidingAdministration(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getActiveProcedures(): Collection
+    {
+        return $this->procedures->filter(fn(Procedure $proc) => $proc->isActive());
+    }
+
+    public function getPublishedProcedures(): Collection
+    {
+        return $this->procedures->filter(fn(Procedure $proc) => $proc->isActive() && $proc->isPublished());
+    }
+
+    public function getProceduresByFamily($family): Collection
+    {
+        return $this->procedures->filter(fn(Procedure $proc) => 
+            $proc->isActive() && $proc->getFamily() === $family
+        );
+    }
+
+    public function getProceduresGroupedByFamily(): array
+    {
+        $grouped = [];
+        foreach ($this->getActiveProcedures() as $procedure) {
+            $familyName = $procedure->getFamily() ? $procedure->getFamily()->getFname() : 'No Family';
+            if (!isset($grouped[$familyName])) {
+                $grouped[$familyName] = [];
+            }
+            $grouped[$familyName][] = $procedure;
+        }
+        ksort($grouped);
+        return $grouped;
+    }
+
+    public function getTotalCostOfProcedures(): float
+    {
+        $total = 0;
+        foreach ($this->getActiveProcedures() as $procedure) {
+            $total += (float)$procedure->getServiceCost();
+        }
+        return $total;
     }
 
     public function __toString(): string

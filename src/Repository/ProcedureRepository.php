@@ -3,11 +3,13 @@
 namespace App\Repository;
 
 use App\Entity\Procedure;
+use App\Entity\PublicEntity;
+use App\Entity\Family;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Project>
+ * @extends ServiceEntityRepository<Procedure>
  */
 class ProcedureRepository extends ServiceEntityRepository
 {
@@ -17,13 +19,19 @@ class ProcedureRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les projets publiés triés par ordre d'affichage
+     * Récupère les procédures publiées triées par ordre d'affichage
      */
     public function findPublishedProcedures(): array
     {
         return $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->leftJoin('pa.department', 'd')
+            ->addSelect('f', 'pa', 'd')
             ->andWhere('p.published = :published')
+            ->andWhere('p.isActive = :active')
             ->setParameter('published', true)
+            ->setParameter('active', true)
             ->orderBy('p.displayOrder', 'ASC')
             ->addOrderBy('p.createdAt', 'DESC')
             ->getQuery()
@@ -31,13 +39,18 @@ class ProcedureRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les projets publiés pour la page d'accueil (limite à 3)
+     * Récupère les procédures publiées pour la page d'accueil (limite à 3)
      */
-    public function findHomePageProjects(): array
+    public function findHomePageProcedures(): array
     {
         return $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->addSelect('f', 'pa')
             ->andWhere('p.published = :published')
+            ->andWhere('p.isActive = :active')
             ->setParameter('published', true)
+            ->setParameter('active', true)
             ->orderBy('p.displayOrder', 'ASC')
             ->addOrderBy('p.createdAt', 'DESC')
             ->setMaxResults(3)
@@ -46,22 +59,37 @@ class ProcedureRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les projets publiés avec filtres
+     * Récupère les procédures publiées avec filtres
      */
     public function findPublishedProceduresWithFilters(array $filters): array
     {
         $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->leftJoin('pa.department', 'd')
+            ->addSelect('f', 'pa', 'd')
             ->andWhere('p.published = :published')
-            ->setParameter('published', true);
+            ->andWhere('p.isActive = :active')
+            ->setParameter('published', true)
+            ->setParameter('active', true);
 
         if (!empty($filters['family'])) {
             $qb->andWhere('p.family = :family')
                ->setParameter('family', $filters['family']);
         }
 
+        if (!empty($filters['administration'])) {
+            $qb->andWhere('p.providingAdministration = :administration')
+               ->setParameter('administration', $filters['administration']);
+        }
+
+        if (!empty($filters['department'])) {
+            $qb->andWhere('pa.department = :department')
+               ->setParameter('department', $filters['department']);
+        }
         
         if (!empty($filters['search'])) {
-            $qb->andWhere('p.pname LIKE :search OR p.shortdesc LIKE :search OR p.longdesc LIKE :search OR p.excerpt LIKE :search')
+            $qb->andWhere('p.pname LIKE :search OR p.shortdesc LIKE :search OR p.longdesc LIKE :search OR pa.institutionName LIKE :search')
                ->setParameter('search', '%' . $filters['search'] . '%');
         }
 
@@ -72,49 +100,184 @@ class ProcedureRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les catégories uniques des projets publiés
+     * Récupère les procédures par administration
+     */
+    public function findByProvidingAdministration(PublicEntity $administration): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->addSelect('f')
+            ->andWhere('p.providingAdministration = :administration')
+            ->andWhere('p.isActive = :active')
+            ->setParameter('administration', $administration)
+            ->setParameter('active', true)
+            ->orderBy('p.displayOrder', 'ASC')
+            ->addOrderBy('p.pname', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Récupère les procédures publiées par administration
+     */
+    public function findPublishedByProvidingAdministration(PublicEntity $administration): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->addSelect('f')
+            ->andWhere('p.providingAdministration = :administration')
+            ->andWhere('p.published = :published')
+            ->andWhere('p.isActive = :active')
+            ->setParameter('administration', $administration)
+            ->setParameter('published', true)
+            ->setParameter('active', true)
+            ->orderBy('p.displayOrder', 'ASC')
+            ->addOrderBy('p.pname', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Récupère les procédures par famille et administration
+     */
+    public function findByFamilyAndAdministration(Family $family, PublicEntity $administration = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->addSelect('pa')
+            ->andWhere('p.family = :family')
+            ->andWhere('p.isActive = :active')
+            ->setParameter('family', $family)
+            ->setParameter('active', true);
+
+        if ($administration) {
+            $qb->andWhere('p.providingAdministration = :administration')
+               ->setParameter('administration', $administration);
+        }
+
+        return $qb->orderBy('p.displayOrder', 'ASC')
+                  ->addOrderBy('p.pname', 'ASC')
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Compte les procédures par administration
+     */
+    public function countByProvidingAdministration(): array
+    {
+        $result = $this->createQueryBuilder('p')
+            ->select('pa.id as administrationId, pa.institutionName as administrationName, COUNT(p.id) as procedureCount')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->where('p.isActive = :active')
+            ->setParameter('active', true)
+            ->groupBy('pa.id')
+            ->orderBy('procedureCount', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        $counts = [];
+        foreach ($result as $row) {
+            if ($row['administrationId']) {
+                $counts[$row['administrationId']] = [
+                    'name' => $row['administrationName'],
+                    'count' => (int)$row['procedureCount']
+                ];
+            }
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Récupère les familles uniques des procédures publiées
      */
     public function findUniqueFamilies(): array
     {
         $result = $this->createQueryBuilder('p')
-            ->select('DISTINCT p.family')
+            ->select('DISTINCT f.id, f.fname')
+            ->leftJoin('p.family', 'f')
             ->where('p.published = :published')
+            ->andWhere('p.isActive = :active')
             ->setParameter('published', true)
-            ->orderBy('p.category', 'ASC')
+            ->setParameter('active', true)
+            ->orderBy('f.fname', 'ASC')
             ->getQuery()
             ->getResult();
 
-        return array_column($result, 'category');
+        return array_column($result, 'fname', 'id');
     }
 
     /**
-     * CORRECTION PRINCIPALE : Récupère les années uniques des projets publiés
-     * Utilisation d'une requête SQL native pour éviter les problèmes avec la fonction YEAR()
+     * Récupère les administrations uniques des procédures publiées
+     */
+    public function findUniqueProvidingAdministrations(): array
+    {
+        $result = $this->createQueryBuilder('p')
+            ->select('DISTINCT pa.id, pa.institutionName')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->where('p.published = :published')
+            ->andWhere('p.isActive = :active')
+            ->andWhere('pa.id IS NOT NULL')
+            ->setParameter('published', true)
+            ->setParameter('active', true)
+            ->orderBy('pa.institutionName', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return array_column($result, 'institutionName', 'id');
+    }
+
+    /**
+     * Récupère les procédures sans administration assignée
+     */
+    public function findWithoutProvidingAdministration(): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->addSelect('f')
+            ->andWhere('p.providingAdministration IS NULL')
+            ->andWhere('p.isActive = :active')
+            ->setParameter('active', true)
+            ->orderBy('p.family', 'ASC')
+            ->addOrderBy('p.pname', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Récupère les années uniques des procédures publiées
      */
     public function findUniqueYears(): array
     {
         $connection = $this->getEntityManager()->getConnection();
         
         $sql = 'SELECT DISTINCT YEAR(created_at) as year 
-                FROM projects 
+                FROM procedures 
                 WHERE published = :published 
+                AND is_active = :active
                 ORDER BY year DESC';
         
-        $result = $connection->executeQuery($sql, ['published' => 1])->fetchAllAssociative();
+        $result = $connection->executeQuery($sql, [
+            'published' => 1,
+            'active' => 1
+        ])->fetchAllAssociative();
         
         return array_column($result, 'year');
     }
 
     /**
-     * Récupère le projet précédent
+     * Récupère la procédure précédente
      */
     public function findPreviousProcedure(Procedure $procedure): ?Procedure
     {
         return $this->createQueryBuilder('p')
             ->where('p.published = :published')
+            ->andWhere('p.isActive = :active')
             ->andWhere('p.id < :currentId')
             ->setParameter('published', true)
-            ->setParameter('currentId', $project->getId())
+            ->setParameter('active', true)
+            ->setParameter('currentId', $procedure->getId())
             ->orderBy('p.id', 'DESC')
             ->setMaxResults(1)
             ->getQuery()
@@ -122,14 +285,16 @@ class ProcedureRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère le projet suivant
+     * Récupère la procédure suivante
      */
     public function findNextProcedure(Procedure $procedure): ?Procedure
     {
         return $this->createQueryBuilder('p')
             ->where('p.published = :published')
+            ->andWhere('p.isActive = :active')
             ->andWhere('p.id > :currentId')
             ->setParameter('published', true)
+            ->setParameter('active', true)
             ->setParameter('currentId', $procedure->getId())
             ->orderBy('p.id', 'ASC')
             ->setMaxResults(1)
@@ -138,82 +303,124 @@ class ProcedureRepository extends ServiceEntityRepository
     }
 
     /**
-     * Récupère les projets similaires (même catégorie)
-     * Remplacement de RAND() par une approche compatible avec Doctrine
+     * Récupère les procédures similaires (même famille ou même administration)
      */
     public function findSimilarProcedures(Procedure $procedure, int $limit = 3): array
     {
-        // Première approche : récupérer tous les projets similaires
-        $allSimilarProcedures = $this->createQueryBuilder('p')
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->addSelect('f', 'pa')
             ->where('p.published = :published')
-            ->andWhere('p.category = :category')
+            ->andWhere('p.isActive = :active')
             ->andWhere('p.id != :currentId')
             ->setParameter('published', true)
-            ->setParameter('category', $project->getCategory())
-            ->setParameter('currentId', $project->getId())
-            ->orderBy('p.createdAt', 'DESC')
-            ->getQuery()
-            ->getResult();
+            ->setParameter('active', true)
+            ->setParameter('currentId', $procedure->getId());
 
-        // Si nous avons plus de projets que la limite demandée, mélanger aléatoirement
-        if (count($allSimilarProcedures) > $limit) {
-            shuffle($allSimilarProcedures);
-            return array_slice($allSimilarProcedures, 0, $limit);
+        // Priorité 1: Même famille ET même administration
+        if ($procedure->getFamily() && $procedure->getProvidingAdministration()) {
+            $qb->andWhere('(p.family = :family AND p.providingAdministration = :administration) OR p.family = :family OR p.providingAdministration = :administration')
+               ->setParameter('family', $procedure->getFamily())
+               ->setParameter('administration', $procedure->getProvidingAdministration())
+               ->addOrderBy('CASE WHEN p.family = :family AND p.providingAdministration = :administration THEN 1 WHEN p.family = :family THEN 2 WHEN p.providingAdministration = :administration THEN 3 ELSE 4 END', 'ASC');
+        } elseif ($procedure->getFamily()) {
+            $qb->andWhere('p.family = :family')
+               ->setParameter('family', $procedure->getFamily());
+        } elseif ($procedure->getProvidingAdministration()) {
+            $qb->andWhere('p.providingAdministration = :administration')
+               ->setParameter('administration', $procedure->getProvidingAdministration());
         }
 
-        return $allSimilarProcedures;
+        $results = $qb->addOrderBy('p.createdAt', 'DESC')
+                     ->setMaxResults($limit * 2) // Get more to allow shuffling
+                     ->getQuery()
+                     ->getResult();
+
+        // Shuffle and limit
+        if (count($results) > $limit) {
+            shuffle($results);
+            return array_slice($results, 0, $limit);
+        }
+
+        return $results;
     }
 
     /**
-     * Alternative pour les projets similaires utilisant une requête SQL native avec RAND()
-     * Cette méthode peut être utilisée si vous préférez l'ordre vraiment aléatoire de la base de données
+     * Recherche de procédures avec texte
      */
-    public function findSimilarProceduresWithRandomOrder(Procedure $procedure, int $limit = 3): array
+    public function searchProcedures(string $searchTerm): array
     {
-        $connection = $this->getEntityManager()->getConnection();
-        
-        $sql = 'SELECT p.* FROM procedures p 
-                WHERE p.published = :published 
-                AND p.family = :family 
-                AND p.id != :currentId 
-                ORDER BY RAND() 
-                LIMIT :limit';
-        
-        $result = $connection->executeQuery($sql, [
-            'published' => 1,
-            'family' => $procedure->getFamily(),
-            'currentId' => $procedure->getId(),
-            'limit' => $limit
-        ])->fetchAllAssociative();
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->leftJoin('pa.department', 'd')
+            ->addSelect('f', 'pa', 'd')
+            ->where('p.isActive = :active')
+            ->andWhere('p.pname LIKE :search OR p.shortdesc LIKE :search OR p.longdesc LIKE :search OR pa.institutionName LIKE :search OR f.fname LIKE :search')
+            ->setParameter('active', true)
+            ->setParameter('search', '%' . $searchTerm . '%')
+            ->orderBy('p.pname', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 
-        // Convertir les résultats en entités Project
-        $procedures = [];
-        foreach ($result as $row) {
-            $procedureEntity = $this->find($row['id']);
-            if ($procedureEntity) {
-                $procedures[] = $procedureEntity;
-            }
-        }
+    /**
+     * Statistiques des procédures
+     */
+    public function getProcedureStats(): array
+    {
+        $totalProcedures = $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.isActive = :active')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
 
-        return $procedures;
+        $publishedProcedures = $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.isActive = :active')
+            ->andWhere('p.published = :published')
+            ->setParameter('active', true)
+            ->setParameter('published', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $proceduresWithAdministration = $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.isActive = :active')
+            ->andWhere('p.providingAdministration IS NOT NULL')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            'total' => (int)$totalProcedures,
+            'published' => (int)$publishedProcedures,
+            'with_administration' => (int)$proceduresWithAdministration,
+            'without_administration' => (int)$totalProcedures - (int)$proceduresWithAdministration,
+            'publication_rate' => $totalProcedures > 0 ? round(($publishedProcedures / $totalProcedures) * 100, 2) : 0,
+            'administration_assignment_rate' => $totalProcedures > 0 ? round(($proceduresWithAdministration / $totalProcedures) * 100, 2) : 0
+        ];
     }
 
     /**
      * Méthode alternative pour récupérer les années en utilisant uniquement PHP
-     * Cette approche évite complètement les fonctions SQL
      */
     public function findUniqueYearsAlternative(): array
     {
-        $projects = $this->createQueryBuilder('p')
+        $procedures = $this->createQueryBuilder('p')
             ->select('p.createdAt')
             ->where('p.published = :published')
+            ->andWhere('p.isActive = :active')
             ->setParameter('published', true)
+            ->setParameter('active', true)
             ->getQuery()
             ->getResult();
 
         $years = [];
-        foreach ($projects as $project) {
-            $year = $project['createdAt']->format('Y');
+        foreach ($procedures as $procedure) {
+            $year = $procedure['createdAt']->format('Y');
             if (!in_array($year, $years)) {
                 $years[] = $year;
             }
@@ -224,24 +431,43 @@ class ProcedureRepository extends ServiceEntityRepository
     }
 
     /**
-     * Méthode utilitaire pour compter les projets par année
+     * Méthode utilitaire pour compter les procédures par année
      */
-    public function countProjectsByYear(): array
+    public function countProceduresByYear(): array
     {
-        $projects = $this->createQueryBuilder('p')
+        $procedures = $this->createQueryBuilder('p')
             ->select('p.createdAt')
             ->where('p.published = :published')
+            ->andWhere('p.isActive = :active')
             ->setParameter('published', true)
+            ->setParameter('active', true)
             ->getQuery()
             ->getResult();
 
         $yearCounts = [];
-        foreach ($projects as $project) {
-            $year = $project['createdAt']->format('Y');
+        foreach ($procedures as $procedure) {
+            $year = $procedure['createdAt']->format('Y');
             $yearCounts[$year] = ($yearCounts[$year] ?? 0) + 1;
         }
 
         krsort($yearCounts); // Tri par année décroissante
         return $yearCounts;
+    }
+
+    /**
+     * Récupère les procédures récentes
+     */
+    public function findRecentProcedures(int $limit = 10): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.family', 'f')
+            ->leftJoin('p.providingAdministration', 'pa')
+            ->addSelect('f', 'pa')
+            ->andWhere('p.isActive = :active')
+            ->setParameter('active', true)
+            ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 }

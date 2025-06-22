@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Family;
 use App\Entity\Procedure;
+use App\Entity\PublicEntity;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -32,8 +33,8 @@ class ProcedureType extends AbstractType
             ->add('family', EntityType::class, [
                 'class' => Family::class,
                 'choice_label' => 'fname',
-                'label' => 'Family',
-                'placeholder' => 'Select a family',
+                'label' => 'Service Family',
+                'placeholder' => 'Select a service family',
                 'attr' => [
                     'class' => 'form-select'
                 ],
@@ -43,6 +44,27 @@ class ProcedureType extends AbstractType
                         ->setParameter('active', true)
                         ->orderBy('f.displayOrder', 'ASC')
                         ->addOrderBy('f.fname', 'ASC');
+                }
+            ])
+            ->add('providingAdministration', EntityType::class, [
+                'class' => PublicEntity::class,
+                'choice_label' => 'institutionName',
+                'label' => 'Providing Administration',
+                'placeholder' => 'Select providing administration (optional)',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-select'
+                ],
+                'query_builder' => function ($repository) {
+                    return $repository->createQueryBuilder('pe')
+                        ->leftJoin('pe.department', 'd')
+                        ->addSelect('d')
+                        ->where('pe.isActive = :active')
+                        ->andWhere('pe.status = :status')
+                        ->setParameter('active', true)
+                        ->setParameter('status', 'active')
+                        ->orderBy('pe.displayOrder', 'ASC')
+                        ->addOrderBy('pe.institutionName', 'ASC');
                 }
             ])
             ->add('shortdesc', TextareaType::class, [

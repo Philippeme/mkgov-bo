@@ -13,6 +13,13 @@
             <i class="bi-pencil me-2"></i>
             Edit
         </a>
+        {% if procedure.providingAdministration %}
+        <a href="{{ path('admin_public_entity_show', {'id': procedure.providingAdministration.id}) }}" 
+           class="btn btn-info">
+            <i class="bi-building me-2"></i>
+            View Administration
+        </a>
+        {% endif %}
         <button type="button" 
                 class="btn btn-danger delete-btn" 
                 data-procedure-id="{{ procedure.id }}"
@@ -127,6 +134,116 @@
             </div>
         </div>
 
+        <!-- Providing Administration -->
+        {% if procedure.providingAdministration %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="bi-building me-2"></i>
+                    Providing Administration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        {% if procedure.providingAdministration.logo %}
+                            <img src="{{ asset('uploads/public_entities/' ~ procedure.providingAdministration.logo) }}" 
+                                 alt="{{ procedure.providingAdministration.institutionName }}" 
+                                 class="img-fluid rounded border mb-3"
+                                 style="max-height: 100px;">
+                        {% else %}
+                            <div class="text-center border rounded p-3 mb-3 bg-light">
+                                <i class="bi-building" style="font-size: 2rem; color: #6c757d;"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-9">
+                        <h6 class="text-success">{{ procedure.providingAdministration.institutionName }}</h6>
+                        {% if procedure.providingAdministration.department %}
+                            <p class="mb-2">
+                                <span class="badge bg-primary">{{ procedure.providingAdministration.department.name }}</span>
+                            </p>
+                        {% endif %}
+                        
+                        <div class="mb-2">
+                            <strong class="text-muted small">Address:</strong>
+                            <p class="mb-1">{{ procedure.providingAdministration.headquartersAddress }}</p>
+                        </div>
+                        
+                        <div class="row">
+                            {% if procedure.providingAdministration.phoneNumber %}
+                            <div class="col-md-6">
+                                <strong class="text-muted small">Phone:</strong>
+                                <p class="mb-1">
+                                    <a href="tel:{{ procedure.providingAdministration.phoneNumber }}" class="text-decoration-none">
+                                        <i class="bi-telephone me-1"></i>{{ procedure.providingAdministration.phoneNumber }}
+                                    </a>
+                                </p>
+                            </div>
+                            {% endif %}
+                            {% if procedure.providingAdministration.email %}
+                            <div class="col-md-6">
+                                <strong class="text-muted small">Email:</strong>
+                                <p class="mb-1">
+                                    <a href="mailto:{{ procedure.providingAdministration.email }}" class="text-decoration-none">
+                                        <i class="bi-envelope me-1"></i>{{ procedure.providingAdministration.email }}
+                                    </a>
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if procedure.providingAdministration.website %}
+                        <div class="mt-2">
+                            <a href="{{ procedure.providingAdministration.website }}" target="_blank" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="bi-globe me-1"></i>Visit Website
+                            </a>
+                        </div>
+                        {% endif %}
+                        
+                        {% if procedure.providingAdministration.contactPersonName %}
+                        <div class="mt-3 pt-3 border-top">
+                            <strong class="text-muted small">Contact Person:</strong>
+                            <p class="mb-1">{{ procedure.providingAdministration.contactPersonName }}</p>
+                            {% if procedure.providingAdministration.contactPersonEmail %}
+                                <small>
+                                    <a href="mailto:{{ procedure.providingAdministration.contactPersonEmail }}">
+                                        {{ procedure.providingAdministration.contactPersonEmail }}
+                                    </a>
+                                </small>
+                            {% endif %}
+                            {% if procedure.providingAdministration.contactPersonPhone %}
+                                <small class="d-block">
+                                    <a href="tel:{{ procedure.providingAdministration.contactPersonPhone }}">
+                                        {{ procedure.providingAdministration.contactPersonPhone }}
+                                    </a>
+                                </small>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mt-3 pt-3 border-top">
+                    <a href="{{ path('admin_public_entity_show', {'id': procedure.providingAdministration.id}) }}" 
+                       class="btn btn-primary btn-sm">
+                        <i class="bi-eye me-1"></i>View Full Administration Details
+                    </a>
+                    {% if procedure.providingAdministration.activeProcedures|length > 1 %}
+                        <span class="ms-3 text-muted small">
+                            This administration provides {{ procedure.providingAdministration.activeProcedures|length }} procedures
+                        </span>
+                        <a href="{{ path('admin_procedure_by_administration', {'id': procedure.providingAdministration.id}) }}" 
+                           class="btn btn-outline-info btn-sm ms-2">
+                            <i class="bi-list me-1"></i>View All Procedures
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Legal Document -->
         {% if procedure.legaltext %}
         <div class="card shadow-sm mb-4">
@@ -157,7 +274,7 @@
         <!-- Associated Documents -->
         {% if procedure.documents|length > 0 %}
         <div class="card shadow-sm">
-            <div class="card-header bg-success text-white">
+            <div class="card-header bg-warning text-dark">
                 <h5 class="card-title mb-0">
                     <i class="bi-files me-2"></i>
                     Associated Documents ({{ procedure.documents|length }})
@@ -288,7 +405,7 @@
         </div>
 
         <!-- Metadata -->
-        <div class="card shadow-sm">
+        <div class="card shadow-sm mb-4">
             <div class="card-header bg-light">
                 <h6 class="card-title mb-0">
                     <i class="bi-clock me-2"></i>
@@ -319,11 +436,27 @@
                     </div>
                 </div>
                 {% endif %}
+                {% if procedure.providingAdministration %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-muted small">Administration Status:</label>
+                    <div class="border rounded p-2 bg-light">
+                        <strong>{{ procedure.providingAdministration.institutionName }}</strong>
+                        <div class="text-muted small mt-1">
+                            Status: <span class="badge bg-{{ procedure.providingAdministration.status == 'active' ? 'success' : 'secondary' }} badge-sm">{{ procedure.providingAdministration.status|title }}</span>
+                        </div>
+                        {% if procedure.providingAdministration.code %}
+                        <div class="text-muted small">
+                            Code: <span class="badge bg-info badge-sm">{{ procedure.providingAdministration.code }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
         <!-- Quick Actions -->
-        <div class="card shadow-sm mt-3">
+        <div class="card shadow-sm">
             <div class="card-header bg-light">
                 <h6 class="card-title mb-0">
                     <i class="bi-lightning me-2"></i>
@@ -342,6 +475,12 @@
                         <i class="bi-{{ procedure.isPublished ? 'eye-slash' : 'globe' }} me-2"></i>
                         {{ procedure.isPublished ? 'Unpublish' : 'Publish' }}
                     </button>
+                    {% if procedure.providingAdministration and procedure.providingAdministration.email %}
+                    <a href="mailto:{{ procedure.providingAdministration.email }}" class="btn btn-outline-info">
+                        <i class="bi-envelope me-2"></i>
+                        Contact Administration
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

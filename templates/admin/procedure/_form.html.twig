@@ -8,11 +8,26 @@
             }) }}
         </div>
         
-        <div class="mb-3">
-            {{ form_row(form.family, {
-                'label_attr': {'class': 'form-label fw-bold'},
-                'attr': {'class': 'form-select'}
-            }) }}
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.family, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-select'}
+                    }) }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_row(form.providingAdministration, {
+                        'label_attr': {'class': 'form-label fw-bold'},
+                        'attr': {'class': 'form-select', 'onchange': 'updateAdministrationInfo(this)'}
+                    }) }}
+                    <div class="form-text">
+                        <small><i class="bi-info-circle me-1"></i>Select the government institution responsible for this procedure</small>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <div class="mb-3">
@@ -77,6 +92,19 @@
     </div>
     
     <div class="col-md-4">
+        <!-- Administration Info Card -->
+        <div class="card bg-light mb-3" id="administrationInfoCard" style="display: none;">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="bi-building me-2"></i>
+                    Administration Info
+                </h6>
+            </div>
+            <div class="card-body" id="administrationInfo">
+                <!-- Will be populated dynamically -->
+            </div>
+        </div>
+
         <!-- Image Section -->
         <div class="card bg-light mb-3">
             <div class="card-header">
@@ -212,6 +240,45 @@
 {{ form_end(form) }}
 
 <script>
+// Administration info data (in real implementation, this would come from Ajax)
+const administrationData = {
+    // This would be populated from the controller or Ajax call
+    {% if procedure.providingAdministration %}
+        {{ procedure.providingAdministration.id }}: {
+            name: "{{ procedure.providingAdministration.institutionName }}",
+            department: "{{ procedure.providingAdministration.department ? procedure.providingAdministration.department.name : '' }}",
+            address: "{{ procedure.providingAdministration.headquartersAddress|e('js') }}",
+            phone: "{{ procedure.providingAdministration.phoneNumber ?? '' }}",
+            email: "{{ procedure.providingAdministration.email ?? '' }}",
+            website: "{{ procedure.providingAdministration.website ?? '' }}"
+        }
+    {% endif %}
+};
+
+function updateAdministrationInfo(select) {
+    const card = document.getElementById('administrationInfoCard');
+    const infoDiv = document.getElementById('administrationInfo');
+    
+    if (select.value && administrationData[select.value]) {
+        const data = administrationData[select.value];
+        infoDiv.innerHTML = `
+            <div class="mb-2">
+                <strong class="text-primary">${data.name}</strong>
+                ${data.department ? `<div class="small text-muted">Department: ${data.department}</div>` : ''}
+            </div>
+            <div class="small">
+                ${data.address ? `<div><i class="bi-geo-alt me-1"></i>${data.address}</div>` : ''}
+                ${data.phone ? `<div><i class="bi-telephone me-1"></i>${data.phone}</div>` : ''}
+                ${data.email ? `<div><i class="bi-envelope me-1"></i><a href="mailto:${data.email}">${data.email}</a></div>` : ''}
+                ${data.website ? `<div><i class="bi-globe me-1"></i><a href="${data.website}" target="_blank">Website</a></div>` : ''}
+            </div>
+        `;
+        card.style.display = 'block';
+    } else {
+        card.style.display = 'none';
+    }
+}
+
 function updateImagePreview(templateValue, templateLabel) {
     if (templateValue) {
         const preview = document.getElementById('imagePreview');
@@ -292,6 +359,14 @@ function previewDocument(input) {
         if (removeCheckbox) removeCheckbox.checked = false;
     }
 }
+
+// Initialize administration info on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const administrationSelect = document.querySelector('select[name="procedure[providingAdministration]"]');
+    if (administrationSelect && administrationSelect.value) {
+        updateAdministrationInfo(administrationSelect);
+    }
+});
 
 // Form validation
 document.getElementById('procedureForm').addEventListener('submit', function(e) {
