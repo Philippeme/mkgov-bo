@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\User;
 use App\Form\UserType;
 use App\Repository\UserRepository;
+use App\Repository\RoleRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
@@ -18,7 +19,7 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 class UserController extends AbstractController
 {
     #[Route('/', name: 'admin_user_index', methods: ['GET'])]
-    public function index(UserRepository $userRepository, Request $request): Response
+    public function index(UserRepository $userRepository, RoleRepository $roleRepository, Request $request): Response
     {
         $page = $request->query->getInt('page', 1);
         $limit = $request->query->getInt('limit', 20);
@@ -29,20 +30,19 @@ class UserController extends AbstractController
             'verified' => $request->query->get('verified'),
         ];
 
-        // Méthode simple pour récupérer les utilisateurs
-        $users = $userRepository->findBy([], ['displayOrder' => 'ASC', 'createdAt' => 'DESC'], $limit);
+        // Utiliser la méthode avec filtres du repository
+        $users = $userRepository->findActiveUsersWithFilters($filters, $page, $limit);
         
-        // Statistiques basiques
-        $statistics = [
-            'total' => $userRepository->count([]),
-            'active' => $userRepository->count(['isActive' => true]),
-            'verified' => $userRepository->count(['isVerified' => true]),
-            'new_this_month' => 0, // Simplifier pour le debug
-        ];
+        // Statistiques complètes
+        $statistics = $userRepository->getUserStatistics();
+        
+        // Récupérer tous les rôles pour le filtre
+        $availableRoles = $roleRepository->findBy(['isActive' => true], ['displayName' => 'ASC']);
         
         return $this->render('admin/user/index.html.twig', [
             'users' => $users,
             'statistics' => $statistics,
+            'available_roles' => $availableRoles,
             'filters' => $filters,
             'page' => $page,
             'limit' => $limit,
@@ -65,13 +65,16 @@ class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted()) {
-            // Debug : vérifier les erreurs de validation
+            // Validation plus détaillée
             if (!$form->isValid()) {
                 $errors = [];
                 foreach ($form->getErrors(true) as $error) {
                     $errors[] = $error->getMessage();
                 }
-                $this->addFlash('error', 'Validation errors: ' . implode(', ', $errors));
+                
+                if (!empty($errors)) {
+                    $this->addFlash('error', 'Validation errors: ' . implode(', ', $errors));
+                }
                 
                 return $this->render('admin/user/new.html.twig', [
                     'user' => $user,
@@ -95,7 +98,6 @@ class UserController extends AbstractController
                     $newFilename = $safeFilename.'-'.uniqid().'.'.$avatarFile->guessExtension();
 
                     try {
-                        // Créer le dossier s'il n'existe pas
                         $uploadsDirectory = $this->getParameter('kernel.project_dir') . '/public/uploads/users';
                         if (!is_dir($uploadsDirectory)) {
                             mkdir($uploadsDirectory, 0755, true);
@@ -105,7 +107,6 @@ class UserController extends AbstractController
                         $user->setAvatar($newFilename);
                     } catch (FileException $e) {
                         $this->addFlash('warning', 'Avatar upload failed: ' . $e->getMessage());
-                        // Continue sans avatar
                     }
                 }
 

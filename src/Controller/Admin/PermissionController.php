@@ -49,7 +49,7 @@ class PermissionController extends AbstractController
                 // Libération de la mémoire
                 $entityManager->clear();
 
-                $this->addFlash('success', 'Le projet a été créé avec succès.');
+                $this->addFlash('success', 'Permission has been created successfully.');
                 return $this->redirectToRoute('admin_permission_index', [], Response::HTTP_SEE_OTHER);
                 
             } catch (\Exception $e) {
@@ -90,7 +90,7 @@ class PermissionController extends AbstractController
                 // Libération de la mémoire
                 $entityManager->clear();
 
-                $this->addFlash('success', 'Family has been modified successfully.');
+                $this->addFlash('success', 'Permission has been modified successfully.');
                 return $this->redirectToRoute('admin_permission_index', [], Response::HTTP_SEE_OTHER);
                 
             } catch (\Exception $e) {
