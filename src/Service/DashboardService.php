@@ -96,7 +96,7 @@ class DashboardService
     }
 
     /**
-     * Get monthly requests data for line chart
+     * Get monthly requests data for line chart - CORRIGÉ
      */
     public function getMonthlyRequestsData(array $filters = []): array
     {
@@ -109,16 +109,19 @@ class DashboardService
         
         $current = clone $startDate;
         while ($current <= $endDate) {
-            $monthKey = $current->format('Y-m');
             $monthLabel = $current->format('M Y');
+            
+            // Créer les dates de début et fin du mois pour la comparaison
+            $monthStart = new \DateTime($current->format('Y-m-01 00:00:00'));
+            $monthEnd = new \DateTime($current->format('Y-m-t 23:59:59'));
             
             $qb = $this->requestRepository->createQueryBuilder('r')
                 ->select('COUNT(r.id)')
-                ->where('YEAR(r.submittedAt) = :year')
-                ->andWhere('MONTH(r.submittedAt) = :month')
+                ->where('r.submittedAt >= :monthStart')
+                ->andWhere('r.submittedAt <= :monthEnd')
                 ->andWhere('r.isDeleted = :deleted')
-                ->setParameter('year', $current->format('Y'))
-                ->setParameter('month', $current->format('n'))
+                ->setParameter('monthStart', $monthStart)
+                ->setParameter('monthEnd', $monthEnd)
                 ->setParameter('deleted', false);
 
             // Apply filters
@@ -286,7 +289,7 @@ class DashboardService
     }
 
     /**
-     * Get performance metrics
+     * Get performance metrics - CORRIGÉ
      */
     public function getPerformanceMetrics(array $filters = []): array
     {
@@ -306,13 +309,19 @@ class DashboardService
             ->getQuery()
             ->getSingleScalarResult();
 
-        $avgProcessingTime = (clone $qb)
-            ->select('AVG(TIMESTAMPDIFF(DAY, r.submittedAt, r.completedAt))')
-            ->andWhere('r.status = :status')
-            ->andWhere('r.completedAt IS NOT NULL')
-            ->setParameter('status', 'completed')
-            ->getQuery()
-            ->getSingleScalarResult();
+        // Utilisation de TIMESTAMPDIFF compatible avec Doctrine
+        $avgProcessingTime = $this->requestRepository->getEntityManager()
+            ->getConnection()
+            ->fetchOne('
+                SELECT AVG(TIMESTAMPDIFF(DAY, submitted_at, completed_at)) 
+                FROM requests 
+                WHERE status = :status 
+                AND completed_at IS NOT NULL 
+                AND is_deleted = :deleted
+            ', [
+                'status' => 'completed',
+                'deleted' => false
+            ]);
 
         return [
             'completion_rate' => $totalRequests > 0 ? round(($completedRequests / $totalRequests) * 100, 1) : 0,
@@ -323,20 +332,59 @@ class DashboardService
     }
 
     /**
-     * Apply filters to query builder
+     * Apply filters to query builder - CORRIGÉ
      */
     private function applyFilters($qb, array $filters): void
     {
         if (!empty($filters['region'])) {
-            $qb->join('r.person', 'person')
-               ->andWhere('person.region = :region')
+            // Vérifier si la jointure avec person existe déjà
+            $alias = $qb->getRootAliases()[0];
+            $joins = $qb->getDQLPart('join');
+            $hasPersonJoin = false;
+            
+            if (isset($joins[$alias])) {
+                foreach ($joins[$alias] as $join) {
+                    if (strpos($join->getJoin(), 'person') !== false) {
+                        $hasPersonJoin = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!$hasPersonJoin) {
+                $qb->join('r.person', 'person');
+            }
+            
+            $qb->andWhere('person.region = :region')
                ->setParameter('region', $filters['region']);
         }
 
         if (!empty($filters['family'])) {
-            $qb->join('r.procedure', 'proc')
-               ->join('proc.family', 'fam')
-               ->andWhere('fam.id = :family')
+            // Vérifier si les jointures existent déjà
+            $alias = $qb->getRootAliases()[0];
+            $joins = $qb->getDQLPart('join');
+            $hasProcJoin = false;
+            $hasFamJoin = false;
+            
+            if (isset($joins[$alias])) {
+                foreach ($joins[$alias] as $join) {
+                    if (strpos($join->getJoin(), 'procedure') !== false) {
+                        $hasProcJoin = true;
+                    }
+                    if (strpos($join->getJoin(), 'family') !== false) {
+                        $hasFamJoin = true;
+                    }
+                }
+            }
+            
+            if (!$hasProcJoin) {
+                $qb->join('r.procedure', 'proc');
+            }
+            if (!$hasFamJoin) {
+                $qb->join('proc.family', 'fam');
+            }
+            
+            $qb->andWhere('fam.id = :family')
                ->setParameter('family', $filters['family']);
         }
 
@@ -346,8 +394,13 @@ class DashboardService
         }
 
         if (!empty($filters['year'])) {
-            $qb->andWhere('YEAR(r.submittedAt) = :year')
-               ->setParameter('year', $filters['year']);
+            $yearStart = new \DateTime($filters['year'] . '-01-01 00:00:00');
+            $yearEnd = new \DateTime($filters['year'] . '-12-31 23:59:59');
+            
+            $qb->andWhere('r.submittedAt >= :yearStart')
+               ->andWhere('r.submittedAt <= :yearEnd')
+               ->setParameter('yearStart', $yearStart)
+               ->setParameter('yearEnd', $yearEnd);
         }
     }
 
