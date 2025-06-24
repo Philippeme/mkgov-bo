@@ -12,9 +12,12 @@ use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 class RequestType extends AbstractType
 {
@@ -70,7 +73,10 @@ class RequestType extends AbstractType
                     'Rejected' => 'rejected',
                     'Cancelled' => 'cancelled'
                 ],
-                'attr' => ['class' => 'form-select']
+                'attr' => [
+                    'class' => 'form-select',
+                    'onchange' => 'handleStatusChange(this.value)'
+                ]
             ])
             ->add('priority', ChoiceType::class, [
                 'label' => 'Priority',
@@ -97,35 +103,16 @@ class RequestType extends AbstractType
                 'label' => 'Paid Amount',
                 'currency' => 'XAF',
                 'required' => false,
-                'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => '0.00'
-                ]
-            ])
-            ->add('paymentStatus', ChoiceType::class, [
-                'label' => 'Payment Status',
-                'choices' => [
-                    'Pending' => 'pending',
-                    'Partial' => 'partial',
-                    'Completed' => 'completed',
-                    'Refunded' => 'refunded'
+                'constraints' => [
+                    new Assert\PositiveOrZero(message: 'Paid amount cannot be negative'),
+                    new Assert\Callback([$this, 'validatePaidAmount'])
                 ],
-                'attr' => ['class' => 'form-select']
-            ])
-            ->add('expectedCompletionAt', DateTimeType::class, [
-                'label' => 'Expected Completion Date',
-                'widget' => 'single_text',
-                'required' => false,
                 'attr' => [
                     'class' => 'form-control',
-                    'id' => 'request_expectedCompletionAt'
+                    'placeholder' => '0.00',
+                    'id' => 'request_paidAmount',
+                    'onchange' => 'validatePaymentAmount(this.value)'
                 ]
-            ])
-            ->add('completedAt', DateTimeType::class, [
-                'label' => 'Completion Date',
-                'widget' => 'single_text',
-                'required' => false,
-                'attr' => ['class' => 'form-control']
             ])
             ->add('comments', TextareaType::class, [
                 'label' => 'Citizen Comments',
@@ -145,6 +132,23 @@ class RequestType extends AbstractType
                     'placeholder' => 'Internal notes for administrative purposes'
                 ]
             ])
+            ->add('expectedCompletionAt', DateTimeType::class, [
+                'label' => 'Expected Completion Date',
+                'widget' => 'single_text',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'id' => 'request_expectedCompletionAt',
+                    'readonly' => true,
+                    'title' => 'This field is automatically calculated based on the procedure'
+                ]
+            ])
+            ->add('completedAt', DateTimeType::class, [
+                'label' => 'Completion Date',
+                'widget' => 'single_text',
+                'required' => false,
+                'attr' => ['class' => 'form-control']
+            ])
             ->add('displayOrder', IntegerType::class, [
                 'label' => 'Display Order',
                 'attr' => [
@@ -153,6 +157,78 @@ class RequestType extends AbstractType
                 ],
                 'data' => $options['data']->getDisplayOrder() ?: 0
             ]);
+
+        // Ajouter les événements pour la gestion dynamique des champs
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, [$this, 'onPreSetData']);
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, [$this, 'onPreSubmit']);
+    }
+
+    public function onPreSetData(FormEvent $event): void
+    {
+        $request = $event->getData();
+        $form = $event->getForm();
+
+        if ($request instanceof Request) {
+            // Ajouter le champ paymentStatus avec les choix dynamiques
+            $paymentChoices = $request->getValidPaymentStatuses();
+            
+            $form->add('paymentStatus', ChoiceType::class, [
+                'label' => 'Payment Status',
+                'choices' => $paymentChoices,
+                'attr' => [
+                    'class' => 'form-select',
+                    'id' => 'request_paymentStatus'
+                ]
+            ]);
+        } else {
+            // Pour une nouvelle requête
+            $form->add('paymentStatus', ChoiceType::class, [
+                'label' => 'Payment Status',
+                'choices' => [
+                    'Pending' => 'pending',
+                    'Partial' => 'partial',
+                    'Completed' => 'completed'
+                ],
+                'attr' => [
+                    'class' => 'form-select',
+                    'id' => 'request_paymentStatus'
+                ]
+            ]);
+        }
+    }
+
+    public function onPreSubmit(FormEvent $event): void
+    {
+        $data = $event->getData();
+        $form = $event->getForm();
+
+        // Validation côté serveur pour les montants
+        if (isset($data['paidAmount']) && isset($data['totalCost'])) {
+            $paidAmount = (float) $data['paidAmount'];
+            $totalCost = (float) $data['totalCost'];
+
+            if ($paidAmount > $totalCost) {
+                $data['paidAmount'] = $totalCost;
+                $event->setData($data);
+            }
+        }
+    }
+
+    public function validatePaidAmount($value, ExecutionContextInterface $context): void
+    {
+        $form = $context->getRoot();
+        $totalCost = $form->get('totalCost')->getData();
+
+        if ($value !== null && $totalCost !== null) {
+            $paidAmountValue = (float) $value;
+            $totalCostValue = (float) $totalCost;
+
+            if ($paidAmountValue > $totalCostValue) {
+                $context->buildViolation('Paid amount cannot exceed the total cost of {{ totalCost }} XAF')
+                    ->setParameter('{{ totalCost }}', number_format($totalCostValue, 0, '.', ','))
+                    ->addViolation();
+            }
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void

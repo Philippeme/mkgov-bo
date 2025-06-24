@@ -52,6 +52,7 @@ services:
         arguments:
             $dashboardService: '@App\Service\DashboardService'
         tags: ['controller.service_arguments']
+        
 
     # CORRECTION PRINCIPALE: Désactivation complète de l'extracteur PHPStan
     # Cette ligne désactive définitivement le service problématique

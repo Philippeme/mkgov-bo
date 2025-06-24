@@ -26,12 +26,6 @@
                             'attr': {'class': 'form-select form-select-lg'}
                         }) }}
                         {{ form_errors(form.person) }}
-                        <div class="form-text">
-                            <small class="text-muted">
-                                <i class="bi-info-circle me-1"></i>
-                                Select the citizen requesting this service
-                            </small>
-                        </div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold text-dark mb-2">
@@ -41,12 +35,6 @@
                             'attr': {'class': 'form-select form-select-lg'}
                         }) }}
                         {{ form_errors(form.procedure) }}
-                        <div class="form-text">
-                            <small class="text-muted">
-                                <i class="bi-info-circle me-1"></i>
-                                Cost and timeline will be calculated automatically
-                            </small>
-                        </div>
                     </div>
                 </div>
 
@@ -98,18 +86,12 @@
                         }
                     }) }}
                     {{ form_errors(form.adminNotes) }}
-                    <div class="form-text">
-                        <small class="text-muted">
-                            <i class="bi-info-circle me-1"></i>
-                            Internal notes for administrative purposes only
-                        </small>
-                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Financial Information Card -->
-        <div class="card shadow-sm border-0 mb-4">
+        <div class="card shadow-sm border-0 mb-4" id="financialSection">
             <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <div class="d-flex align-items-center">
                     <div class="icon-wrapper me-3">
@@ -122,6 +104,12 @@
                 </div>
             </div>
             <div class="card-body p-4">
+                <!-- Alert for rejected/cancelled status -->
+                <div class="alert alert-warning" id="paymentDisabledAlert" style="display: none;">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    <strong>Payment Section Disabled:</strong> Payment information is not editable for rejected or cancelled requests.
+                </div>
+
                 <!-- Cost and Payment Row -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
@@ -141,6 +129,7 @@
                             'attr': {'class': 'form-control form-control-lg'}
                         }) }}
                         {{ form_errors(form.paidAmount) }}
+                        <div class="form-text" id="paymentValidationMessage"></div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold text-dark mb-2">
@@ -152,11 +141,21 @@
                         {{ form_errors(form.paymentStatus) }}
                     </div>
                 </div>
+
+                <!-- Remaining Amount Display -->
+                <div class="row g-3" id="remainingAmountSection" style="display: none;">
+                    <div class="col-md-12">
+                        <div class="alert alert-info">
+                            <i class="bi-info-circle me-2"></i>
+                            <strong>Remaining Amount:</strong> <span id="remainingAmountValue">0</span> XAF
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Timeline Information Card -->
-        <div class="card shadow-sm border-0 mb-4">
+        <div class="card shadow-sm border-0 mb-4" id="timelineSection">
             <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333 !important;">
                 <div class="d-flex align-items-center">
                     <div class="icon-wrapper me-3">
@@ -169,6 +168,12 @@
                 </div>
             </div>
             <div class="card-body p-4">
+                <!-- Alert for rejected/cancelled status -->
+                <div class="alert alert-warning" id="timelineDisabledAlert" style="display: none;">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    <strong>Timeline Section Disabled:</strong> Timeline information is not editable for rejected or cancelled requests.
+                </div>
+
                 <!-- Dates Row -->
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -182,7 +187,7 @@
                         <div class="form-text">
                             <small class="text-muted">
                                 <i class="bi-info-circle me-1"></i>
-                                Will be calculated automatically based on procedure
+                                Automatically calculated based on procedure
                             </small>
                         </div>
                     </div>
@@ -194,12 +199,6 @@
                             'attr': {'class': 'form-control form-control-lg'}
                         }) }}
                         {{ form_errors(form.completedAt) }}
-                        <div class="form-text">
-                            <small class="text-muted">
-                                <i class="bi-info-circle me-1"></i>
-                                Set when request is marked as completed
-                            </small>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -228,12 +227,6 @@
                             'attr': {'class': 'form-control form-control-lg'}
                         }) }}
                         {{ form_errors(form.displayOrder) }}
-                        <div class="form-text">
-                            <small class="text-muted">
-                                <i class="bi-info-circle me-1"></i>
-                                Used for sorting requests in lists and reports
-                            </small>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -280,8 +273,17 @@
                             <div class="d-flex align-items-start">
                                 <i class="bi-check-circle text-success me-2 mt-1"></i>
                                 <div>
-                                    <strong class="text-dark">Required Fields</strong>
-                                    <p class="mb-0 small text-muted">Citizen and Procedure are mandatory fields</p>
+                                    <strong class="text-dark">Payment Validation</strong>
+                                    <p class="mb-0 small text-muted">Paid amount cannot exceed total cost or be negative</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="guideline-item mb-3">
+                            <div class="d-flex align-items-start">
+                                <i class="bi-check-circle text-success me-2 mt-1"></i>
+                                <div>
+                                    <strong class="text-dark">Status-Based Logic</strong>
+                                    <p class="mb-0 small text-muted">Payment and timeline sections disabled for rejected/cancelled requests</p>
                                 </div>
                             </div>
                         </div>
@@ -290,25 +292,7 @@
                                 <i class="bi-check-circle text-success me-2 mt-1"></i>
                                 <div>
                                     <strong class="text-dark">Auto-calculation</strong>
-                                    <p class="mb-0 small text-muted">Cost and dates are calculated automatically</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="guideline-item mb-3">
-                            <div class="d-flex align-items-start">
-                                <i class="bi-check-circle text-success me-2 mt-1"></i>
-                                <div>
-                                    <strong class="text-dark">Priority Levels</strong>
-                                    <p class="mb-0 small text-muted">Set appropriate priority for processing order</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="guideline-item">
-                            <div class="d-flex align-items-start">
-                                <i class="bi-info-circle text-info me-2 mt-1"></i>
-                                <div>
-                                    <strong class="text-dark">Reference Number</strong>
-                                    <p class="mb-0 small text-muted">Will be generated automatically upon creation</p>
+                                    <p class="mb-0 small text-muted">Expected completion date calculated automatically</p>
                                 </div>
                             </div>
                         </div>
@@ -342,109 +326,152 @@
 
 {{ form_end(form) }}
 
-<style>
-/* Enhanced form styles */
-.icon-wrapper {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-}
-
-.card {
-    border-radius: 15px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
-}
-
-.card-header.bg-gradient {
-    border: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.card-header.bg-gradient::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    transform: translate(30px, -30px);
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-
-.guideline-item {
-    padding: 0.75rem;
-    border-radius: 8px;
-    background: rgba(102, 126, 234, 0.05);
-    border-left: 3px solid #667eea;
-    transition: all 0.3s ease;
-}
-
-.guideline-item:hover {
-    background: rgba(102, 126, 234, 0.1);
-    transform: translateX(3px);
-}
-
-.form-actions-buttons .btn {
-    min-width: 120px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .col-lg-4 .position-sticky {
-        position: relative !important;
-        top: auto !important;
-    }
-    
-    .form-actions-buttons {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .form-actions-info {
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-}
-
-/* Form validation styles */
-.is-invalid {
-    border-color: #dc3545;
-}
-
-.is-valid {
-    border-color: #28a745;
-}
-
-.invalid-feedback {
-    display: block;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: #dc3545;
-}
-</style>
-
 <script>
-// Function to update cost and time when procedure changes
+// Variables globales
+let currentRequestData = {{ request|default({})|json_encode|raw }};
+let isEditMode = {{ request.id is defined and request.id ? 'true' : 'false' }};
+
+// Fonction pour gérer les changements de statut
+function handleStatusChange(newStatus) {
+    const isRejectedOrCancelled = ['rejected', 'cancelled'].includes(newStatus);
+    
+    // Gérer la section financière
+    const financialInputs = document.querySelectorAll('#financialSection input, #financialSection select');
+    const paymentAlert = document.getElementById('paymentDisabledAlert');
+    
+    if (isRejectedOrCancelled) {
+        financialInputs.forEach(input => {
+            if (input.name !== 'request[totalCost]') { // Keep total cost visible
+                input.disabled = true;
+            }
+        });
+        paymentAlert.style.display = 'block';
+        
+        // Mettre à jour automatiquement le statut de paiement
+        updatePaymentStatusForRejectedCancelled();
+    } else {
+        financialInputs.forEach(input => input.disabled = false);
+        paymentAlert.style.display = 'none';
+    }
+    
+    // Gérer la section timeline
+    const timelineInputs = document.querySelectorAll('#timelineSection input');
+    const timelineAlert = document.getElementById('timelineDisabledAlert');
+    
+    if (isRejectedOrCancelled) {
+        timelineInputs.forEach(input => input.disabled = true);
+        timelineAlert.style.display = 'block';
+    } else {
+        timelineInputs.forEach(input => {
+            // Expected completion reste toujours readonly
+            if (input.name !== 'request[expectedCompletionAt]') {
+                input.disabled = false;
+            }
+        });
+        timelineAlert.style.display = 'none';
+    }
+}
+
+// Fonction pour mettre à jour le statut de paiement pour les requêtes rejetées/annulées
+function updatePaymentStatusForRejectedCancelled() {
+    const paidAmountField = document.querySelector('input[name="request[paidAmount]"]');
+    const paymentStatusField = document.querySelector('select[name="request[paymentStatus]"]');
+    
+    if (!paidAmountField || !paymentStatusField) return;
+    
+    const paidAmount = parseFloat(paidAmountField.value) || 0;
+    
+    // Mettre à jour les options du select
+    const newOptions = paidAmount > 0 ? 
+        {
+            'awaiting_refund': 'Awaiting Refund',
+            'refunded': 'Refunded'
+        } : 
+        {
+            'revoked': 'Revoked'
+        };
+    
+    // Vider et repeupler les options
+    paymentStatusField.innerHTML = '';
+    Object.entries(newOptions).forEach(([value, label]) => {
+        const option = document.createElement('option');
+        option.value = value;
+        option.textContent = label;
+        paymentStatusField.appendChild(option);
+    });
+    
+    // Sélectionner la valeur appropriée
+    paymentStatusField.value = paidAmount > 0 ? 'awaiting_refund' : 'revoked';
+}
+
+// Fonction pour valider le montant payé
+function validatePaymentAmount(value) {
+    const totalCostField = document.querySelector('input[name="request[totalCost]"]');
+    const paidAmountField = document.querySelector('input[name="request[paidAmount]"]');
+    const messageDiv = document.getElementById('paymentValidationMessage');
+    const remainingSection = document.getElementById('remainingAmountSection');
+    const remainingValue = document.getElementById('remainingAmountValue');
+    
+    if (!totalCostField || !paidAmountField) return;
+    
+    const totalCost = parseFloat(totalCostField.value) || 0;
+    const paidAmount = parseFloat(value) || 0;
+    
+    // Validation des montants négatifs
+    if (paidAmount < 0) {
+        paidAmountField.value = 0;
+        messageDiv.innerHTML = '<small class="text-danger">Paid amount cannot be negative</small>';
+        return;
+    }
+    
+    // Validation du dépassement
+    if (paidAmount > totalCost) {
+        paidAmountField.value = totalCost;
+        messageDiv.innerHTML = '<small class="text-warning">Paid amount adjusted to total cost</small>';
+        setTimeout(() => messageDiv.innerHTML = '', 3000);
+    } else {
+        messageDiv.innerHTML = '';
+    }
+    
+    // Calculer et afficher le reste à payer
+    const remainingAmount = Math.max(0, totalCost - paidAmount);
+    if (remainingAmount > 0 && paidAmount > 0) {
+        remainingValue.textContent = remainingAmount.toLocaleString();
+        remainingSection.style.display = 'block';
+    } else {
+        remainingSection.style.display = 'none';
+    }
+    
+    // Mettre à jour automatiquement le statut de paiement
+    autoUpdatePaymentStatus(paidAmount, totalCost);
+}
+
+// Fonction pour mettre à jour automatiquement le statut de paiement
+function autoUpdatePaymentStatus(paidAmount, totalCost) {
+    const paymentStatusField = document.querySelector('select[name="request[paymentStatus]"]');
+    const statusField = document.querySelector('select[name="request[status]"]');
+    
+    if (!paymentStatusField || !statusField) return;
+    
+    const currentStatus = statusField.value;
+    const isRejectedOrCancelled = ['rejected', 'cancelled'].includes(currentStatus);
+    
+    if (isRejectedOrCancelled) {
+        // Ne pas modifier automatiquement pour les statuts rejetés/annulés
+        return;
+    }
+    
+    // Logique normale pour les autres statuts
+    if (paidAmount === 0) {
+        paymentStatusField.value = 'pending';
+    } else if (paidAmount >= totalCost) {
+        paymentStatusField.value = 'completed';
+    } else {
+        paymentStatusField.value = 'partial';
+    }
+}
+
+// Fonction pour mettre à jour les informations de procédure
 function updateCostAndTime(procedureId) {
     if (!procedureId) {
         document.getElementById('procedureInfo').style.display = 'none';
@@ -454,13 +481,19 @@ function updateCostAndTime(procedureId) {
     fetch(`/admin/request/api/procedure/${procedureId}/info`)
         .then(response => response.json())
         .then(data => {
-            // Update cost field
+            // Mettre à jour le coût
             const costField = document.querySelector('input[name="request[totalCost]"]');
             if (costField && data.cost) {
                 costField.value = data.cost;
+                
+                // Revalider le montant payé
+                const paidAmountField = document.querySelector('input[name="request[paidAmount]"]');
+                if (paidAmountField) {
+                    validatePaymentAmount(paidAmountField.value);
+                }
             }
             
-            // Calculate expected completion date
+            // Calculer la date d'achèvement prévue
             if (data.processTime) {
                 const match = data.processTime.match(/(\d+)/);
                 const days = match ? parseInt(match[1]) : 7;
@@ -474,7 +507,7 @@ function updateCostAndTime(procedureId) {
                 }
             }
             
-            // Update procedure info card
+            // Mettre à jour les informations de procédure
             const procedureDetails = document.getElementById('procedureDetails');
             procedureDetails.innerHTML = `
                 <div class="mb-3">
@@ -498,8 +531,27 @@ function updateCostAndTime(procedureId) {
         });
 }
 
+// Initialisation au chargement de la page
 document.addEventListener('DOMContentLoaded', function() {
-    // Form validation
+    // Initialiser l'état des sections selon le statut actuel
+    const statusField = document.querySelector('select[name="request[status]"]');
+    if (statusField) {
+        handleStatusChange(statusField.value);
+    }
+    
+    // Initialiser la validation des montants
+    const paidAmountField = document.querySelector('input[name="request[paidAmount]"]');
+    if (paidAmountField && paidAmountField.value) {
+        validatePaymentAmount(paidAmountField.value);
+    }
+    
+    // Initialiser les informations de procédure si une procédure est déjà sélectionnée
+    const procedureField = document.querySelector('select[name="request[procedure]"]');
+    if (procedureField && procedureField.value) {
+        updateCostAndTime(procedureField.value);
+    }
+    
+    // Validation du formulaire
     document.getElementById('requestForm').addEventListener('submit', function(e) {
         const person = document.querySelector('select[name="request[person]"]').value;
         const procedure = document.querySelector('select[name="request[procedure]"]').value;
@@ -510,47 +562,49 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
     });
-
-    // Real-time validation feedback
-    document.querySelectorAll('select[required]').forEach(function(field) {
-        field.addEventListener('change', function() {
-            if (this.value === '') {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-            } else {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-            }
-        });
-    });
-
-    // Auto-calculate payment status based on amounts
-    const totalCostField = document.querySelector('input[name="request[totalCost]"]');
-    const paidAmountField = document.querySelector('input[name="request[paidAmount]"]');
-    const paymentStatusField = document.querySelector('select[name="request[paymentStatus]"]');
-    
-    function updatePaymentStatus() {
-        const totalCost = parseFloat(totalCostField.value) || 0;
-        const paidAmount = parseFloat(paidAmountField.value) || 0;
-        
-        if (paidAmount === 0) {
-            paymentStatusField.value = 'pending';
-        } else if (paidAmount >= totalCost) {
-            paymentStatusField.value = 'completed';
-        } else {
-            paymentStatusField.value = 'partial';
-        }
-    }
-    
-    if (totalCostField && paidAmountField && paymentStatusField) {
-        totalCostField.addEventListener('input', updatePaymentStatus);
-        paidAmountField.addEventListener('input', updatePaymentStatus);
-    }
-
-    // Initialize procedure info if procedure is already selected
-    const procedureField = document.querySelector('select[name="request[procedure]"]');
-    if (procedureField && procedureField.value) {
-        updateCostAndTime(procedureField.value);
-    }
 });
 </script>
+
+<style>
+/* Styles pour les sections désactivées */
+#financialSection.disabled,
+#timelineSection.disabled {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+#financialSection input:disabled,
+#timelineSection input:disabled,
+#financialSection select:disabled,
+#timelineSection select:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.8;
+}
+
+/* Styles pour les alerts */
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-left: 4px solid #ffc107;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border-left: 4px solid #17a2b8;
+}
+
+/* Animation pour les changements d'état */
+.form-control,
+.form-select {
+    transition: all 0.3s ease;
+}
+
+.form-control:disabled,
+.form-select:disabled {
+    transform: scale(0.98);
+}
+</style>

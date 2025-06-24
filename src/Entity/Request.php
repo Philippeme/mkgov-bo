@@ -62,7 +62,7 @@ class Request
 
     #[ORM\Column(length: 30, nullable: true)]
     #[Assert\Choice(
-        choices: ['pending', 'partial', 'completed', 'refunded'],
+        choices: ['pending', 'partial', 'completed', 'refunded', 'awaiting_refund', 'revoked'],
         message: 'Invalid payment status'
     )]
     private ?string $paymentStatus = 'pending';
@@ -103,6 +103,24 @@ class Request
     public function setUpdatedAtValue(): void
     {
         $this->updatedAt = new \DateTime();
+    }
+
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate] 
+    public function updatePaymentStatusBasedOnRequestStatus(): void
+    {
+        // Si le statut de la requête est rejected ou cancelled
+        if (in_array($this->status, ['rejected', 'cancelled'])) {
+            $currentPaidAmount = (float) ($this->paidAmount ?? 0);
+            
+            if ($currentPaidAmount > 0) {
+                // Si un paiement a été effectué, mettre en attente de remboursement
+                $this->paymentStatus = 'awaiting_refund';
+            } else {
+                // Si aucun paiement, marquer comme révoqué
+                $this->paymentStatus = 'revoked';
+            }
+        }
     }
 
     private function generateReference(): void
@@ -261,7 +279,22 @@ class Request
             'partial' => 'info',
             'completed' => 'success',
             'refunded' => 'secondary',
+            'awaiting_refund' => 'danger',
+            'revoked' => 'dark',
             default => 'warning'
+        };
+    }
+
+    public function getPaymentStatusLabel(): string
+    {
+        return match($this->paymentStatus) {
+            'pending' => 'Pending',
+            'partial' => 'Partial',
+            'completed' => 'Completed',
+            'refunded' => 'Refunded',
+            'awaiting_refund' => 'Awaiting Refund',
+            'revoked' => 'Revoked',
+            default => 'Unknown'
         };
     }
 
@@ -400,6 +433,67 @@ class Request
             'rejected', 'cancelled' => 0,
             default => 0
         };
+    }
+
+    // NEW: Méthodes pour la gestion des statuts
+    public function isRequestRejectedOrCancelled(): bool
+    {
+        return in_array($this->status, ['rejected', 'cancelled']);
+    }
+
+    public function canModifyPayment(): bool
+    {
+        return !$this->isRequestRejectedOrCancelled();
+    }
+
+    public function canModifyTimeline(): bool
+    {
+        return !$this->isRequestRejectedOrCancelled();
+    }
+
+    public function getRemainingAmount(): float
+    {
+        $totalCost = (float) ($this->totalCost ?? 0);
+        $paidAmount = (float) ($this->paidAmount ?? 0);
+        return max(0, $totalCost - $paidAmount);
+    }
+
+    public function hasPartialPayment(): bool
+    {
+        return $this->paymentStatus === 'partial';
+    }
+
+    public function getValidPaymentStatuses(): array
+    {
+        if ($this->paymentStatus === 'awaiting_refund') {
+            // Si en attente de remboursement, seuls "refunded" et "awaiting_refund" sont valides
+            return [
+                'awaiting_refund' => 'Awaiting Refund',
+                'refunded' => 'Refunded'
+            ];
+        }
+
+        if ($this->isRequestRejectedOrCancelled()) {
+            // Si la requête est rejetée/annulée
+            $currentPaidAmount = (float) ($this->paidAmount ?? 0);
+            if ($currentPaidAmount > 0) {
+                return [
+                    'awaiting_refund' => 'Awaiting Refund',
+                    'refunded' => 'Refunded'
+                ];
+            } else {
+                return [
+                    'revoked' => 'Revoked'
+                ];
+            }
+        }
+
+        // Statuts normaux pour les requêtes actives
+        return [
+            'pending' => 'Pending',
+            'partial' => 'Partial',
+            'completed' => 'Completed'
+        ];
     }
 
     public function __toString(): string
