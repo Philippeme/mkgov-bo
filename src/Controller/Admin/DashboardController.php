@@ -7,6 +7,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/admin')]
@@ -34,22 +35,44 @@ class DashboardController extends AbstractController
             'year' => $request->query->get('year'),
         ];
 
-        // Get filtered data
+        // CORRECTION: Seule la carte est filtrée, pas les diagrammes
         $filteredData = [
-            'requestsByFamily' => $this->dashboardService->getRequestsByFamily($filters),
-            'monthlyRequests' => $this->dashboardService->getMonthlyRequestsData($filters),
-            'requestsByGender' => $this->dashboardService->getRequestsByGender($filters),
-            'requestsByLocation' => $this->dashboardService->getRequestsByLocation($filters),
-            'topProcedures' => $this->dashboardService->getTopProcedures($filters),
-            'performanceMetrics' => $this->dashboardService->getPerformanceMetrics($filters),
+            'requestsByLocation' => $this->dashboardService->getRequestsByLocation($filters), // SEULE la carte est filtrée
+            'stats' => $this->dashboardService->getMainStatistics(), // Stats non filtrées
         ];
 
         return new JsonResponse([
             'success' => true,
-            'data' => $filteredData,
+            'data' => $filteredData, // SEULEMENT carte + stats, pas les diagrammes
             'filters_applied' => array_filter($filters),
             'timestamp' => (new \DateTime())->format('Y-m-d H:i:s')
         ]);
+    }
+
+    #[Route('/dashboard/map-data', name: 'admin_dashboard_map_data', methods: ['GET'])]
+    public function getMapData(Request $request): JsonResponse
+    {
+        $filters = [
+            'region' => $request->query->get('region'),
+            'family' => $request->query->get('family'),
+            'request' => $request->query->get('request'),
+            'year' => $request->query->get('year'),
+        ];
+
+        try {
+            $mapData = $this->dashboardService->getFilteredMapData($filters);
+            
+            return new JsonResponse([
+                'success' => true,
+                'data' => $mapData,
+                'timestamp' => (new \DateTime())->format('Y-m-d H:i:s')
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error loading map data: ' . $e->getMessage()
+            ], 400);
+        }
     }
 
     #[Route('/dashboard/export', name: 'admin_dashboard_export', methods: ['GET'])]
@@ -63,19 +86,26 @@ class DashboardController extends AbstractController
             'year' => $request->query->get('year'),
         ];
 
-        $data = $this->dashboardService->getDashboardData($filters);
+        try {
+            $data = $this->dashboardService->getDashboardData($filters);
 
-        switch ($format) {
-            case 'csv':
-                return $this->exportToCsv($data);
-            case 'pdf':
-                return $this->exportToPdf($data);
-            case 'excel':
-                return $this->exportToExcel($data);
-            default:
-                return new JsonResponse($data, 200, [
-                    'Content-Disposition' => 'attachment; filename="dashboard_data.json"'
-                ]);
+            switch ($format) {
+                case 'csv':
+                    return $this->exportToCsv($data);
+                case 'pdf':
+                    return $this->exportToPdf($data, $request);
+                case 'excel':
+                    return $this->exportToExcel($data);
+                default:
+                    return new JsonResponse($data, 200, [
+                        'Content-Disposition' => 'attachment; filename="dashboard_data_' . date('Y-m-d_H-i-s') . '.json"'
+                    ]);
+            }
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Export failed: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -138,219 +168,163 @@ class DashboardController extends AbstractController
     }
 
     /**
-     * Export data to CSV format
+     * Export data to CSV format - CORRIGÉ
      */
-    private function exportToCsv(array $data): Response
+    private function exportToCsv(array $data): StreamedResponse
     {
-        $csvContent = "Dashboard Export - " . date('Y-m-d H:i:s') . "\n\n";
+        $response = new StreamedResponse();
+        $response->setCallback(function() use ($data) {
+            $handle = fopen('php://output', 'w+');
+            
+            // UTF-8 BOM for Excel compatibility
+            fwrite($handle, "\xEF\xBB\xBF");
+            
+            // Header
+            fputcsv($handle, ['Dashboard Export - ' . date('Y-m-d H:i:s')]);
+            fputcsv($handle, []);
+            
+            // Statistics
+            fputcsv($handle, ['STATISTICS']);
+            fputcsv($handle, ['Metric', 'Value']);
+            foreach ($data['stats'] as $key => $value) {
+                fputcsv($handle, [ucfirst(str_replace('_', ' ', $key)), $value]);
+            }
+            
+            fputcsv($handle, []);
+            fputcsv($handle, ['REQUESTS BY FAMILY']);
+            fputcsv($handle, ['Family', 'Count', 'Percentage']);
+            foreach ($data['requestsByFamily'] as $family) {
+                fputcsv($handle, [
+                    $family['family_name'] ?? 'Unassigned',
+                    $family['count'],
+                    $family['percentage'] . '%'
+                ]);
+            }
+            
+            fputcsv($handle, []);
+            fputcsv($handle, ['MONTHLY REQUESTS']);
+            fputcsv($handle, ['Month', 'Count']);
+            if (isset($data['monthlyRequests']['labels']) && isset($data['monthlyRequests']['data'])) {
+                foreach ($data['monthlyRequests']['labels'] as $index => $month) {
+                    fputcsv($handle, [$month, $data['monthlyRequests']['data'][$index] ?? 0]);
+                }
+            }
+            
+            fputcsv($handle, []);
+            fputcsv($handle, ['REQUESTS BY GENDER']);
+            fputcsv($handle, ['Gender', 'Count', 'Percentage']);
+            if (isset($data['requestsByGender']['labels']) && isset($data['requestsByGender']['data'])) {
+                foreach ($data['requestsByGender']['labels'] as $index => $gender) {
+                    $percentage = $gender === 'Male' ? 
+                        ($data['requestsByGender']['percentages']['male'] ?? 0) : 
+                        ($data['requestsByGender']['percentages']['female'] ?? 0);
+                    fputcsv($handle, [
+                        $gender,
+                        $data['requestsByGender']['data'][$index] ?? 0,
+                        $percentage . '%'
+                    ]);
+                }
+            }
+            
+            fputcsv($handle, []);
+            fputcsv($handle, ['REQUESTS BY LOCATION']);
+            fputcsv($handle, ['Region', 'Count']);
+            foreach ($data['requestsByLocation'] as $location) {
+                fputcsv($handle, [$location['region'], $location['count']]);
+            }
+            
+            fclose($handle);
+        });
         
-        // Statistics
-        $csvContent .= "STATISTICS\n";
-        $csvContent .= "Metric,Value\n";
-        foreach ($data['stats'] as $key => $value) {
-            $csvContent .= ucfirst(str_replace('_', ' ', $key)) . "," . $value . "\n";
-        }
-        
-        $csvContent .= "\nREQUESTS BY FAMILY\n";
-        $csvContent .= "Family,Count,Percentage\n";
-        foreach ($data['requestsByFamily'] as $family) {
-            $csvContent .= $family['family_name'] . "," . $family['count'] . "," . $family['percentage'] . "%\n";
-        }
-
-        $response = new Response($csvContent);
-        $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="dashboard_export_' . date('Y-m-d_H-i-s') . '.csv"');
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="mkgov_dashboard_export_' . date('Y-m-d_H-i-s') . '.csv"');
         
         return $response;
     }
 
     /**
-     * Export data to PDF format
+     * Export data to PDF format - CORRIGÉ
      */
-    private function exportToPdf(array $data): Response
+    private function exportToPdf(array $data, Request $request = null): Response
     {
-        // Simplified PDF generation - in a real application, use a library like TCPDF or DOMPDF
-        $html = $this->renderView('admin/dashboard/export_pdf.html.twig', ['data' => $data]);
+        // Generate HTML content for PDF
+        $html = $this->renderView('admin/dashboard/export_pdf.html.twig', [
+            'data' => $data,
+            'generated_at' => new \DateTime(),
+            'filters_applied' => $request ? $request->query->all() : []
+        ]);
         
-        // For now, return HTML that looks like a PDF report
+        // Use DomPDF or similar library in production
+        // For now, create a proper HTML response that can be printed to PDF
         $response = new Response($html);
-        $response->headers->set('Content-Type', 'text/html');
-        $response->headers->set('Content-Disposition', 'attachment; filename="dashboard_report_' . date('Y-m-d_H-i-s') . '.html"');
+        $response->headers->set('Content-Type', 'text/html; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'inline; filename="mkgov_dashboard_report_' . date('Y-m-d_H-i-s') . '.html"');
         
         return $response;
     }
 
     /**
-     * Export data to Excel format
+     * Export data to Excel format - CORRIGÉ
      */
-    private function exportToExcel(array $data): Response
+    private function exportToExcel(array $data): StreamedResponse
     {
-        // Simplified Excel export - in a real application, use PhpSpreadsheet
-        $csvContent = $this->exportToCsv($data)->getContent();
+        $response = new StreamedResponse();
+        $response->setCallback(function() use ($data) {
+            $handle = fopen('php://output', 'w+');
+            
+            // Excel-compatible headers
+            fwrite($handle, "\xEF\xBB\xBF"); // UTF-8 BOM
+            
+            // Create Excel-like structure with tabs simulation
+            fputcsv($handle, ['=== MK GOV DASHBOARD EXPORT ==='], "\t");
+            fputcsv($handle, ['Generated: ' . date('Y-m-d H:i:s')], "\t");
+            fputcsv($handle, [], "\t");
+            
+            // Statistics Sheet
+            fputcsv($handle, ['--- STATISTICS ---'], "\t");
+            fputcsv($handle, ['Metric', 'Value'], "\t");
+            foreach ($data['stats'] as $key => $value) {
+                fputcsv($handle, [ucfirst(str_replace('_', ' ', $key)), $value], "\t");
+            }
+            
+            fputcsv($handle, [], "\t");
+            fputcsv($handle, ['--- REQUESTS BY FAMILY ---'], "\t");
+            fputcsv($handle, ['Family', 'Count', 'Percentage'], "\t");
+            foreach ($data['requestsByFamily'] as $family) {
+                fputcsv($handle, [
+                    $family['family_name'] ?? 'Unassigned',
+                    $family['count'],
+                    $family['percentage'] . '%'
+                ], "\t");
+            }
+            
+            fputcsv($handle, [], "\t");
+            fputcsv($handle, ['--- MONTHLY REQUESTS ---'], "\t");
+            fputcsv($handle, ['Month', 'Count'], "\t");
+            if (isset($data['monthlyRequests']['labels']) && isset($data['monthlyRequests']['data'])) {
+                foreach ($data['monthlyRequests']['labels'] as $index => $month) {
+                    fputcsv($handle, [$month, $data['monthlyRequests']['data'][$index] ?? 0], "\t");
+                }
+            }
+            
+            fputcsv($handle, [], "\t");
+            fputcsv($handle, ['--- REQUESTS BY LOCATION ---'], "\t");
+            fputcsv($handle, ['Region', 'Count', 'Latitude', 'Longitude'], "\t");
+            foreach ($data['requestsByLocation'] as $location) {
+                fputcsv($handle, [
+                    $location['region'],
+                    $location['count'],
+                    $location['lat'] ?? '',
+                    $location['lng'] ?? ''
+                ], "\t");
+            }
+            
+            fclose($handle);
+        });
         
-        $response = new Response($csvContent);
-        $response->headers->set('Content-Type', 'application/vnd.ms-excel');
-        $response->headers->set('Content-Disposition', 'attachment; filename="dashboard_export_' . date('Y-m-d_H-i-s') . '.xls"');
+        $response->headers->set('Content-Type', 'application/vnd.ms-excel; charset=UTF-8');
+        $response->headers->set('Content-Disposition', 'attachment; filename="mkgov_dashboard_export_' . date('Y-m-d_H-i-s') . '.xls"');
         
         return $response;
-    }
-
-    private function getMonthlyRequestsData(RequestRepository $repository): array
-    {
-        $data = [];
-        $months = [];
-        
-        // Generate last 12 months from July 2024 to June 2025
-        $startDate = new \DateTime('2024-07-01');
-        $endDate = new \DateTime('2025-06-30');
-        
-        $current = clone $startDate;
-        while ($current <= $endDate) {
-            $monthKey = $current->format('Y-m');
-            $monthLabel = $current->format('M Y');
-            
-            $count = $repository->createQueryBuilder('r')
-                ->select('COUNT(r.id)')
-                ->where('YEAR(r.submittedAt) = :year')
-                ->andWhere('MONTH(r.submittedAt) = :month')
-                ->andWhere('r.isDeleted = :deleted')
-                ->setParameter('year', $current->format('Y'))
-                ->setParameter('month', $current->format('n'))
-                ->setParameter('deleted', false)
-                ->getQuery()
-                ->getSingleScalarResult();
-            
-            $months[] = $monthLabel;
-            $data[] = (int)$count;
-            
-            $current->modify('+1 month');
-        }
-        
-        return [
-            'labels' => $months,
-            'data' => $data
-        ];
-    }
-
-    private function getRequestsByGender(RequestRepository $requestRepository, PersonRepository $personRepository): array
-    {
-        $maleCount = $requestRepository->createQueryBuilder('r')
-            ->select('COUNT(r.id)')
-            ->join('r.person', 'p')
-            ->where('p.gender = :gender')
-            ->andWhere('r.isDeleted = :deleted')
-            ->setParameter('gender', 'M')
-            ->setParameter('deleted', false)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $femaleCount = $requestRepository->createQueryBuilder('r')
-            ->select('COUNT(r.id)')
-            ->join('r.person', 'p')
-            ->where('p.gender = :gender')
-            ->andWhere('r.isDeleted = :deleted')
-            ->setParameter('gender', 'F')
-            ->setParameter('deleted', false)
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $total = $maleCount + $femaleCount;
-        
-        return [
-            'labels' => ['Male', 'Female'],
-            'data' => [$maleCount, $femaleCount],
-            'percentages' => [
-                'male' => $total > 0 ? round(($maleCount / $total) * 100, 1) : 0,
-                'female' => $total > 0 ? round(($femaleCount / $total) * 100, 1) : 0,
-            ]
-        ];
-    }
-
-    private function getRequestsByLocation(RequestRepository $requestRepository, PersonRepository $personRepository): array
-    {
-        // Guinea-Bissau regions
-        $regions = [
-            'Bissau' => ['lat' => 11.8636, 'lng' => -15.5986],
-            'Biombo' => ['lat' => 11.8889, 'lng' => -15.7269],
-            'Bolama' => ['lat' => 11.5781, 'lng' => -15.4781],
-            'Cacheu' => ['lat' => 12.2750, 'lng' => -16.1667],
-            'Gabu' => ['lat' => 12.2833, 'lng' => -14.2167],
-            'Oio' => ['lat' => 12.5000, 'lng' => -15.1000],
-            'Quinara' => ['lat' => 11.2500, 'lng' => -15.2000],
-            'Tombali' => ['lat' => 11.1000, 'lng' => -15.0000],
-            'Bafata' => ['lat' => 12.1667, 'lng' => -14.6667],
-        ];
-
-        $locationData = [];
-        
-        foreach ($regions as $region => $coords) {
-            $count = $requestRepository->createQueryBuilder('r')
-                ->select('COUNT(r.id)')
-                ->join('r.person', 'p')
-                ->where('p.region = :region')
-                ->andWhere('r.isDeleted = :deleted')
-                ->setParameter('region', $region)
-                ->setParameter('deleted', false)
-                ->getQuery()
-                ->getSingleScalarResult();
-
-            $locationData[] = [
-                'region' => $region,
-                'count' => (int)$count,
-                'lat' => $coords['lat'],
-                'lng' => $coords['lng']
-            ];
-        }
-
-        return $locationData;
-    }
-
-    private function getFilteredRequestsByFamily(RequestRepository $repository, array $filters): array
-    {
-        $qb = $repository->createQueryBuilder('r')
-            ->select('f.fname as family_name, COUNT(r.id) as count')
-            ->leftJoin('r.procedure', 'p')
-            ->leftJoin('p.family', 'f')
-            ->andWhere('r.isDeleted = :deleted')
-            ->setParameter('deleted', false);
-
-        if (!empty($filters['family'])) {
-            $qb->andWhere('f.id = :family')
-               ->setParameter('family', $filters['family']);
-        }
-
-        if (!empty($filters['year'])) {
-            $qb->andWhere('YEAR(r.submittedAt) = :year')
-               ->setParameter('year', $filters['year']);
-        }
-
-        if (!empty($filters['region'])) {
-            $qb->join('r.person', 'person')
-               ->andWhere('person.region = :region')
-               ->setParameter('region', $filters['region']);
-        }
-
-        return $qb->groupBy('f.id')
-                  ->orderBy('count', 'DESC')
-                  ->getQuery()
-                  ->getResult();
-    }
-
-    private function getFilteredMonthlyRequests(RequestRepository $repository, array $filters): array
-    {
-        // Implementation similar to getMonthlyRequestsData but with filters applied
-        return $this->getMonthlyRequestsData($repository);
-    }
-
-    private function getFilteredRequestsByGender(RequestRepository $requestRepository, PersonRepository $personRepository, array $filters): array
-    {
-        // Implementation similar to getRequestsByGender but with filters applied
-        return $this->getRequestsByGender($requestRepository, $personRepository);
-    }
-
-    private function getFilteredRequestsByLocation(RequestRepository $requestRepository, PersonRepository $personRepository, array $filters): array
-    {
-        // Implementation similar to getRequestsByLocation but with filters applied
-        return $this->getRequestsByLocation($requestRepository, $personRepository);
     }
 }

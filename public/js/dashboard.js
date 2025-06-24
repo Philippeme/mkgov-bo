@@ -1,60 +1,33 @@
 /**
- * MK Gov Dashboard JavaScript
- * Enhanced dashboard functionality with charts, filters, and real-time updates
+ * MK Gov Dashboard JavaScript - Enhanced with fixes and Guinea-Bissau map
+ * Corrections: Auto-refresh issues, exports, interactive map
  */
 
 class MKGovDashboard {
     constructor() {
         this.charts = {};
-        this.filters = {};
-        this.refreshInterval = 300000; // 5 minutes
-        this.autoRefreshTimer = null;
+        this.map = null;
+        this.mapMarkers = [];
+        this.autoRefreshInterval = null;
+        this.autoRefreshEnabled = false;
+        this.currentFilters = {};
+        this.lastStatsSnapshot = null; // To prevent negative decrements
         
-        this.colors = {
-            primary: '#1a4b8f',
-            secondary: '#f18221',
-            success: '#28a745',
-            danger: '#dc3545',
-            warning: '#ffc107',
-            info: '#17a2b8',
-            light: '#f8f9fa',
-            dark: '#343a40'
-        };
-
-        this.chartColors = [
-            this.colors.primary,
-            this.colors.secondary,
-            this.colors.success,
-            this.colors.danger,
-            this.colors.warning,
-            this.colors.info,
-            '#e83e8c',
-            '#6f42c1',
-            '#fd7e14',
-            '#20c997'
-        ];
-
         this.init();
     }
 
-    /**
-     * Initialize dashboard
-     */
     init() {
-        document.addEventListener('DOMContentLoaded', () => {
-            this.initializeCharts();
-            this.initializeFilters();
-            this.initializeEventListeners();
-            this.initializeMapInteractions();
-            this.startAutoRefresh();
-            this.showWelcomeMessage();
-        });
+        this.initCharts();
+        this.initMap();
+        this.initEventListeners();
+        this.loadInitialData();
+        console.log('MK Gov Dashboard initialized successfully');
     }
 
     /**
      * Initialize all charts
      */
-    initializeCharts() {
+    initCharts() {
         this.initDonutChart();
         this.initBarChart();
         this.initLineChart();
@@ -64,22 +37,23 @@ class MKGovDashboard {
      * Initialize donut chart for requests by family
      */
     initDonutChart() {
-        const canvas = document.getElementById('donutChart');
-        if (!canvas) return;
+        const ctx = document.getElementById('donutChart');
+        if (!ctx) return;
 
-        const ctx = canvas.getContext('2d');
-        const familyData = window.dashboardData?.requestsByFamily || [];
+        const data = window.dashboardData?.requestsByFamily || [];
         
         this.charts.donut = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: familyData.map(item => item.family_name || 'Unassigned'),
+                labels: data.map(item => item.family_name),
                 datasets: [{
-                    data: familyData.map(item => item.count),
-                    backgroundColor: this.chartColors.slice(0, familyData.length),
-                    borderWidth: 3,
-                    borderColor: '#fff',
-                    hoverOffset: 10
+                    data: data.map(item => item.count),
+                    backgroundColor: [
+                        '#1a4b8f', '#f18221', '#28a745', '#dc3545', 
+                        '#ffc107', '#17a2b8', '#e83e8c', '#6f42c1'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
                 }]
             },
             options: {
@@ -90,26 +64,17 @@ class MKGovDashboard {
                         position: 'bottom',
                         labels: {
                             padding: 20,
-                            font: {
-                                size: 12
-                            },
-                            usePointStyle: true,
-                            pointStyle: 'circle'
+                            usePointStyle: true
                         }
                     },
                     tooltip: {
                         callbacks: {
-                            label: (context) => {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            label: function(context) {
+                                const item = data[context.dataIndex];
+                                return `${context.label}: ${context.parsed} requests (${item.percentage}%)`;
                             }
                         }
                     }
-                },
-                animation: {
-                    animateRotate: true,
-                    duration: 1000
                 }
             }
         });
@@ -119,24 +84,21 @@ class MKGovDashboard {
      * Initialize bar chart for requests by gender
      */
     initBarChart() {
-        const canvas = document.getElementById('barChart');
-        if (!canvas) return;
+        const ctx = document.getElementById('barChart');
+        if (!ctx) return;
 
-        const ctx = canvas.getContext('2d');
-        const genderData = window.dashboardData?.requestsByGender || { labels: [], data: [] };
+        const data = window.dashboardData?.requestsByGender || {};
         
         this.charts.bar = new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: genderData.labels,
+                labels: data.labels || ['Male', 'Female'],
                 datasets: [{
-                    label: 'Number of Requests',
-                    data: genderData.data,
-                    backgroundColor: [this.colors.info + '80', this.colors.warning + '80'],
-                    borderColor: [this.colors.info, this.colors.warning],
-                    borderWidth: 2,
-                    borderRadius: 4,
-                    borderSkipped: false,
+                    label: 'Requests',
+                    data: data.data || [0, 0],
+                    backgroundColor: ['#1a4b8f', '#f18221'],
+                    borderColor: ['#1a4b8f', '#f18221'],
+                    borderWidth: 1
                 }]
             },
             options: {
@@ -148,10 +110,11 @@ class MKGovDashboard {
                     },
                     tooltip: {
                         callbacks: {
-                            label: (context) => {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : 0;
-                                return `${context.label}: ${context.parsed.y} (${percentage}%)`;
+                            label: function(context) {
+                                const percentages = data.percentages || {};
+                                const gender = context.label.toLowerCase();
+                                const percentage = percentages[gender] || 0;
+                                return `${context.label}: ${context.parsed.y} requests (${percentage}%)`;
                             }
                         }
                     }
@@ -159,9 +122,6 @@ class MKGovDashboard {
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        },
                         grid: {
                             color: 'rgba(0,0,0,0.1)'
                         }
@@ -171,10 +131,6 @@ class MKGovDashboard {
                             display: false
                         }
                     }
-                },
-                animation: {
-                    duration: 1000,
-                    easing: 'easeOutQuart'
                 }
             }
         });
@@ -184,29 +140,27 @@ class MKGovDashboard {
      * Initialize line chart for monthly requests
      */
     initLineChart() {
-        const canvas = document.getElementById('lineChart');
-        if (!canvas) return;
+        const ctx = document.getElementById('lineChart');
+        if (!ctx) return;
 
-        const ctx = canvas.getContext('2d');
-        const monthlyData = window.dashboardData?.monthlyRequests || { labels: [], data: [] };
+        const data = window.dashboardData?.monthlyRequests || {};
         
         this.charts.line = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: monthlyData.labels,
+                labels: data.labels || [],
                 datasets: [{
                     label: 'Requests',
-                    data: monthlyData.data,
-                    borderColor: this.colors.primary,
-                    backgroundColor: this.colors.primary + '20',
+                    data: data.data || [],
+                    borderColor: '#1a4b8f',
+                    backgroundColor: 'rgba(26, 75, 143, 0.1)',
+                    borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: this.colors.primary,
+                    pointBackgroundColor: '#1a4b8f',
                     pointBorderColor: '#fff',
-                    pointBorderWidth: 3,
-                    pointRadius: 5,
-                    pointHoverRadius: 8,
-                    borderWidth: 3
+                    pointBorderWidth: 2,
+                    pointRadius: 5
                 }]
             },
             options: {
@@ -215,66 +169,190 @@ class MKGovDashboard {
                 plugins: {
                     legend: {
                         display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: 'rgba(0,0,0,0.8)',
-                        titleColor: '#fff',
-                        bodyColor: '#fff',
-                        borderColor: this.colors.primary,
-                        borderWidth: 1
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        },
                         grid: {
                             color: 'rgba(0,0,0,0.1)'
                         }
                     },
                     x: {
-                        ticks: {
-                            maxRotation: 45
-                        },
                         grid: {
                             display: false
                         }
                     }
                 },
                 interaction: {
-                    mode: 'nearest',
-                    intersect: false
-                },
-                animation: {
-                    duration: 1500,
-                    easing: 'easeOutQuart'
+                    intersect: false,
+                    mode: 'index'
                 }
             }
         });
     }
 
     /**
-     * Initialize filters functionality
+     * Initialize interactive Guinea-Bissau map
      */
-    initializeFilters() {
-        const filterElements = {
-            region: document.getElementById('regionFilter'),
-            family: document.getElementById('familyFilter'),
-            request: document.getElementById('requestFilter'),
-            year: document.getElementById('yearFilter')
+    initMap() {
+        const mapContainer = document.getElementById('guineaBissauMap');
+        if (!mapContainer) return;
+
+        // Initialize Leaflet map centered on Guinea-Bissau
+        this.map = L.map('guineaBissauMap').setView([11.8636, -15.5986], 7);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18,
+            minZoom: 6
+        }).addTo(this.map);
+
+        // Set bounds to limit panning to Guinea-Bissau area
+        const bounds = L.latLngBounds(
+            L.latLng(10.5, -17.0), // Southwest coordinates
+            L.latLng(12.7, -13.0)  // Northeast coordinates
+        );
+        this.map.setMaxBounds(bounds);
+
+        // Add region markers
+        this.updateMapMarkers();
+
+        // Add map controls
+        this.addMapControls();
+    }
+
+    /**
+     * Update map markers with current data - CORRIGÉ avec popups au survol
+     */
+    updateMapMarkers() {
+        // Clear existing markers
+        this.mapMarkers.forEach(marker => {
+            this.map.removeLayer(marker);
+        });
+        this.mapMarkers = [];
+
+        const locationData = window.dashboardData?.requestsByLocation || [];
+
+        locationData.forEach(location => {
+            // Create custom icon based on request count
+            const iconSize = Math.max(20, Math.min(50, location.count * 0.5 + 20));
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div style="
+                        background: ${location.color || '#1a4b8f'};
+                        width: ${iconSize}px;
+                        height: ${iconSize}px;
+                        border-radius: 50%;
+                        border: 3px solid white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-weight: bold;
+                        font-size: ${iconSize < 30 ? '10px' : '12px'};
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                    ">
+                        ${location.count}
+                    </div>
+                `,
+                iconSize: [iconSize, iconSize],
+                iconAnchor: [iconSize/2, iconSize/2]
+            });
+
+            const marker = L.marker([location.lat, location.lng], { icon })
+                .bindPopup(`
+                    <div style="text-align: center; min-width: 150px;">
+                        <strong style="color: #1a4b8f; font-size: 1.1em;">${location.region}</strong><br>
+                        <span style="font-size: 1.2em; font-weight: bold; color: ${location.color || '#1a4b8f'};">
+                            ${location.count}
+                        </span> requests<br>
+                        <small class="text-muted">Click to filter by region</small>
+                    </div>
+                `, {
+                    closeButton: true,
+                    autoClose: false
+                })
+                // CORRECTION: Popup au survol + clic pour filtrer
+                .on('mouseover', function() {
+                    this.openPopup();
+                })
+                .on('mouseout', function() {
+                    this.closePopup();
+                })
+                .on('click', () => {
+                    this.filterByRegion(location.region);
+                });
+
+            marker.addTo(this.map);
+            this.mapMarkers.push(marker);
+        });
+    }
+
+    /**
+     * Add map controls and legend
+     */
+    addMapControls() {
+        // Add scale control
+        L.control.scale({
+            position: 'bottomleft',
+            imperial: false
+        }).addTo(this.map);
+
+        // Add custom legend
+        const legend = L.control({ position: 'topright' });
+        legend.onAdd = () => {
+            const div = L.DomUtil.create('div', 'map-legend');
+            div.style.cssText = `
+                background: rgba(255,255,255,0.95);
+                padding: 10px;
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                font-size: 0.85rem;
+                max-width: 200px;
+            `;
+            div.innerHTML = `
+                <div><strong>Guinea-Bissau Regions</strong></div>
+                <div class="small text-muted mt-1">Marker size = request volume</div>
+                <div class="small text-muted">Click markers to filter</div>
+            `;
+            return div;
         };
+        legend.addTo(this.map);
+    }
 
-        // Store filter elements
-        this.filterElements = filterElements;
+    /**
+     * Filter by region when marker is clicked
+     */
+    filterByRegion(region) {
+        document.getElementById('regionFilter').value = region;
+        this.applyFilters();
+        
+        // Show notification
+        this.showNotification(`Filtered by region: ${region}`, 'info');
+    }
 
-        // Initialize filter change listeners
-        Object.keys(filterElements).forEach(key => {
-            if (filterElements[key]) {
-                filterElements[key].addEventListener('change', () => {
+    /**
+     * Initialize event listeners
+     */
+    initEventListeners() {
+        // Auto-refresh toggle
+        const autoRefreshToggle = document.getElementById('autoRefreshToggle');
+        if (autoRefreshToggle) {
+            autoRefreshToggle.addEventListener('change', (e) => {
+                this.toggleAutoRefresh(e.target.checked);
+            });
+        }
+
+        // Filter change listeners
+        ['regionFilter', 'familyFilter', 'requestFilter', 'yearFilter'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('change', () => {
                     this.updateActiveFilters();
                 });
             }
@@ -282,229 +360,112 @@ class MKGovDashboard {
     }
 
     /**
-     * Initialize event listeners
+     * Toggle auto-refresh functionality - FIXED to prevent negative decrements
      */
-    initializeEventListeners() {
-        // Apply filters button
-        const applyBtn = document.querySelector('[onclick="applyFilters()"]');
-        if (applyBtn) {
-            applyBtn.removeAttribute('onclick');
-            applyBtn.addEventListener('click', () => this.applyFilters());
-        }
-
-        // Clear filters button
-        const clearBtn = document.querySelector('[onclick="clearFilters()"]');
-        if (clearBtn) {
-            clearBtn.removeAttribute('onclick');
-            clearBtn.addEventListener('click', () => this.clearFilters());
-        }
-
-        // Export functionality
-        this.initializeExportButtons();
-
-        // Auto-refresh toggle
-        this.initializeAutoRefreshToggle();
-
-        // Keyboard shortcuts
-        this.initializeKeyboardShortcuts();
-    }
-
-    /**
-     * Initialize map interactions
-     */
-    initializeMapInteractions() {
-        const regionMarkers = document.querySelectorAll('.region-marker');
+    toggleAutoRefresh(enabled) {
+        this.autoRefreshEnabled = enabled;
+        const statusElement = document.getElementById('autoRefreshStatus');
         
-        regionMarkers.forEach(marker => {
-            marker.addEventListener('click', (e) => {
-                const region = e.currentTarget.dataset.region;
-                const count = e.currentTarget.dataset.count;
-                
-                // Show region details
-                this.showRegionDetails(region, count);
-                
-                // Auto-filter by region
-                if (this.filterElements.region) {
-                    this.filterElements.region.value = region;
-                    this.applyFilters();
-                }
-            });
-
-            // Enhanced hover effects
-            marker.addEventListener('mouseenter', (e) => {
-                e.currentTarget.style.transform = 'scale(1.3)';
-                e.currentTarget.style.zIndex = '20';
-            });
-
-            marker.addEventListener('mouseleave', (e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.zIndex = '10';
-            });
-        });
-    }
-
-    /**
-     * Apply filters and update dashboard
-     */
-    async applyFilters() {
-        const filters = this.getCurrentFilters();
-        
-        this.showLoadingSpinners();
-        this.updateActiveFilters(filters);
-
-        try {
-            const response = await fetch(`/admin/dashboard/filter?${new URLSearchParams(filters)}`);
+        if (enabled) {
+            // Take snapshot of current stats to prevent decrements
+            this.lastStatsSnapshot = { ...window.dashboardData.stats };
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            statusElement.textContent = 'ON';
+            statusElement.className = 'text-success fw-bold';
+            
+            this.autoRefreshInterval = setInterval(() => {
+                this.refreshDashboard(true); // true = preserve stats consistency
+            }, 30000); // 30 seconds
+            
+            this.showNotification('Auto-refresh enabled (30s)', 'success');
+        } else {
+            statusElement.textContent = 'OFF';
+            statusElement.className = 'text-muted';
+            
+            if (this.autoRefreshInterval) {
+                clearInterval(this.autoRefreshInterval);
+                this.autoRefreshInterval = null;
             }
             
-            const data = await response.json();
+            this.showNotification('Auto-refresh disabled', 'info');
+        }
+    }
+
+    /**
+     * Refresh dashboard data - FIXED to prevent stats decrements
+     */
+    async refreshDashboard(preserveStats = false) {
+        try {
+            const response = await fetch('/admin/dashboard/refresh', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(this.currentFilters)
+            });
+
+            if (!response.ok) {
+                throw new Error('Refresh failed');
+            }
+
+            const result = await response.json();
             
-            if (data.success) {
-                this.updateCharts(data.data);
-                this.updateStatistics(data.data);
-                this.showSuccessMessage('Filters applied successfully');
-            } else {
-                throw new Error(data.message || 'Failed to apply filters');
+            if (result.success) {
+                // Update data but preserve consistent stats if auto-refreshing
+                if (preserveStats && this.lastStatsSnapshot) {
+                    // Only update dynamic stats, preserve institution count
+                    result.data.stats.institutions = this.lastStatsSnapshot.institutions;
+                    result.data.stats.procedures = this.lastStatsSnapshot.procedures;
+                    result.data.stats.families = this.lastStatsSnapshot.families;
+                }
+                
+                this.updateDashboardWithData(result.data);
+                
+                if (!preserveStats) {
+                    this.showNotification('Dashboard refreshed', 'success');
+                }
             }
         } catch (error) {
-            console.error('Error applying filters:', error);
-            this.showErrorMessage('Error applying filters: ' + error.message);
-        } finally {
-            this.hideLoadingSpinners();
+            console.error('Refresh error:', error);
+            this.showNotification('Refresh failed', 'danger');
         }
     }
 
     /**
-     * Clear all filters
+     * Update dashboard with new data
      */
-    clearFilters() {
-        Object.values(this.filterElements).forEach(element => {
-            if (element) element.value = '';
-        });
-        
-        this.hideActiveFilters();
-        
-        // Reload page to reset all data
-        window.location.reload();
-    }
+    updateDashboardWithData(data) {
+        // Update global data
+        window.dashboardData = data;
 
-    /**
-     * Get current filter values
-     */
-    getCurrentFilters() {
-        const filters = {};
-        
-        Object.keys(this.filterElements).forEach(key => {
-            const element = this.filterElements[key];
-            if (element && element.value) {
-                filters[key] = element.value;
-            }
-        });
-        
-        return filters;
-    }
+        // Update statistics cards
+        this.updateStatsCards(data.stats);
 
-    /**
-     * Update active filters display
-     */
-    updateActiveFilters(filters = null) {
-        const activeFiltersContainer = document.getElementById('activeFilters');
-        const filterBadges = document.getElementById('filterBadges');
-        
-        if (!activeFiltersContainer || !filterBadges) return;
-        
-        const currentFilters = filters || this.getCurrentFilters();
-        
-        filterBadges.innerHTML = '';
-        let hasActiveFilters = false;
+        // Update charts
+        this.updateCharts(data);
 
-        Object.entries(currentFilters).forEach(([key, value]) => {
-            if (value) {
-                hasActiveFilters = true;
-                const badge = document.createElement('span');
-                badge.className = 'filter-badge';
-                badge.innerHTML = `${key}: ${value} <span class="remove" data-filter="${key}">&times;</span>`;
-                filterBadges.appendChild(badge);
-            }
-        });
-
-        // Add event listeners to remove buttons
-        filterBadges.querySelectorAll('.remove').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const filterKey = e.target.dataset.filter;
-                this.removeFilter(filterKey);
-            });
-        });
-
-        activeFiltersContainer.style.display = hasActiveFilters ? 'block' : 'none';
-    }
-
-    /**
-     * Remove specific filter
-     */
-    removeFilter(filterKey) {
-        if (this.filterElements[filterKey]) {
-            this.filterElements[filterKey].value = '';
-            this.applyFilters();
-        }
-    }
-
-    /**
-     * Hide active filters
-     */
-    hideActiveFilters() {
-        const activeFiltersContainer = document.getElementById('activeFilters');
-        if (activeFiltersContainer) {
-            activeFiltersContainer.style.display = 'none';
-        }
-    }
-
-    /**
-     * Update charts with new data
-     */
-    updateCharts(data) {
-        // Update donut chart
-        if (this.charts.donut && data.requestsByFamily) {
-            this.charts.donut.data.labels = data.requestsByFamily.map(item => item.family_name || 'Unassigned');
-            this.charts.donut.data.datasets[0].data = data.requestsByFamily.map(item => item.count);
-            this.charts.donut.update('resize');
-        }
-
-        // Update bar chart
-        if (this.charts.bar && data.requestsByGender) {
-            this.charts.bar.data.labels = data.requestsByGender.labels;
-            this.charts.bar.data.datasets[0].data = data.requestsByGender.data;
-            this.charts.bar.update('resize');
-        }
-
-        // Update line chart
-        if (this.charts.line && data.monthlyRequests) {
-            this.charts.line.data.labels = data.monthlyRequests.labels;
-            this.charts.line.data.datasets[0].data = data.monthlyRequests.data;
-            this.charts.line.update('resize');
-        }
+        // Update map
+        this.updateMapMarkers();
     }
 
     /**
      * Update statistics cards
      */
-    updateStatistics(data) {
-        if (!data.stats) return;
-
+    updateStatsCards(stats) {
         const statElements = {
-            institutions: document.querySelector('.stats-card:nth-child(1) .stats-value'),
-            procedures: document.querySelector('.stats-card:nth-child(2) .stats-value'),
-            families: document.querySelector('.stats-card:nth-child(3) .stats-value'),
-            requests: document.querySelector('.stats-card:nth-child(4) .stats-value'),
-            pending_admin: document.querySelector('.stats-card:nth-child(5) .stats-value'),
-            pending_requestor: document.querySelector('.stats-card:nth-child(6) .stats-value')
+            'stat-institutions': stats.institutions,
+            'stat-procedures': stats.procedures,
+            'stat-families': stats.families,
+            'stat-requests': stats.requests,
+            'stat-pending-admin': stats.pending_admin,
+            'stat-pending-requestor': stats.pending_requestor
         };
 
-        Object.keys(statElements).forEach(key => {
-            if (statElements[key] && data.stats[key] !== undefined) {
-                this.animateNumber(statElements[key], data.stats[key]);
+        Object.entries(statElements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                // Animate number change
+                this.animateNumber(element, parseInt(element.textContent) || 0, value);
             }
         });
     }
@@ -512,271 +473,258 @@ class MKGovDashboard {
     /**
      * Animate number changes
      */
-    animateNumber(element, newValue) {
-        const currentValue = parseInt(element.textContent) || 0;
-        const increment = newValue > currentValue ? 1 : -1;
-        const duration = 1000;
-        const steps = Math.abs(newValue - currentValue);
-        const stepDuration = duration / steps;
+    animateNumber(element, from, to, duration = 1000) {
+        const start = Date.now();
+        const difference = to - from;
 
-        let current = currentValue;
-        const timer = setInterval(() => {
-            current += increment;
+        const step = () => {
+            const elapsed = Date.now() - start;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const current = Math.round(from + (difference * progress));
             element.textContent = current;
-            
-            if (current === newValue) {
-                clearInterval(timer);
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
             }
-        }, stepDuration);
+        };
+
+        step();
     }
 
     /**
-     * Show loading spinners
+     * Update all charts with new data
      */
-    showLoadingSpinners() {
-        ['donutLoading', 'barLoading', 'lineLoading'].forEach(id => {
+    updateCharts(data) {
+        // Update donut chart
+        if (this.charts.donut && data.requestsByFamily) {
+            this.charts.donut.data.labels = data.requestsByFamily.map(item => item.family_name);
+            this.charts.donut.data.datasets[0].data = data.requestsByFamily.map(item => item.count);
+            this.charts.donut.update('none');
+        }
+
+        // Update bar chart
+        if (this.charts.bar && data.requestsByGender) {
+            this.charts.bar.data.labels = data.requestsByGender.labels;
+            this.charts.bar.data.datasets[0].data = data.requestsByGender.data;
+            this.charts.bar.update('none');
+        }
+
+        // Update line chart
+        if (this.charts.line && data.monthlyRequests) {
+            this.charts.line.data.labels = data.monthlyRequests.labels;
+            this.charts.line.data.datasets[0].data = data.monthlyRequests.data;
+            this.charts.line.update('none');
+        }
+    }
+
+    /**
+     * Apply filters - CORRECTION: Seule la carte est filtrée, pas les diagrammes
+     */
+    async applyFilters() {
+        this.currentFilters = {
+            region: document.getElementById('regionFilter').value,
+            family: document.getElementById('familyFilter').value,
+            request: document.getElementById('requestFilter').value,
+            year: document.getElementById('yearFilter').value
+        };
+
+        try {
+            // CORRECTION: Utiliser la nouvelle route qui ne filtre QUE la carte
+            const params = new URLSearchParams(this.currentFilters);
+            const response = await fetch(`/admin/dashboard/map-data?${params}`);
+            
+            if (!response.ok) {
+                throw new Error('Filter request failed');
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                // CORRECTION: Ne mettre à jour QUE la carte, pas les diagrammes
+                if (result.data.requestsByLocation) {
+                    window.dashboardData.requestsByLocation = result.data.requestsByLocation;
+                    this.updateMapMarkers(); // SEULE la carte est mise à jour
+                }
+                
+                this.updateActiveFilters();
+                this.showNotification('Map filtered successfully', 'success');
+            }
+        } catch (error) {
+            console.error('Filter error:', error);
+            this.showNotification('Filter failed', 'danger');
+        }
+    }
+
+    /**
+     * Clear all filters - CORRECTION: Recharger QUE la carte, pas les diagrammes
+     */
+    async clearFilters() {
+        ['regionFilter', 'familyFilter', 'requestFilter', 'yearFilter'].forEach(id => {
             const element = document.getElementById(id);
-            if (element) element.style.display = 'block';
+            if (element) {
+                element.value = '';
+            }
         });
-    }
 
-    /**
-     * Hide loading spinners
-     */
-    hideLoadingSpinners() {
-        ['donutLoading', 'barLoading', 'lineLoading'].forEach(id => {
-            const element = document.getElementById(id);
-            if (element) element.style.display = 'none';
-        });
-    }
-
-    /**
-     * Show region details modal
-     */
-    showRegionDetails(region, count) {
-        // Create a simple modal or use existing modal system
-        const message = `Region: ${region}\nRequests: ${count}\n\nClick OK to filter by this region.`;
+        this.currentFilters = {};
+        this.updateActiveFilters();
         
-        if (confirm(message)) {
-            // Already handled in the click event
+        // CORRECTION: Recharger SEULEMENT la carte avec toutes les régions
+        try {
+            const response = await fetch('/admin/dashboard/map-data');
+            const result = await response.json();
+            
+            if (result.success && result.data.requestsByLocation) {
+                window.dashboardData.requestsByLocation = result.data.requestsByLocation;
+                this.updateMapMarkers(); // SEULE la carte est rechargée
+            }
+        } catch (error) {
+            console.error('Clear filters error:', error);
         }
+        
+        this.showNotification('Map filters cleared', 'info');
     }
 
     /**
-     * Initialize export buttons
+     * Update active filters display
      */
-    initializeExportButtons() {
-        // Add export dropdown to dashboard
-        const headerActions = document.querySelector('.header-actions');
-        if (headerActions) {
-            const exportBtn = document.createElement('div');
-            exportBtn.className = 'dropdown';
-            exportBtn.innerHTML = `
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                    <i class="fas fa-download me-2"></i>Export
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#" data-format="json">JSON</a></li>
-                    <li><a class="dropdown-item" href="#" data-format="csv">CSV</a></li>
-                    <li><a class="dropdown-item" href="#" data-format="pdf">PDF Report</a></li>
-                    <li><a class="dropdown-item" href="#" data-format="excel">Excel</a></li>
-                </ul>
-            `;
-            
-            headerActions.insertBefore(exportBtn, headerActions.firstChild);
-            
-            // Add export event listeners
-            exportBtn.querySelectorAll('[data-format]').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.exportData(e.target.dataset.format);
-                });
-            });
+    updateActiveFilters() {
+        const activeFiltersDiv = document.getElementById('activeFilters');
+        const filterBadgesDiv = document.getElementById('filterBadges');
+        
+        if (!activeFiltersDiv || !filterBadgesDiv) return;
+
+        const filters = {
+            region: document.getElementById('regionFilter').value,
+            family: document.getElementById('familyFilter').value,
+            request: document.getElementById('requestFilter').value,
+            year: document.getElementById('yearFilter').value
+        };
+
+        const activeFilters = Object.entries(filters).filter(([key, value]) => value);
+
+        if (activeFilters.length > 0) {
+            activeFiltersDiv.style.display = 'block';
+            filterBadgesDiv.innerHTML = activeFilters.map(([key, value]) => `
+                <span class="filter-badge">
+                    ${key}: ${value}
+                    <span class="remove" onclick="window.mkgovDashboard.removeFilter('${key}')">&times;</span>
+                </span>
+            `).join('');
+        } else {
+            activeFiltersDiv.style.display = 'none';
         }
     }
 
     /**
-     * Export dashboard data
+     * Remove individual filter
+     */
+    removeFilter(filterKey) {
+        const element = document.getElementById(filterKey + 'Filter');
+        if (element) {
+            element.value = '';
+            this.applyFilters();
+        }
+    }
+
+    /**
+     * Load initial data
+     */
+    loadInitialData() {
+        // Data is already loaded from the server via window.dashboardData
+        this.updateActiveFilters();
+    }
+
+    /**
+     * Export data
      */
     async exportData(format) {
-        const filters = this.getCurrentFilters();
-        const params = new URLSearchParams({
-            format: format,
-            ...filters
-        });
-
         try {
-            const response = await fetch(`/admin/dashboard/export?${params}`);
+            const params = new URLSearchParams(this.currentFilters);
+            params.set('format', format);
             
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `dashboard_export_${format}_${new Date().toISOString().slice(0, 10)}.${format}`;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-                
-                this.showSuccessMessage(`Dashboard exported as ${format.toUpperCase()}`);
-            } else {
-                throw new Error('Export failed');
-            }
+            this.showNotification(`Preparing ${format.toUpperCase()} export...`, 'info');
+            
+            // Use window.open for better browser compatibility
+            window.open(`/admin/dashboard/export?${params}`, '_blank');
+            
+            setTimeout(() => {
+                this.showNotification(`${format.toUpperCase()} export initiated`, 'success');
+            }, 1000);
+            
         } catch (error) {
             console.error('Export error:', error);
-            this.showErrorMessage('Failed to export dashboard data');
+            this.showNotification('Export failed', 'danger');
         }
-    }
-
-    /**
-     * Initialize auto-refresh functionality
-     */
-    initializeAutoRefreshToggle() {
-        const headerActions = document.querySelector('.header-actions');
-        if (headerActions) {
-            const refreshBtn = document.createElement('button');
-            refreshBtn.className = 'btn btn-outline-info';
-            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Auto-refresh: ON';
-            refreshBtn.id = 'autoRefreshToggle';
-            
-            headerActions.insertBefore(refreshBtn, headerActions.firstChild);
-            
-            refreshBtn.addEventListener('click', () => {
-                this.toggleAutoRefresh();
-            });
-        }
-    }
-
-    /**
-     * Toggle auto-refresh
-     */
-    toggleAutoRefresh() {
-        const btn = document.getElementById('autoRefreshToggle');
-        
-        if (this.autoRefreshTimer) {
-            clearInterval(this.autoRefreshTimer);
-            this.autoRefreshTimer = null;
-            btn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Auto-refresh: OFF';
-            btn.className = 'btn btn-outline-secondary';
-        } else {
-            this.startAutoRefresh();
-            btn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Auto-refresh: ON';
-            btn.className = 'btn btn-outline-info';
-        }
-    }
-
-    /**
-     * Start auto-refresh
-     */
-    startAutoRefresh() {
-        this.autoRefreshTimer = setInterval(() => {
-            if (document.visibilityState === 'visible') {
-                this.refreshDashboard();
-            }
-        }, this.refreshInterval);
-    }
-
-    /**
-     * Refresh dashboard data
-     */
-    async refreshDashboard() {
-        try {
-            const filters = this.getCurrentFilters();
-            const response = await fetch('/admin/dashboard/refresh', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(filters)
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    this.updateCharts(data.data);
-                    this.updateStatistics(data.data);
-                    this.showInfoMessage('Dashboard refreshed');
-                }
-            }
-        } catch (error) {
-            console.error('Auto-refresh error:', error);
-        }
-    }
-
-    /**
-     * Initialize keyboard shortcuts
-     */
-    initializeKeyboardShortcuts() {
-        document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + R: Refresh dashboard
-            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-                e.preventDefault();
-                this.refreshDashboard();
-            }
-            
-            // Ctrl/Cmd + E: Export as JSON
-            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                this.exportData('json');
-            }
-            
-            // Escape: Clear filters
-            if (e.key === 'Escape') {
-                this.clearFilters();
-            }
-        });
-    }
-
-    /**
-     * Show welcome message
-     */
-    showWelcomeMessage() {
-        this.showInfoMessage('Dashboard loaded successfully. Use filters to analyze data.', 3000);
-    }
-
-    /**
-     * Show success message
-     */
-    showSuccessMessage(message, duration = 3000) {
-        this.showNotification(message, 'success', duration);
-    }
-
-    /**
-     * Show error message
-     */
-    showErrorMessage(message, duration = 5000) {
-        this.showNotification(message, 'danger', duration);
-    }
-
-    /**
-     * Show info message
-     */
-    showInfoMessage(message, duration = 3000) {
-        this.showNotification(message, 'info', duration);
     }
 
     /**
      * Show notification
      */
-    showNotification(message, type = 'info', duration = 3000) {
+    showNotification(message, type = 'info') {
+        // Remove existing notifications
+        document.querySelectorAll('.dashboard-notification').forEach(el => el.remove());
+
         const notification = document.createElement('div');
-        notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.className = `alert alert-${type} alert-dismissible fade show dashboard-notification`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1060;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease;
+        `;
         notification.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        
+
         document.body.appendChild(notification);
-        
+
+        // Auto-remove after 3 seconds
         setTimeout(() => {
             if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
+                notification.remove();
             }
-        }, duration);
+        }, 3000);
     }
+
 }
 
-// Initialize dashboard when script loads
-const mkgovDashboard = new MKGovDashboard();
+// Initialize dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.mkgovDashboard = new MKGovDashboard();
+});
+
+// Handle page unload
+window.addEventListener('beforeunload', function() {
+    if (window.mkgovDashboard) {
+        window.mkgovDashboard.destroy();
+    }
+});
+
+// CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideInRight {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    .custom-marker {
+        cursor: pointer !important;
+    }
+    
+    .map-legend {
+        pointer-events: auto !important;
+    }
+`;
+document.head.appendChild(style);
