@@ -62,6 +62,7 @@ class RequestController extends AbstractController
                 // Auto-calculate expected completion date
                 if ($request->getProcedure() && !$request->getExpectedCompletionAt()) {
                     $processTime = $request->getProcedure()->getProcessTime();
+                    // Extract days from process time (assuming format like "5-7 working days")
                     preg_match('/(\d+)/', $processTime, $matches);
                     $days = isset($matches[1]) ? (int)$matches[1] : 7;
                     
@@ -69,9 +70,6 @@ class RequestController extends AbstractController
                     $expectedDate->add(new \DateInterval('P' . $days . 'D'));
                     $request->setExpectedCompletionAt($expectedDate);
                 }
-
-                // Validate payment amount constraints
-                $this->validatePaymentConstraints($request);
 
                 $entityManager->persist($request);
                 $entityManager->flush();
@@ -90,10 +88,12 @@ class RequestController extends AbstractController
         ]);
     }
 
+    // DÉPLACER LA ROUTE EXPORT AVANT LES ROUTES AVEC {id}
     #[Route('/export', name: 'admin_request_export', methods: ['GET'])]
     public function export(RequestRepository $requestRepository, HttpRequest $httpRequest): Response
     {
         try {
+            // Récupérer les filtres depuis la requête
             $search = $httpRequest->query->get('search', '');
             $status = $httpRequest->query->get('status', '');
             $priority = $httpRequest->query->get('priority', '');
@@ -108,15 +108,18 @@ class RequestController extends AbstractController
                 'family' => $family
             ];
 
-            $requests = array_filter($filters) ? 
-                $requestRepository->findWithFilters($filters) : 
-                $requestRepository->findBy(['isDeleted' => false], ['submittedAt' => 'DESC']);
+            // Si des filtres sont appliqués, utiliser findWithFilters, sinon exporter toutes les requêtes
+            if (array_filter($filters)) {
+                $requests = $requestRepository->findWithFilters($filters);
+            } else {
+                $requests = $requestRepository->findBy(['isDeleted' => false], ['submittedAt' => 'DESC']);
+            }
             
             $csvData = [];
             $csvData[] = [
                 'Reference', 'Citizen', 'National ID', 'Procedure', 'Family', 'Status', 'Priority', 
-                'Total Cost (XAF)', 'Paid Amount (XAF)', 'Payment Status', 'Remaining Amount (XAF)',
-                'Submitted At', 'Expected Completion', 'Completed At', 'Days in Progress', 'Comments'
+                'Total Cost (XAF)', 'Paid Amount (XAF)', 'Payment Status', 'Submitted At', 
+                'Expected Completion', 'Completed At', 'Days in Progress', 'Comments'
             ];
 
             foreach ($requests as $request) {
@@ -130,8 +133,7 @@ class RequestController extends AbstractController
                     ucfirst($request->getPriority()),
                     $request->getTotalCost() ?? '0',
                     $request->getPaidAmount() ?? '0',
-                    $request->getPaymentStatusLabel(),
-                    $request->getRemainingAmount(),
+                    ucfirst($request->getPaymentStatus()),
                     $request->getSubmittedAt()?->format('Y-m-d H:i:s'),
                     $request->getExpectedCompletionAt()?->format('Y-m-d H:i:s'),
                     $request->getCompletedAt()?->format('Y-m-d H:i:s'),
@@ -141,22 +143,27 @@ class RequestController extends AbstractController
             }
 
             $filename = 'requests_export_' . date('Y-m-d_H-i-s') . '.csv';
+
             $response = new Response();
             $response->headers->set('Content-Type', 'text/csv; charset=utf-8');
             $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
             $response->headers->set('Cache-Control', 'must-revalidate');
             $response->headers->set('Pragma', 'public');
 
+            // Ajouter BOM UTF-8 pour Excel
             $csvContent = "\xEF\xBB\xBF";
+            
+            // Créer le contenu CSV
             $output = fopen('php://temp', 'w');
             foreach ($csvData as $row) {
-                fputcsv($output, $row, ';');
+                fputcsv($output, $row, ';'); // Utiliser point-virgule pour Excel français
             }
             rewind($output);
             $csvContent .= stream_get_contents($output);
             fclose($output);
 
             $response->setContent($csvContent);
+
             return $response;
             
         } catch (\Exception $e) {
@@ -207,9 +214,11 @@ class RequestController extends AbstractController
         ]);
     }
 
+    // ROUTES AVEC {id} APRÈS LES ROUTES STATIQUES
     #[Route('/{id}', name: 'admin_request_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(Request $request): Response
     {
+        // Check if request is deleted
         if ($request->isDeleted()) {
             throw $this->createNotFoundException('Request not found.');
         }
@@ -222,25 +231,16 @@ class RequestController extends AbstractController
     #[Route('/{id}/edit', name: 'admin_request_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(HttpRequest $httpRequest, Request $request, EntityManagerInterface $entityManager): Response
     {
+        // Check if request is deleted
         if ($request->isDeleted()) {
             throw $this->createNotFoundException('Request not found.');
         }
-
-        // Store original status and payment data for comparison
-        $originalStatus = $request->getStatus();
-        $originalPaidAmount = $request->getPaidAmount();
 
         $form = $this->createForm(RequestType::class, $request);
         $form->handleRequest($httpRequest);
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
-                // Validate payment constraints
-                $this->validatePaymentConstraints($request);
-
-                // Handle status changes and payment logic
-                $this->handleStatusChanges($request, $originalStatus, $originalPaidAmount);
-
                 $entityManager->flush();
 
                 $this->addFlash('success', 'Request has been updated successfully.');
@@ -262,6 +262,7 @@ class RequestController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete'.$request->getId(), $httpRequest->request->get('_token'))) {
             try {
+                // Soft delete - set isDeleted to true instead of removing from database
                 $request->setIsDeleted(true);
                 $entityManager->flush();
 
@@ -288,18 +289,12 @@ class RequestController extends AbstractController
                 default => 'pending'
             };
             
-            $originalPaidAmount = $request->getPaidAmount();
             $request->setStatus($newStatus);
-            
-            // Handle payment status updates based on status change
-            $this->handleStatusChanges($request, $currentStatus, $originalPaidAmount);
-            
             $entityManager->flush();
 
             return new JsonResponse([
                 'success' => true,
                 'status' => $request->getStatus(),
-                'paymentStatus' => $request->getPaymentStatus(),
                 'message' => 'Status updated successfully.'
             ]);
         } catch (\Exception $e) {
@@ -321,20 +316,12 @@ class RequestController extends AbstractController
                 throw new \InvalidArgumentException('Invalid status');
             }
             
-            $originalStatus = $request->getStatus();
-            $originalPaidAmount = $request->getPaidAmount();
-            
             $request->setStatus($newStatus);
-            
-            // Handle payment status updates based on status change
-            $this->handleStatusChanges($request, $originalStatus, $originalPaidAmount);
-            
             $entityManager->flush();
 
             return new JsonResponse([
                 'success' => true,
                 'status' => $request->getStatus(),
-                'paymentStatus' => $request->getPaymentStatus(),
                 'message' => 'Status updated successfully.'
             ]);
         } catch (\Exception $e) {
@@ -390,12 +377,7 @@ class RequestController extends AbstractController
                 'submitted_at' => $request->getSubmittedAt()?->format('Y-m-d H:i:s'),
                 'expected_completion_at' => $request->getExpectedCompletionAt()?->format('Y-m-d H:i:s'),
                 'total_cost' => $request->getTotalCost(),
-                'paid_amount' => $request->getPaidAmount(),
-                'remaining_amount' => $request->getRemainingAmount(),
-                'payment_status' => $request->getPaymentStatus(),
-                'priority' => $request->getPriority(),
-                'can_modify_payment' => $request->canModifyPayment(),
-                'can_modify_timeline' => $request->canModifyTimeline()
+                'priority' => $request->getPriority()
             ]);
         } catch (\Exception $e) {
             return new JsonResponse([
@@ -449,70 +431,67 @@ class RequestController extends AbstractController
         ]);
     }
 
-    /**
-     * Valide les contraintes de paiement
-     */
-    private function validatePaymentConstraints(Request $request): void
+    #[Route('/{id}/timeline', name: 'admin_request_timeline', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function getTimeline(Request $request): JsonResponse
     {
-        $totalCost = (float) ($request->getTotalCost() ?? 0);
-        $paidAmount = (float) ($request->getPaidAmount() ?? 0);
-
-        // Vérifier que le montant payé n'est pas négatif
-        if ($paidAmount < 0) {
-            throw new \InvalidArgumentException('Paid amount cannot be negative');
-        }
-
-        // Vérifier que le montant payé ne dépasse pas le coût total
-        if ($paidAmount > $totalCost) {
-            throw new \InvalidArgumentException(
-                sprintf('Paid amount (%.2f XAF) cannot exceed total cost (%.2f XAF)', $paidAmount, $totalCost)
-            );
-        }
-    }
-
-    /**
-     * Gère les changements de statut et leurs impacts sur les paiements
-     */
-    private function handleStatusChanges(Request $request, string $originalStatus, ?string $originalPaidAmount): void
-    {
-        $currentStatus = $request->getStatus();
-        $currentPaidAmount = (float) ($request->getPaidAmount() ?? 0);
-
-        // Si le statut change vers rejected ou cancelled
-        if (in_array($currentStatus, ['rejected', 'cancelled']) && !in_array($originalStatus, ['rejected', 'cancelled'])) {
-            if ($currentPaidAmount > 0) {
-                $request->setPaymentStatus('awaiting_refund');
-            } else {
-                $request->setPaymentStatus('revoked');
-            }
-        }
-        // Si le statut change depuis rejected/cancelled vers un statut actif
-        elseif (!in_array($currentStatus, ['rejected', 'cancelled']) && in_array($originalStatus, ['rejected', 'cancelled'])) {
-            // Remettre un statut de paiement normal basé sur les montants
-            $totalCost = (float) ($request->getTotalCost() ?? 0);
+        try {
+            $timeline = [];
             
-            if ($currentPaidAmount === 0) {
-                $request->setPaymentStatus('pending');
-            } elseif ($currentPaidAmount >= $totalCost) {
-                $request->setPaymentStatus('completed');
-            } else {
-                $request->setPaymentStatus('partial');
+            // Request submitted
+            $timeline[] = [
+                'type' => 'submitted',
+                'title' => 'Request Submitted',
+                'description' => 'Request was submitted by ' . $request->getPerson()->getFullName(),
+                'date' => $request->getSubmittedAt()?->format('Y-m-d H:i:s'),
+                'icon' => 'bi-plus-circle',
+                'color' => 'primary'
+            ];
+
+            // Status changes
+            if ($request->getStatus() === 'processing' || $request->getStatus() === 'completed') {
+                $timeline[] = [
+                    'type' => 'processing',
+                    'title' => 'Processing Started',
+                    'description' => 'Request status changed to processing',
+                    'date' => $request->getUpdatedAt()?->format('Y-m-d H:i:s'),
+                    'icon' => 'bi-gear',
+                    'color' => 'info'
+                ];
             }
-        }
-        // Pour les requêtes qui restent dans un statut actif
-        elseif (!in_array($currentStatus, ['rejected', 'cancelled'])) {
-            // Mettre à jour automatiquement le statut de paiement si ce n'est pas un statut spécial
-            if (!in_array($request->getPaymentStatus(), ['awaiting_refund', 'revoked', 'refunded'])) {
-                $totalCost = (float) ($request->getTotalCost() ?? 0);
-                
-                if ($currentPaidAmount === 0) {
-                    $request->setPaymentStatus('pending');
-                } elseif ($currentPaidAmount >= $totalCost) {
-                    $request->setPaymentStatus('completed');
-                } else {
-                    $request->setPaymentStatus('partial');
-                }
+
+            // Completion
+            if ($request->getCompletedAt()) {
+                $timeline[] = [
+                    'type' => 'completed',
+                    'title' => 'Request Completed',
+                    'description' => 'Request was completed successfully',
+                    'date' => $request->getCompletedAt()?->format('Y-m-d H:i:s'),
+                    'icon' => 'bi-check-circle',
+                    'color' => 'success'
+                ];
             }
+
+            // Expected completion
+            if ($request->getExpectedCompletionAt() && !$request->getCompletedAt()) {
+                $timeline[] = [
+                    'type' => 'expected',
+                    'title' => 'Expected Completion',
+                    'description' => 'Target completion date',
+                    'date' => $request->getExpectedCompletionAt()?->format('Y-m-d H:i:s'),
+                    'icon' => 'bi-calendar-event',
+                    'color' => $request->isOverdue() ? 'danger' : 'warning'
+                ];
+            }
+
+            return new JsonResponse([
+                'success' => true,
+                'timeline' => $timeline
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Error retrieving timeline: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

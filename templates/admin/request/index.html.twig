@@ -16,15 +16,6 @@
         box-shadow: 0 8px 25px rgba(0,0,0,0.1);
     }
     
-    .request-card.rejected-cancelled {
-        opacity: 0.8;
-        border-left: 4px solid #dc3545;
-    }
-    
-    .request-card.rejected-cancelled.cancelled {
-        border-left-color: #6c757d;
-    }
-    
     .stats-card {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 15px;
@@ -56,11 +47,6 @@
         transition: all 0.3s ease;
     }
     
-    .status-toggle:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-    
     .overdue-indicator {
         position: absolute;
         top: 10px;
@@ -88,39 +74,6 @@
     .progress-bar {
         height: 100%;
         transition: width 0.6s ease;
-    }
-    
-    .payment-status-indicator {
-        font-size: 0.7em;
-        padding: 0.2em 0.4em;
-        border-radius: 0.2rem;
-        margin-left: 0.2rem;
-    }
-    
-    .remaining-amount {
-        font-size: 0.8em;
-        color: #856404;
-        background: #fff3cd;
-        padding: 0.2em 0.4em;
-        border-radius: 0.2rem;
-        margin-top: 0.2rem;
-        display: inline-block;
-    }
-    
-    .rejected-cancelled-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.1);
-        z-index: 1;
-        pointer-events: none;
-    }
-    
-    .status-modification-disabled {
-        opacity: 0.6;
-        pointer-events: none;
     }
 </style>
 {% endblock %}
@@ -265,19 +218,7 @@
                             <option value="urgent" {% if filters.priority == 'urgent' %}selected{% endif %}>Urgent</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label fw-semibold">Payment Status</label>
-                        <select name="payment_status" class="form-select">
-                            <option value="">All Payment Status</option>
-                            <option value="pending" {% if filters.payment_status == 'pending' %}selected{% endif %}>Pending</option>
-                            <option value="partial" {% if filters.payment_status == 'partial' %}selected{% endif %}>Partial</option>
-                            <option value="completed" {% if filters.payment_status == 'completed' %}selected{% endif %}>Completed</option>
-                            <option value="refunded" {% if filters.payment_status == 'refunded' %}selected{% endif %}>Refunded</option>
-                            <option value="awaiting_refund" {% if filters.payment_status == 'awaiting_refund' %}selected{% endif %}>Awaiting Refund</option>
-                            <option value="revoked" {% if filters.payment_status == 'revoked' %}selected{% endif %}>Revoked</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1">
+                    <div class="col-md-3">
                         <label class="form-label fw-semibold">Procedure</label>
                         <select name="procedure" class="form-select">
                             <option value="">All Procedures</option>
@@ -304,16 +245,12 @@
     <div class="row" id="requestsGrid">
         {% for request in requests %}
         <div class="col-xl-6 col-lg-12 mb-4">
-            <div class="card request-card h-100 shadow-sm position-relative {{ request.isRequestRejectedOrCancelled ? 'rejected-cancelled ' ~ request.status : '' }}">
-                {% if request.isRequestRejectedOrCancelled %}
-                    <div class="rejected-cancelled-overlay"></div>
-                {% endif %}
-                
-                {% if request.isOverdue and not request.isRequestRejectedOrCancelled %}
+            <div class="card request-card h-100 shadow-sm position-relative">
+                {% if request.isOverdue %}
                     <div class="overdue-indicator" title="Overdue"></div>
                 {% endif %}
                 
-                <div class="card-body p-4 position-relative" style="z-index: 2;">
+                <div class="card-body p-4">
                     <!-- Request Header -->
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div>
@@ -330,18 +267,10 @@
                             <span class="badge bg-{{ request.statusBadgeClass }} mb-1">{{ request.status|title }}</span>
                             <br>
                             <span class="badge bg-{{ request.priorityBadgeClass }} priority-badge">{{ request.priority|title }}</span>
-                            {% if request.isRequestRejectedOrCancelled %}
-                                <br>
-                                <small class="text-muted">
-                                    <i class="bi-{{ request.status == 'rejected' ? 'x-circle' : 'ban' }} me-1"></i>
-                                    {{ request.status|title }}
-                                </small>
-                            {% endif %}
                         </div>
                     </div>
                     
-                    <!-- Progress Bar (only for active requests) -->
-                    {% if not request.isRequestRejectedOrCancelled %}
+                    <!-- Progress Bar -->
                     <div class="mb-3">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <small class="text-muted">Progress</small>
@@ -352,7 +281,6 @@
                                  style="width: {{ request.progressPercentage }}%"></div>
                         </div>
                     </div>
-                    {% endif %}
                     
                     <!-- Request Details -->
                     <div class="row text-center mb-3">
@@ -370,37 +298,9 @@
                         </div>
                         <div class="col-4">
                             <div class="border rounded p-2">
-                                <div class="fw-bold text-{{ request.paymentStatusBadgeClass }}">
-                                    <span class="payment-status-indicator bg-{{ request.paymentStatusBadgeClass }} text-white">
-                                        {{ request.paymentStatusLabel }}
-                                    </span>
-                                </div>
+                                <div class="fw-bold text-{{ request.paymentStatusBadgeClass }}">{{ request.paymentStatus|title }}</div>
                                 <small class="text-muted">Payment</small>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Payment Information -->
-                    <div class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center text-small">
-                            <div>
-                                <span class="text-muted">
-                                    <i class="bi-currency-exchange me-1"></i>
-                                    Paid: {{ request.paidAmount|default(0)|number_format(0, '.', ',') }} XAF
-                                </span>
-                                {% if request.hasPartialPayment and not request.isRequestRejectedOrCancelled %}
-                                    <div class="remaining-amount">
-                                        <i class="bi-exclamation-triangle me-1"></i>
-                                        Remaining: {{ request.remainingAmount|number_format(0, '.', ',') }} XAF
-                                    </div>
-                                {% endif %}
-                            </div>
-                            {% if request.paymentStatus in ['awaiting_refund', 'refunded'] %}
-                                <div class="text-{{ request.paymentStatus == 'refunded' ? 'success' : 'warning' }}">
-                                    <i class="bi-{{ request.paymentStatus == 'refunded' ? 'check-circle' : 'clock' }} me-1"></i>
-                                    <small>{{ request.paymentStatusLabel }}</small>
-                                </div>
-                            {% endif %}
                         </div>
                     </div>
                     
@@ -410,7 +310,7 @@
                             <span class="text-muted">
                                 <i class="bi-calendar-plus me-1"></i>{{ request.submittedAt|date('M d, Y') }}
                             </span>
-                            {% if request.expectedCompletionAt and not request.isRequestRejectedOrCancelled %}
+                            {% if request.expectedCompletionAt %}
                             <span class="text-muted">
                                 <i class="bi-calendar-event me-1"></i>Due: {{ request.expectedCompletionAt|date('M d') }}
                             </span>
@@ -421,19 +321,11 @@
                     <!-- Actions -->
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="btn-group btn-group-sm">
-                            {% if not request.isRequestRejectedOrCancelled %}
                             <button class="btn btn-outline-{{ request.statusBadgeClass }} status-toggle"
                                     data-request-id="{{ request.id }}"
                                     title="Toggle Status">
                                 <i class="bi-arrow-repeat"></i>
                             </button>
-                            {% else %}
-                            <button class="btn btn-outline-secondary status-toggle"
-                                    data-request-id="{{ request.id }}"
-                                    title="Reactivate Request">
-                                <i class="bi-arrow-clockwise"></i>
-                            </button>
-                            {% endif %}
                             <div class="dropdown">
                                 <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi-three-dots"></i>
@@ -442,25 +334,10 @@
                                     <li><a class="dropdown-item" href="{{ path('admin_request_show', {'id': request.id}) }}">
                                         <i class="bi-eye me-2"></i>View Details
                                     </a></li>
-                                    {% if not request.isRequestRejectedOrCancelled or request.paymentStatus == 'awaiting_refund' %}
                                     <li><a class="dropdown-item" href="{{ path('admin_request_edit', {'id': request.id}) }}">
                                         <i class="bi-pencil me-2"></i>Edit
                                     </a></li>
-                                    {% endif %}
                                     <li><hr class="dropdown-divider"></li>
-                                    {% if not request.isRequestRejectedOrCancelled %}
-                                    <li><button class="dropdown-item text-danger status-change-btn" 
-                                               data-request-id="{{ request.id }}" 
-                                               data-new-status="rejected">
-                                        <i class="bi-x-circle me-2"></i>Reject
-                                    </button></li>
-                                    <li><button class="dropdown-item text-secondary status-change-btn" 
-                                               data-request-id="{{ request.id }}" 
-                                               data-new-status="cancelled">
-                                        <i class="bi-ban me-2"></i>Cancel
-                                    </button></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    {% endif %}
                                     <li><button class="dropdown-item text-danger delete-btn" 
                                                data-request-id="{{ request.id }}" 
                                                data-request-reference="{{ request.reference }}">
@@ -539,45 +416,11 @@
     </div>
 </div>
 
-<!-- Status Change Confirmation Modal -->
-<div class="modal fade" id="statusChangeModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-warning text-dark border-0">
-                <h5 class="modal-title">
-                    <i class="bi-exclamation-triangle me-2"></i>
-                    Confirm Status Change
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-4">
-                <div class="text-center mb-3">
-                    <i class="bi-arrow-repeat text-warning" style="font-size: 3rem;"></i>
-                </div>
-                <p class="text-center mb-3">Are you sure you want to change the status of request <strong id="statusChangeReference"></strong> to <strong id="newStatusLabel"></strong>?</p>
-                <div class="alert alert-info" id="statusChangeInfo">
-                    <i class="bi-info-circle me-2"></i>
-                    <span id="statusChangeMessage"></span>
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" id="confirmStatusChange">
-                    <i class="bi-check-circle me-1"></i>Confirm Change
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 {% endblock %}
 
 {% block javascripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    let currentRequestId = null;
-    let currentNewStatus = null;
-
     // Status toggle functionality
     document.querySelectorAll('.status-toggle').forEach(function(button) {
         button.addEventListener('click', function() {
@@ -604,59 +447,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Status change with confirmation
-    document.querySelectorAll('.status-change-btn').forEach(function(button) {
-        button.addEventListener('click', function() {
-            currentRequestId = this.dataset.requestId;
-            currentNewStatus = this.dataset.newStatus;
-            
-            const requestReference = this.closest('.request-card').querySelector('h5').textContent.trim();
-            
-            document.getElementById('statusChangeReference').textContent = requestReference;
-            document.getElementById('newStatusLabel').textContent = currentNewStatus.charAt(0).toUpperCase() + currentNewStatus.slice(1);
-            
-            // Set appropriate message based on the new status
-            const messageElement = document.getElementById('statusChangeMessage');
-            if (currentNewStatus === 'rejected') {
-                messageElement.innerHTML = 'This will reject the request. If payment was made, it will be marked for refund.';
-            } else if (currentNewStatus === 'cancelled') {
-                messageElement.innerHTML = 'This will cancel the request. If payment was made, it will be marked for refund.';
-            }
-            
-            new bootstrap.Modal(document.getElementById('statusChangeModal')).show();
-        });
-    });
-
-    // Confirm status change
-    document.getElementById('confirmStatusChange').addEventListener('click', function() {
-        if (currentRequestId && currentNewStatus) {
-            fetch(`/admin/request/${currentRequestId}/update-status`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({ status: currentNewStatus })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                } else {
-                    alert('Error updating status: ' + data.message);
-                }
-            })
-            .catch(error => {
-                alert('Error updating status');
-            })
-            .finally(() => {
-                bootstrap.Modal.getInstance(document.getElementById('statusChangeModal')).hide();
-                currentRequestId = null;
-                currentNewStatus = null;
-            });
-        }
-    });
-
     // Delete modal functionality
     document.querySelectorAll('.delete-btn').forEach(function(button) {
         button.addEventListener('click', function() {
@@ -677,20 +467,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('filterForm').submit();
         });
     });
-
-    // Search input enhancement
-    const searchInput = document.querySelector('input[name="search"]');
-    if (searchInput) {
-        let searchTimeout;
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                if (this.value.length >= 3 || this.value.length === 0) {
-                    document.getElementById('filterForm').submit();
-                }
-            }, 500);
-        });
-    }
 });
 </script>
 {% endblock %}
