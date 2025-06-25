@@ -58,11 +58,12 @@ class Request
     private ?string $totalCost = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
+    #[Assert\PositiveOrZero(message: 'Paid amount must be positive or zero')]
     private ?string $paidAmount = null;
 
     #[ORM\Column(length: 30, nullable: true)]
     #[Assert\Choice(
-        choices: ['pending', 'partial', 'completed', 'refunded'],
+        choices: ['pending', 'partial', 'completed', 'pending_refund', 'revoked', 'refunded'],
         message: 'Invalid payment status'
     )]
     private ?string $paymentStatus = 'pending';
@@ -103,11 +104,52 @@ class Request
     public function setUpdatedAtValue(): void
     {
         $this->updatedAt = new \DateTime();
+        $this->updatePaymentStatusBasedOnRequestStatus();
+    }
+
+    #[ORM\PrePersist]
+    public function setCreatedAtValue(): void
+    {
+        $this->updatePaymentStatusBasedOnRequestStatus();
     }
 
     private function generateReference(): void
     {
         $this->reference = 'REQ-' . date('Y') . '-' . strtoupper(bin2hex(random_bytes(4)));
+    }
+
+    /**
+     * Mise à jour automatique du statut de paiement selon le statut de la requête
+     */
+    private function updatePaymentStatusBasedOnRequestStatus(): void
+    {
+        if (in_array($this->status, ['rejected', 'cancelled'])) {
+            $paidAmount = (float) ($this->paidAmount ?? 0);
+            
+            if ($paidAmount > 0 && $this->paymentStatus !== 'refunded') {
+                $this->paymentStatus = 'pending_refund';
+            } elseif ($paidAmount === 0.0 && $this->paymentStatus !== 'refunded') {
+                $this->paymentStatus = 'revoked';
+            }
+        }
+    }
+
+    /**
+     * Validation du montant payé par rapport au coût total
+     */
+    #[Assert\Callback]
+    public function validatePaidAmount(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
+    {
+        if ($this->paidAmount !== null && $this->totalCost !== null) {
+            $paidAmount = (float) $this->paidAmount;
+            $totalCost = (float) $this->totalCost;
+            
+            if ($paidAmount > $totalCost) {
+                $context->buildViolation('Paid amount cannot exceed total cost')
+                    ->atPath('paidAmount')
+                    ->addViolation();
+            }
+        }
     }
 
     public function getId(): ?int
@@ -161,6 +203,9 @@ class Request
         if ($status === 'completed' && !$this->completedAt) {
             $this->completedAt = new \DateTime();
         }
+        
+        // Update payment status based on new request status
+        $this->updatePaymentStatusBasedOnRequestStatus();
         
         return $this;
     }
@@ -240,7 +285,31 @@ class Request
     public function setPaidAmount(?string $paidAmount): static
     {
         $this->paidAmount = $paidAmount;
+        $this->updatePaymentStatusBasedOnPaidAmount();
         return $this;
+    }
+
+    /**
+     * Mise à jour automatique du statut de paiement selon le montant payé
+     */
+    private function updatePaymentStatusBasedOnPaidAmount(): void
+    {
+        if (in_array($this->status, ['rejected', 'cancelled'])) {
+            return; // Ne pas mettre à jour si la requête est rejetée/annulée
+        }
+
+        if ($this->paidAmount !== null && $this->totalCost !== null) {
+            $paidAmount = (float) $this->paidAmount;
+            $totalCost = (float) $this->totalCost;
+            
+            if ($paidAmount === 0.0) {
+                $this->paymentStatus = 'pending';
+            } elseif ($paidAmount >= $totalCost) {
+                $this->paymentStatus = 'completed';
+            } else {
+                $this->paymentStatus = 'partial';
+            }
+        }
     }
 
     public function getPaymentStatus(): ?string
@@ -260,9 +329,89 @@ class Request
             'pending' => 'warning',
             'partial' => 'info',
             'completed' => 'success',
+            'pending_refund' => 'primary',
+            'revoked' => 'dark',
             'refunded' => 'secondary',
             default => 'warning'
         };
+    }
+
+    public function getPaymentStatusLabel(): string
+    {
+        return match($this->paymentStatus) {
+            'pending' => 'Pending',
+            'partial' => 'Partial',
+            'completed' => 'Completed',
+            'pending_refund' => 'Pending Refund',
+            'revoked' => 'Revoked',
+            'refunded' => 'Refunded',
+            default => 'Unknown'
+        };
+    }
+
+    /**
+     * Calcul du montant restant à payer
+     */
+    public function getRemainingAmount(): float
+    {
+        if ($this->totalCost === null) {
+            return 0.0;
+        }
+        
+        $totalCost = (float) $this->totalCost;
+        $paidAmount = (float) ($this->paidAmount ?? 0);
+        
+        return max(0, $totalCost - $paidAmount);
+    }
+
+    /**
+     * Pourcentage de paiement effectué
+     */
+    public function getPaymentProgressPercentage(): int
+    {
+        if ($this->totalCost === null || (float) $this->totalCost === 0.0) {
+            return 0;
+        }
+        
+        $totalCost = (float) $this->totalCost;
+        $paidAmount = (float) ($this->paidAmount ?? 0);
+        
+        return min(100, (int) round(($paidAmount / $totalCost) * 100));
+    }
+
+    /**
+     * Vérifie si les sections paiement/timeline doivent être désactivées
+     */
+    public function isPaymentTimelineSectionDisabled(): bool
+    {
+        return in_array($this->status, ['rejected', 'cancelled']);
+    }
+
+    /**
+     * Obtient les statuts de paiement valides selon le statut de la requête
+     */
+    public function getValidPaymentStatuses(): array
+    {
+        if (in_array($this->status, ['rejected', 'cancelled'])) {
+            $statuses = [];
+            
+            if ($this->paymentStatus === 'pending_refund') {
+                $statuses['pending_refund'] = 'Pending Refund';
+                $statuses['refunded'] = 'Refunded';
+            } elseif ($this->paymentStatus === 'revoked') {
+                $statuses['revoked'] = 'Revoked';
+            } elseif ($this->paymentStatus === 'refunded') {
+                $statuses['refunded'] = 'Refunded';
+            }
+            
+            return $statuses;
+        }
+        
+        return [
+            'pending' => 'Pending',
+            'partial' => 'Partial',
+            'completed' => 'Completed'
+        ];
     }
 
     public function getSubmittedAt(): ?\DateTimeInterface

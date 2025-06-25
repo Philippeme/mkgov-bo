@@ -72,6 +72,14 @@
                     </div>
                 </div>
 
+                <!-- Status Warning for Rejected/Cancelled -->
+                {% if request and request.isPaymentTimelineSectionDisabled %}
+                <div class="alert alert-warning mb-4">
+                    <i class="bi-exclamation-triangle me-2"></i>
+                    <strong>Note:</strong> Payment and timeline sections are disabled for rejected/cancelled requests.
+                </div>
+                {% endif %}
+
                 <!-- Comments -->
                 <div class="mb-4">
                     <label class="form-label fw-semibold text-dark mb-2">
@@ -109,7 +117,7 @@
         </div>
 
         <!-- Financial Information Card -->
-        <div class="card shadow-sm border-0 mb-4">
+        <div class="card shadow-sm border-0 mb-4" id="financialCard">
             <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
                 <div class="d-flex align-items-center">
                     <div class="icon-wrapper me-3">
@@ -138,25 +146,54 @@
                             <i class="bi-credit-card me-1 text-primary"></i>{{ form_label(form.paidAmount) }}
                         </label>
                         {{ form_widget(form.paidAmount, {
-                            'attr': {'class': 'form-control form-control-lg'}
+                            'attr': {'class': 'form-control form-control-lg payment-field'}
                         }) }}
                         {{ form_errors(form.paidAmount) }}
+                        <div class="form-text">
+                            <small class="text-muted" id="paidAmountHelp">
+                                <i class="bi-info-circle me-1"></i>
+                                Amount cannot exceed total cost
+                            </small>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold text-dark mb-2">
                             <i class="bi-check2-square me-1 text-primary"></i>{{ form_label(form.paymentStatus) }}
                         </label>
                         {{ form_widget(form.paymentStatus, {
-                            'attr': {'class': 'form-select form-select-lg'}
+                            'attr': {'class': 'form-select form-select-lg payment-field'}
                         }) }}
                         {{ form_errors(form.paymentStatus) }}
+                    </div>
+                </div>
+
+                <!-- Payment Progress Bar -->
+                <div class="payment-progress mb-3" id="paymentProgressContainer" style="display: none;">
+                    <label class="form-label fw-semibold text-dark mb-2">Payment Progress</label>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" id="paymentProgressBar" 
+                             style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted">Paid</small>
+                        <small class="text-muted" id="paymentPercentage">0%</small>
+                        <small class="text-muted">Total</small>
+                    </div>
+                </div>
+
+                <!-- Remaining Amount Display -->
+                <div class="remaining-amount" id="remainingAmountContainer" style="display: none;">
+                    <div class="alert alert-info">
+                        <i class="bi-info-circle me-2"></i>
+                        <strong>Remaining to pay:</strong> <span id="remainingAmount">0</span> XAF
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Timeline Information Card -->
-        <div class="card shadow-sm border-0 mb-4">
+        <div class="card shadow-sm border-0 mb-4" id="timelineCard">
             <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); color: #333 !important;">
                 <div class="d-flex align-items-center">
                     <div class="icon-wrapper me-3">
@@ -176,13 +213,13 @@
                             <i class="bi-calendar-plus me-1 text-primary"></i>{{ form_label(form.expectedCompletionAt) }}
                         </label>
                         {{ form_widget(form.expectedCompletionAt, {
-                            'attr': {'class': 'form-control form-control-lg'}
+                            'attr': {'class': 'form-control form-control-lg timeline-field'}
                         }) }}
                         {{ form_errors(form.expectedCompletionAt) }}
                         <div class="form-text">
                             <small class="text-muted">
                                 <i class="bi-info-circle me-1"></i>
-                                Will be calculated automatically based on procedure
+                                Calculated automatically based on procedure
                             </small>
                         </div>
                     </div>
@@ -191,7 +228,7 @@
                             <i class="bi-calendar-check me-1 text-primary"></i>{{ form_label(form.completedAt) }}
                         </label>
                         {{ form_widget(form.completedAt, {
-                            'attr': {'class': 'form-control form-control-lg'}
+                            'attr': {'class': 'form-control form-control-lg timeline-field'}
                         }) }}
                         {{ form_errors(form.completedAt) }}
                         <div class="form-text">
@@ -280,8 +317,8 @@
                             <div class="d-flex align-items-start">
                                 <i class="bi-check-circle text-success me-2 mt-1"></i>
                                 <div>
-                                    <strong class="text-dark">Required Fields</strong>
-                                    <p class="mb-0 small text-muted">Citizen and Procedure are mandatory fields</p>
+                                    <strong class="text-dark">Payment Validation</strong>
+                                    <p class="mb-0 small text-muted">Paid amount cannot exceed total cost</p>
                                 </div>
                             </div>
                         </div>
@@ -289,8 +326,8 @@
                             <div class="d-flex align-items-start">
                                 <i class="bi-check-circle text-success me-2 mt-1"></i>
                                 <div>
-                                    <strong class="text-dark">Auto-calculation</strong>
-                                    <p class="mb-0 small text-muted">Cost and dates are calculated automatically</p>
+                                    <strong class="text-dark">Status Dependencies</strong>
+                                    <p class="mb-0 small text-muted">Payment options change based on request status</p>
                                 </div>
                             </div>
                         </div>
@@ -298,8 +335,8 @@
                             <div class="d-flex align-items-start">
                                 <i class="bi-check-circle text-success me-2 mt-1"></i>
                                 <div>
-                                    <strong class="text-dark">Priority Levels</strong>
-                                    <p class="mb-0 small text-muted">Set appropriate priority for processing order</p>
+                                    <strong class="text-dark">Timeline Protection</strong>
+                                    <p class="mb-0 small text-muted">Expected completion is auto-calculated</p>
                                 </div>
                             </div>
                         </div>
@@ -307,8 +344,8 @@
                             <div class="d-flex align-items-start">
                                 <i class="bi-info-circle text-info me-2 mt-1"></i>
                                 <div>
-                                    <strong class="text-dark">Reference Number</strong>
-                                    <p class="mb-0 small text-muted">Will be generated automatically upon creation</p>
+                                    <strong class="text-dark">Disabled Sections</strong>
+                                    <p class="mb-0 small text-muted">Payment/Timeline disabled for rejected/cancelled</p>
                                 </div>
                             </div>
                         </div>
@@ -342,164 +379,225 @@
 
 {{ form_end(form) }}
 
-<style>
-/* Enhanced form styles */
-.icon-wrapper {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(10px);
-}
-
-.card {
-    border-radius: 15px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1) !important;
-}
-
-.card-header.bg-gradient {
-    border: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.card-header.bg-gradient::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100px;
-    background: rgba(255,255,255,0.1);
-    border-radius: 50%;
-    transform: translate(30px, -30px);
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-
-.guideline-item {
-    padding: 0.75rem;
-    border-radius: 8px;
-    background: rgba(102, 126, 234, 0.05);
-    border-left: 3px solid #667eea;
-    transition: all 0.3s ease;
-}
-
-.guideline-item:hover {
-    background: rgba(102, 126, 234, 0.1);
-    transform: translateX(3px);
-}
-
-.form-actions-buttons .btn {
-    min-width: 120px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .col-lg-4 .position-sticky {
-        position: relative !important;
-        top: auto !important;
-    }
-    
-    .form-actions-buttons {
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    
-    .form-actions-info {
-        text-align: center;
-        margin-bottom: 1rem;
-    }
-}
-
-/* Form validation styles */
-.is-invalid {
-    border-color: #dc3545;
-}
-
-.is-valid {
-    border-color: #28a745;
-}
-
-.invalid-feedback {
-    display: block;
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
-    color: #dc3545;
-}
-</style>
-
 <script>
-// Function to update cost and time when procedure changes
-function updateCostAndTime(procedureId) {
-    if (!procedureId) {
-        document.getElementById('procedureInfo').style.display = 'none';
-        return;
+// Enhanced form management with new features
+document.addEventListener('DOMContentLoaded', function() {
+    const statusField = document.querySelector('select[name="request[status]"]');
+    const paymentStatusField = document.querySelector('select[name="request[paymentStatus]"]');
+    const totalCostField = document.querySelector('input[name="request[totalCost]"]');
+    const paidAmountField = document.querySelector('input[name="request[paidAmount]"]');
+    const financialCard = document.getElementById('financialCard');
+    const timelineCard = document.getElementById('timelineCard');
+
+    // Initialize form state
+    updateFormState();
+    updatePaymentProgress();
+    updateRemainingAmount();
+
+    // Status change handler
+    if (statusField) {
+        statusField.addEventListener('change', function() {
+            updatePaymentStatusOptions(this.value);
+            updateFormState();
+        });
     }
-    
-    fetch(`/admin/request/api/procedure/${procedureId}/info`)
-        .then(response => response.json())
-        .then(data => {
-            // Update cost field
-            const costField = document.querySelector('input[name="request[totalCost]"]');
-            if (costField && data.cost) {
-                costField.value = data.cost;
-            }
-            
-            // Calculate expected completion date
-            if (data.processTime) {
-                const match = data.processTime.match(/(\d+)/);
-                const days = match ? parseInt(match[1]) : 7;
+
+    // Paid amount validation and auto-update
+    if (paidAmountField) {
+        paidAmountField.addEventListener('input', function() {
+            validateAndUpdatePaymentStatus(this);
+            updatePaymentProgress();
+            updateRemainingAmount();
+        });
+    }
+
+    function updateFormState() {
+        const status = statusField ? statusField.value : '';
+        const isDisabled = ['rejected', 'cancelled'].includes(status);
+        
+        // Toggle card visibility/styling
+        if (financialCard && timelineCard) {
+            if (isDisabled) {
+                financialCard.style.opacity = '0.6';
+                timelineCard.style.opacity = '0.6';
                 
-                const expectedDate = new Date();
-                expectedDate.setDate(expectedDate.getDate() + days);
+                // Disable payment and timeline fields
+                document.querySelectorAll('.payment-field, .timeline-field').forEach(field => {
+                    field.setAttribute('readonly', true);
+                    field.setAttribute('disabled', true);
+                });
+            } else {
+                financialCard.style.opacity = '1';
+                timelineCard.style.opacity = '1';
                 
-                const expectedField = document.querySelector('input[name="request[expectedCompletionAt]"]');
+                // Enable payment fields (but keep expectedCompletionAt readonly)
+                document.querySelectorAll('.payment-field').forEach(field => {
+                    field.removeAttribute('readonly');
+                    field.removeAttribute('disabled');
+                });
+                
+                // Keep expectedCompletionAt readonly always
+                const expectedField = document.querySelector('#request_expectedCompletionAt');
                 if (expectedField) {
-                    expectedField.value = expectedDate.toISOString().slice(0, 16);
+                    expectedField.setAttribute('readonly', true);
                 }
             }
-            
-            // Update procedure info card
-            const procedureDetails = document.getElementById('procedureDetails');
-            procedureDetails.innerHTML = `
-                <div class="mb-3">
-                    <label class="fw-bold text-muted small">Service Cost:</label>
-                    <div class="fs-5 text-success fw-bold">${data.cost ? Number(data.cost).toLocaleString() : '0'} XAF</div>
-                </div>
-                <div class="mb-3">
-                    <label class="fw-bold text-muted small">Processing Time:</label>
-                    <div class="text-info">${data.processTime || 'Not specified'}</div>
-                </div>
-                <div class="mb-0">
-                    <label class="fw-bold text-muted small">Family:</label>
-                    <div class="text-primary">${data.family || 'Not specified'}</div>
-                </div>
-            `;
-            
-            document.getElementById('procedureInfo').style.display = 'block';
-        })
-        .catch(error => {
-            console.error('Error fetching procedure info:', error);
-        });
-}
+        }
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Form validation
+    function updatePaymentStatusOptions(requestStatus) {
+        if (!paymentStatusField) return;
+        
+        const currentPaymentStatus = paymentStatusField.value;
+        
+        // Clear existing options
+        paymentStatusField.innerHTML = '';
+        
+        let options = {};
+        
+        if (['rejected', 'cancelled'].includes(requestStatus)) {
+            // Limited options for rejected/cancelled
+            if (currentPaymentStatus === 'pending_refund') {
+                options = {
+                    'pending_refund': 'Pending Refund',
+                    'refunded': 'Refunded'
+                };
+            } else if (currentPaymentStatus === 'revoked') {
+                options = {'revoked': 'Revoked'};
+            } else if (currentPaymentStatus === 'refunded') {
+                options = {'refunded': 'Refunded'};
+            } else {
+                // Determine based on paid amount
+                const paidAmount = parseFloat(paidAmountField?.value || 0);
+                if (paidAmount > 0) {
+                    options = {'pending_refund': 'Pending Refund'};
+                } else {
+                    options = {'revoked': 'Revoked'};
+                }
+            }
+        } else {
+            // Normal options for active requests
+            options = {
+                'pending': 'Pending',
+                'partial': 'Partial',
+                'completed': 'Completed'
+            };
+        }
+        
+        // Add options to select
+        Object.entries(options).forEach(([value, label]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            if (value === currentPaymentStatus) {
+                option.selected = true;
+            }
+            paymentStatusField.appendChild(option);
+        });
+    }
+
+    function validateAndUpdatePaymentStatus(paidAmountField) {
+        const paidAmount = parseFloat(paidAmountField.value || 0);
+        const totalCost = parseFloat(totalCostField?.value || 0);
+        const helpText = document.getElementById('paidAmountHelp');
+        
+        // Validation
+        if (paidAmount < 0) {
+            paidAmountField.setCustomValidity('Amount cannot be negative');
+            if (helpText) helpText.innerHTML = '<i class="bi-exclamation-triangle me-1 text-danger"></i>Amount cannot be negative';
+            return;
+        }
+        
+        if (paidAmount > totalCost && totalCost > 0) {
+            paidAmountField.setCustomValidity('Amount cannot exceed total cost');
+            if (helpText) helpText.innerHTML = '<i class="bi-exclamation-triangle me-1 text-danger"></i>Amount cannot exceed total cost';
+            return;
+        }
+        
+        paidAmountField.setCustomValidity('');
+        if (helpText) helpText.innerHTML = '<i class="bi-info-circle me-1"></i>Amount cannot exceed total cost';
+        
+        // Auto-update payment status (only for active requests)
+        const requestStatus = statusField?.value || '';
+        if (!['rejected', 'cancelled'].includes(requestStatus) && paymentStatusField) {
+            if (paidAmount === 0) {
+                paymentStatusField.value = 'pending';
+            } else if (paidAmount >= totalCost && totalCost > 0) {
+                paymentStatusField.value = 'completed';
+            } else if (paidAmount > 0) {
+                paymentStatusField.value = 'partial';
+            }
+        }
+    }
+
+    function updatePaymentProgress() {
+        const paidAmount = parseFloat(paidAmountField?.value || 0);
+        const totalCost = parseFloat(totalCostField?.value || 0);
+        const progressContainer = document.getElementById('paymentProgressContainer');
+        const progressBar = document.getElementById('paymentProgressBar');
+        const percentageText = document.getElementById('paymentPercentage');
+        
+        if (!progressContainer || !progressBar || !percentageText) return;
+        
+        if (totalCost > 0) {
+            const percentage = Math.min(100, Math.round((paidAmount / totalCost) * 100));
+            progressBar.style.width = percentage + '%';
+            progressBar.setAttribute('aria-valuenow', percentage);
+            percentageText.textContent = percentage + '%';
+            progressContainer.style.display = 'block';
+        } else {
+            progressContainer.style.display = 'none';
+        }
+    }
+
+    function updateRemainingAmount() {
+        const paidAmount = parseFloat(paidAmountField?.value || 0);
+        const totalCost = parseFloat(totalCostField?.value || 0);
+        const remainingContainer = document.getElementById('remainingAmountContainer');
+        const remainingAmountSpan = document.getElementById('remainingAmount');
+        const paymentStatus = paymentStatusField?.value || '';
+        
+        if (!remainingContainer || !remainingAmountSpan) return;
+        
+        if (paymentStatus === 'partial' && totalCost > paidAmount) {
+            const remaining = totalCost - paidAmount;
+            remainingAmountSpan.textContent = remaining.toLocaleString();
+            remainingContainer.style.display = 'block';
+        } else {
+            remainingContainer.style.display = 'none';
+        }
+    }
+
+    // Procedure change handler (existing functionality)
+    window.updateCostAndTime = function(procedureId) {
+        if (!procedureId) return;
+        
+        fetch(`/admin/request/api/procedure/${procedureId}/info`)
+            .then(response => response.json())
+            .then(data => {
+                if (totalCostField && data.cost) {
+                    totalCostField.value = data.cost;
+                    updatePaymentProgress();
+                    updateRemainingAmount();
+                }
+                
+                if (data.processTime) {
+                    const match = data.processTime.match(/(\d+)/);
+                    const days = match ? parseInt(match[1]) : 7;
+                    
+                    const expectedDate = new Date();
+                    expectedDate.setDate(expectedDate.getDate() + days);
+                    
+                    const expectedField = document.querySelector('input[name="request[expectedCompletionAt]"]');
+                    if (expectedField) {
+                        expectedField.value = expectedDate.toISOString().slice(0, 16);
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching procedure info:', error));
+    };
+
+    // Form submission validation
     document.getElementById('requestForm').addEventListener('submit', function(e) {
         const person = document.querySelector('select[name="request[person]"]').value;
         const procedure = document.querySelector('select[name="request[procedure]"]').value;
@@ -510,47 +608,5 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
     });
-
-    // Real-time validation feedback
-    document.querySelectorAll('select[required]').forEach(function(field) {
-        field.addEventListener('change', function() {
-            if (this.value === '') {
-                this.classList.add('is-invalid');
-                this.classList.remove('is-valid');
-            } else {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-            }
-        });
-    });
-
-    // Auto-calculate payment status based on amounts
-    const totalCostField = document.querySelector('input[name="request[totalCost]"]');
-    const paidAmountField = document.querySelector('input[name="request[paidAmount]"]');
-    const paymentStatusField = document.querySelector('select[name="request[paymentStatus]"]');
-    
-    function updatePaymentStatus() {
-        const totalCost = parseFloat(totalCostField.value) || 0;
-        const paidAmount = parseFloat(paidAmountField.value) || 0;
-        
-        if (paidAmount === 0) {
-            paymentStatusField.value = 'pending';
-        } else if (paidAmount >= totalCost) {
-            paymentStatusField.value = 'completed';
-        } else {
-            paymentStatusField.value = 'partial';
-        }
-    }
-    
-    if (totalCostField && paidAmountField && paymentStatusField) {
-        totalCostField.addEventListener('input', updatePaymentStatus);
-        paidAmountField.addEventListener('input', updatePaymentStatus);
-    }
-
-    // Initialize procedure info if procedure is already selected
-    const procedureField = document.querySelector('select[name="request[procedure]"]');
-    if (procedureField && procedureField.value) {
-        updateCostAndTime(procedureField.value);
-    }
 });
 </script>

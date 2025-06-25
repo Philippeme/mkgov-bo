@@ -69,11 +69,49 @@
         background-color: #e9ecef;
         border-radius: 2px;
         overflow: hidden;
+        margin-bottom: 3px;
     }
     
     .progress-bar {
         height: 100%;
         transition: width 0.6s ease;
+    }
+
+    /* NEW: Payment progress styles */
+    .payment-progress-container {
+        height: 3px;
+        background-color: #f8f9fa;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 2px;
+    }
+    
+    .payment-progress-bar {
+        height: 100%;
+        transition: width 0.6s ease;
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    }
+
+    .dual-progress {
+        margin-bottom: 8px;
+    }
+
+    .progress-labels {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.7rem;
+        color: #6c757d;
+        margin-top: 2px;
+    }
+
+    .disabled-card {
+        opacity: 0.7;
+        background: #f8f9fa;
+    }
+
+    .disabled-card .progress-bar-container,
+    .disabled-card .payment-progress-container {
+        display: none;
     }
 </style>
 {% endblock %}
@@ -245,7 +283,7 @@
     <div class="row" id="requestsGrid">
         {% for request in requests %}
         <div class="col-xl-6 col-lg-12 mb-4">
-            <div class="card request-card h-100 shadow-sm position-relative">
+            <div class="card request-card h-100 shadow-sm position-relative {{ request.isPaymentTimelineSectionDisabled ? 'disabled-card' : '' }}">
                 {% if request.isOverdue %}
                     <div class="overdue-indicator" title="Overdue"></div>
                 {% endif %}
@@ -270,16 +308,29 @@
                         </div>
                     </div>
                     
-                    <!-- Progress Bar -->
-                    <div class="mb-3">
+                    <!-- Enhanced Progress Section -->
+                    <div class="dual-progress mb-3">
+                        <!-- Request Progress Bar -->
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <small class="text-muted">Progress</small>
+                            <small class="text-muted">Request Progress</small>
                             <small class="text-muted">{{ request.progressPercentage }}%</small>
                         </div>
                         <div class="progress-bar-container">
                             <div class="progress-bar bg-{{ request.statusBadgeClass }}" 
                                  style="width: {{ request.progressPercentage }}%"></div>
                         </div>
+                        
+                        <!-- NEW: Payment Progress Bar (only for eligible statuses) -->
+                        {% if request.status in ['pending', 'processing', 'completed'] and not request.isPaymentTimelineSectionDisabled %}
+                        <div class="d-flex justify-content-between align-items-center mb-1 mt-2">
+                            <small class="text-muted">Payment Progress</small>
+                            <small class="text-muted">{{ request.paymentProgressPercentage }}%</small>
+                        </div>
+                        <div class="payment-progress-container">
+                            <div class="payment-progress-bar" 
+                                 style="width: {{ request.paymentProgressPercentage }}%"></div>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <!-- Request Details -->
@@ -298,11 +349,45 @@
                         </div>
                         <div class="col-4">
                             <div class="border rounded p-2">
-                                <div class="fw-bold text-{{ request.paymentStatusBadgeClass }}">{{ request.paymentStatus|title }}</div>
+                                <div class="fw-bold text-{{ request.paymentStatusBadgeClass }}">{{ request.paymentStatusLabel }}</div>
                                 <small class="text-muted">Payment</small>
                             </div>
                         </div>
                     </div>
+
+                    <!-- NEW: Payment Details for partial payments -->
+                    {% if request.paymentStatus == 'partial' %}
+                    <div class="alert alert-info py-2 mb-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small>
+                                <i class="bi-cash me-1"></i>
+                                Paid: {{ request.paidAmount|number_format(0, '.', ',') }} XAF
+                            </small>
+                            <small>
+                                <i class="bi-exclamation-circle me-1"></i>
+                                Remaining: {{ request.remainingAmount|number_format(0, '.', ',') }} XAF
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- NEW: Status indicators for rejected/cancelled -->
+                    {% if request.isPaymentTimelineSectionDisabled %}
+                    <div class="alert alert-warning py-2 mb-3">
+                        <small>
+                            <i class="bi-exclamation-triangle me-1"></i>
+                            {% if request.paymentStatus == 'pending_refund' %}
+                                Refund pending for this {{ request.status }} request
+                            {% elseif request.paymentStatus == 'revoked' %}
+                                Payment revoked for this {{ request.status }} request
+                            {% elseif request.paymentStatus == 'refunded' %}
+                                Payment refunded for this {{ request.status }} request
+                            {% else %}
+                                Request {{ request.status }} - Limited operations
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% endif %}
                     
                     <!-- Dates -->
                     <div class="mb-3">
@@ -310,7 +395,7 @@
                             <span class="text-muted">
                                 <i class="bi-calendar-plus me-1"></i>{{ request.submittedAt|date('M d, Y') }}
                             </span>
-                            {% if request.expectedCompletionAt %}
+                            {% if request.expectedCompletionAt and not request.isPaymentTimelineSectionDisabled %}
                             <span class="text-muted">
                                 <i class="bi-calendar-event me-1"></i>Due: {{ request.expectedCompletionAt|date('M d') }}
                             </span>
@@ -321,11 +406,13 @@
                     <!-- Actions -->
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="btn-group btn-group-sm">
+                            {% if not request.isPaymentTimelineSectionDisabled %}
                             <button class="btn btn-outline-{{ request.statusBadgeClass }} status-toggle"
                                     data-request-id="{{ request.id }}"
                                     title="Toggle Status">
                                 <i class="bi-arrow-repeat"></i>
                             </button>
+                            {% endif %}
                             <div class="dropdown">
                                 <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                                     <i class="bi-three-dots"></i>
@@ -337,6 +424,14 @@
                                     <li><a class="dropdown-item" href="{{ path('admin_request_edit', {'id': request.id}) }}">
                                         <i class="bi-pencil me-2"></i>Edit
                                     </a></li>
+                                    {% if request.paymentStatus == 'pending_refund' %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><button class="dropdown-item text-success process-refund-btn" 
+                                               data-request-id="{{ request.id }}" 
+                                               data-request-reference="{{ request.reference }}">
+                                        <i class="bi-check-circle me-2"></i>Process Refund
+                                    </button></li>
+                                    {% endif %}
                                     <li><hr class="dropdown-divider"></li>
                                     <li><button class="dropdown-item text-danger delete-btn" 
                                                data-request-id="{{ request.id }}" 
@@ -416,6 +511,37 @@
     </div>
 </div>
 
+<!-- NEW: Process Refund Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title">
+                    <i class="bi-check-circle me-2"></i>
+                    Process Refund
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <i class="bi-cash text-success" style="font-size: 3rem;"></i>
+                </div>
+                <p class="text-center mb-3">Process refund for request <strong id="refundRequestReference"></strong>?</p>
+                <div class="alert alert-info">
+                    <i class="bi-info-circle me-2"></i>
+                    This will change the payment status from "Pending Refund" to "Refunded".
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmRefund">
+                    <i class="bi-check-circle me-1"></i>Process Refund
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block javascripts %}
@@ -458,6 +584,45 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('deleteToken').value = '{{ csrf_token("delete") }}';
             
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+
+    // NEW: Process refund functionality
+    let currentRefundRequestId = null;
+    
+    document.querySelectorAll('.process-refund-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            currentRefundRequestId = this.dataset.requestId;
+            const requestReference = this.dataset.requestReference;
+            
+            document.getElementById('refundRequestReference').textContent = requestReference;
+            new bootstrap.Modal(document.getElementById('refundModal')).show();
+        });
+    });
+
+    document.getElementById('confirmRefund')?.addEventListener('click', function() {
+        if (!currentRefundRequestId) return;
+        
+        fetch(`/admin/request/${currentRefundRequestId}/process-refund`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error processing refund: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error processing refund');
+        })
+        .finally(() => {
+            bootstrap.Modal.getInstance(document.getElementById('refundModal')).hide();
         });
     });
 

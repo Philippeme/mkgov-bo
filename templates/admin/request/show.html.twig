@@ -65,6 +65,27 @@
         font-weight: bold;
         font-size: 1.2rem;
     }
+
+    /* NEW: Payment progress circle */
+    .payment-progress-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(#20c997 0deg, #20c997 {{ request.paymentProgressPercentage * 3.6 }}deg, #e9ecef {{ request.paymentProgressPercentage * 3.6 }}deg, #e9ecef 360deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .payment-progress-circle::before {
+        content: '';
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: white;
+        border-radius: 50%;
+    }
     
     .info-card {
         background: rgba(255,255,255,0.95);
@@ -111,6 +132,25 @@
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         border-left: 4px solid currentColor;
     }
+
+    .disabled-section {
+        opacity: 0.6;
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+    }
+
+    .disabled-section::before {
+        content: 'Section disabled for {{ request.status }} requests';
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: #6c757d;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        z-index: 1;
+    }
 </style>
 {% endblock %}
 
@@ -121,16 +161,19 @@
         {{ request.reference }}
     </h1>
     <div class="btn-group">
+        {% if not request.isPaymentTimelineSectionDisabled %}
         <a href="{{ path('admin_request_edit', {'id': request.id}) }}" class="btn btn-warning">
             <i class="bi-pencil me-2"></i>
             Edit
         </a>
+        {% endif %}
         <div class="dropdown">
             <button class="btn btn-outline-{{ request.statusBadgeClass }} dropdown-toggle" type="button" data-bs-toggle="dropdown">
                 <i class="bi-gear me-2"></i>
                 Actions
             </button>
             <ul class="dropdown-menu">
+                {% if not request.isPaymentTimelineSectionDisabled %}
                 <li><button class="dropdown-item status-update" data-status="pending">
                     <i class="bi-clock me-2"></i>Set Pending
                 </button></li>
@@ -141,9 +184,19 @@
                     <i class="bi-check-circle me-2"></i>Mark Completed
                 </button></li>
                 <li><hr class="dropdown-divider"></li>
+                {% endif %}
                 <li><button class="dropdown-item text-danger status-update" data-status="rejected">
                     <i class="bi-x-circle me-2"></i>Reject
                 </button></li>
+                <li><button class="dropdown-item text-secondary status-update" data-status="cancelled">
+                    <i class="bi-slash-circle me-2"></i>Cancel
+                </button></li>
+                {% if request.paymentStatus == 'pending_refund' %}
+                <li><hr class="dropdown-divider"></li>
+                <li><button class="dropdown-item text-success process-refund-btn">
+                    <i class="bi-check-circle me-2"></i>Process Refund
+                </button></li>
+                {% endif %}
             </ul>
         </div>
         <button type="button" 
@@ -173,10 +226,10 @@
     
     <div class="card-body p-4 position-relative">
         <div class="row align-items-center">
-            <div class="col-md-8">
+            <div class="col-md-6">
                 <h2 class="mb-3 fw-bold">{{ request.reference }}</h2>
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <p class="mb-2">
                             <i class="bi-person-fill me-2"></i>
                             <strong>Citizen:</strong> {{ request.person.fullName }}
@@ -185,17 +238,15 @@
                             <i class="bi-gear-fill me-2"></i>
                             <strong>Procedure:</strong> {{ request.procedure.pname }}
                         </p>
-                        <p class="mb-0">
+                        <p class="mb-2">
                             <i class="bi-diagram-3-fill me-2"></i>
                             <strong>Family:</strong> {{ request.procedure.family.fname }}
                         </p>
-                    </div>
-                    <div class="col-md-6">
                         <p class="mb-2">
                             <i class="bi-calendar-plus-fill me-2"></i>
                             <strong>Submitted:</strong> {{ request.submittedAt|date('F d, Y H:i') }}
                         </p>
-                        {% if request.expectedCompletionAt %}
+                        {% if request.expectedCompletionAt and not request.isPaymentTimelineSectionDisabled %}
                         <p class="mb-2">
                             <i class="bi-calendar-event-fill me-2"></i>
                             <strong>Expected:</strong> {{ request.expectedCompletionAt|date('F d, Y') }}
@@ -211,14 +262,31 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 text-center">
+            <div class="col-md-3 text-center">
                 <div class="progress-circle mx-auto mb-3">
                     <div class="progress-text">{{ request.progressPercentage }}%</div>
                 </div>
                 <span class="status-badge-large badge bg-{{ request.statusBadgeClass }}">
                     {{ request.status|title }}
                 </span>
+                <div class="mt-2">
+                    <small class="text-light opacity-75">Request Progress</small>
+                </div>
             </div>
+            <!-- NEW: Payment Progress Column -->
+            {% if request.status in ['pending', 'processing', 'completed'] and not request.isPaymentTimelineSectionDisabled %}
+            <div class="col-md-3 text-center">
+                <div class="payment-progress-circle mx-auto mb-3">
+                    <div class="progress-text text-success" style="font-size: 0.9rem;">{{ request.paymentProgressPercentage }}%</div>
+                </div>
+                <span class="badge bg-{{ request.paymentStatusBadgeClass }} fs-6">
+                    {{ request.paymentStatusLabel }}
+                </span>
+                <div class="mt-2">
+                    <small class="text-light opacity-75">Payment Progress</small>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -269,12 +337,18 @@
             </div>
         </div>
 
-        <!-- Financial Information -->
-        <div class="card shadow-sm mb-4">
+        <!-- Enhanced Financial Information -->
+        <div class="card shadow-sm mb-4 position-relative {{ request.isPaymentTimelineSectionDisabled ? 'disabled-section' : '' }}">
             <div class="card-header bg-success text-white">
                 <h5 class="card-title mb-0">
                     <i class="bi-currency-exchange me-2"></i>
                     Financial Information
+                    {% if request.isPaymentTimelineSectionDisabled %}
+                        <span class="badge bg-warning text-dark ms-2">
+                            <i class="bi-exclamation-triangle me-1"></i>
+                            {{ request.status|title }}
+                        </span>
+                    {% endif %}
                 </h5>
             </div>
             <div class="card-body">
@@ -294,27 +368,85 @@
                     <div class="col-md-4">
                         <div class="text-center p-3 border rounded">
                             <div class="fw-bold text-{{ request.paymentStatusBadgeClass }} fs-6">
-                                <span class="badge bg-{{ request.paymentStatusBadgeClass }}">{{ request.paymentStatus|title }}</span>
+                                <span class="badge bg-{{ request.paymentStatusBadgeClass }}">{{ request.paymentStatusLabel }}</span>
                             </div>
                             <small class="text-muted">Payment Status</small>
                         </div>
                     </div>
                 </div>
                 
+                <!-- NEW: Enhanced Payment Information -->
                 {% if request.totalCost and request.paidAmount %}
-                <div class="mt-3">
+                <div class="mt-4">
                     {% set balanceAmount = request.totalCost - request.paidAmount %}
-                    {% if balanceAmount > 0 %}
-                        <div class="alert alert-warning">
-                            <i class="bi-exclamation-triangle me-2"></i>
-                            Outstanding balance: <strong>{{ balanceAmount|number_format(0, '.', ',') }} XAF</strong>
+                    {% if request.paymentStatus == 'partial' and balanceAmount > 0 %}
+                        <div class="alert alert-info">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <i class="bi-info-circle me-2"></i>
+                                    <strong>Outstanding Balance:</strong> {{ balanceAmount|number_format(0, '.', ',') }} XAF
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            Payment Progress: {{ request.paymentProgressPercentage }}% completed
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <div class="payment-progress-circle">
+                                        <div class="progress-text text-info" style="font-size: 0.8rem;">{{ request.paymentProgressPercentage }}%</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    {% elseif balanceAmount == 0 %}
+                    {% elseif balanceAmount == 0 and request.paymentStatus == 'completed' %}
                         <div class="alert alert-success">
                             <i class="bi-check-circle me-2"></i>
                             Payment completed in full
                         </div>
+                    {% elseif request.paymentStatus == 'pending_refund' %}
+                        <div class="alert alert-warning">
+                            <i class="bi-clock me-2"></i>
+                            <strong>Refund Pending:</strong> {{ request.paidAmount|number_format(0, '.', ',') }} XAF
+                            <div class="mt-2">
+                                <small class="text-muted">
+                                    Request was {{ request.status }} and payment is awaiting refund processing.
+                                </small>
+                            </div>
+                        </div>
+                    {% elseif request.paymentStatus == 'revoked' %}
+                        <div class="alert alert-dark">
+                            <i class="bi-x-circle me-2"></i>
+                            <strong>Payment Revoked:</strong> No payment was made for this {{ request.status }} request.
+                        </div>
+                    {% elseif request.paymentStatus == 'refunded' %}
+                        <div class="alert alert-secondary">
+                            <i class="bi-arrow-clockwise me-2"></i>
+                            <strong>Payment Refunded:</strong> {{ request.paidAmount|number_format(0, '.', ',') }} XAF has been refunded.
+                        </div>
                     {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Payment Progress Bar for Active Requests -->
+                {% if not request.isPaymentTimelineSectionDisabled and request.totalCost %}
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted fw-bold">Payment Progress</small>
+                        <small class="text-muted">{{ request.paymentProgressPercentage }}%</small>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: {{ request.paymentProgressPercentage }}%" 
+                             aria-valuenow="{{ request.paymentProgressPercentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted">{{ request.paidAmount|default(0)|number_format(0, '.', ',') }} XAF</small>
+                        <small class="text-muted">{{ request.totalCost|number_format(0, '.', ',') }} XAF</small>
+                    </div>
                 </div>
                 {% endif %}
             </div>
@@ -437,12 +569,17 @@
             </div>
         </div>
 
-        <!-- Timeline -->
-        <div class="card info-card shadow-sm">
+        <!-- Enhanced Timeline -->
+        <div class="card info-card shadow-sm {{ request.isPaymentTimelineSectionDisabled ? 'disabled-section' : '' }} position-relative">
             <div class="card-header bg-light">
                 <h6 class="card-title mb-0">
                     <i class="bi-clock-history me-2"></i>
                     Request Timeline
+                    {% if request.isPaymentTimelineSectionDisabled %}
+                        <span class="badge bg-warning text-dark ms-2">
+                            {{ request.status|title }}
+                        </span>
+                    {% endif %}
                 </h6>
             </div>
             <div class="card-body">
@@ -474,7 +611,28 @@
                             <small class="text-muted">{{ request.completedAt|date('M d, Y H:i') }}</small>
                         </div>
                     </div>
-                    {% elseif request.expectedCompletionAt %}
+                    {% elseif request.status in ['rejected', 'cancelled'] %}
+                    <div class="timeline-item text-danger">
+                        <div class="timeline-marker bg-danger"></div>
+                        <div class="timeline-content border-danger">
+                            <div class="fw-bold">Request {{ request.status|title }}</div>
+                            <small class="text-muted">{{ request.updatedAt|date('M d, Y H:i') }}</small>
+                            {% if request.paymentStatus == 'pending_refund' %}
+                            <div class="small mt-1 text-warning">
+                                <i class="bi-clock me-1"></i>Refund pending
+                            </div>
+                            {% elseif request.paymentStatus == 'revoked' %}
+                            <div class="small mt-1 text-dark">
+                                <i class="bi-x-circle me-1"></i>Payment revoked
+                            </div>
+                            {% elseif request.paymentStatus == 'refunded' %}
+                            <div class="small mt-1 text-secondary">
+                                <i class="bi-check-circle me-1"></i>Payment refunded
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% elseif request.expectedCompletionAt and not request.isPaymentTimelineSectionDisabled %}
                     <div class="timeline-item text-warning">
                         <div class="timeline-marker bg-warning"></div>
                         <div class="timeline-content border-warning">
@@ -527,6 +685,37 @@
     </div>
 </div>
 
+<!-- Process Refund Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi-check-circle me-2"></i>
+                    Process Refund
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Process refund for request <strong>{{ request.reference }}</strong>?</p>
+                <div class="alert alert-info">
+                    <i class="bi-info-circle me-2"></i>
+                    This will change the payment status from "Pending Refund" to "Refunded".
+                    <div class="mt-2">
+                        <strong>Amount to refund:</strong> {{ request.paidAmount|number_format(0, '.', ',') }} XAF
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmRefund">
+                    <i class="bi-check-circle me-1"></i>Process Refund
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Status update functionality
@@ -561,6 +750,39 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.delete-btn').forEach(function(button) {
         button.addEventListener('click', function() {
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        });
+    });
+
+    // Process refund functionality
+    document.querySelectorAll('.process-refund-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            new bootstrap.Modal(document.getElementById('refundModal')).show();
+        });
+    });
+
+    document.getElementById('confirmRefund')?.addEventListener('click', function() {
+        const requestId = {{ request.id }};
+        
+        fetch(`/admin/request/${requestId}/process-refund`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error processing refund: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error processing refund');
+        })
+        .finally(() => {
+            bootstrap.Modal.getInstance(document.getElementById('refundModal')).hide();
         });
     });
 });

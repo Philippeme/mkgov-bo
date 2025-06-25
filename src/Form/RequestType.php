@@ -12,8 +12,9 @@ use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
-use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class RequestType extends AbstractType
@@ -70,7 +71,10 @@ class RequestType extends AbstractType
                     'Rejected' => 'rejected',
                     'Cancelled' => 'cancelled'
                 ],
-                'attr' => ['class' => 'form-select']
+                'attr' => [
+                    'class' => 'form-select',
+                    'onchange' => 'updatePaymentStatusOptions(this.value)'
+                ]
             ])
             ->add('priority', ChoiceType::class, [
                 'label' => 'Priority',
@@ -98,8 +102,11 @@ class RequestType extends AbstractType
                 'currency' => 'XAF',
                 'required' => false,
                 'attr' => [
-                    'class' => 'form-control',
-                    'placeholder' => '0.00'
+                    'class' => 'form-control payment-field',
+                    'placeholder' => '0.00',
+                    'min' => '0',
+                    'step' => '0.01',
+                    'oninput' => 'validateAndUpdatePaymentStatus(this)'
                 ]
             ])
             ->add('paymentStatus', ChoiceType::class, [
@@ -108,24 +115,33 @@ class RequestType extends AbstractType
                     'Pending' => 'pending',
                     'Partial' => 'partial',
                     'Completed' => 'completed',
+                    'Pending Refund' => 'pending_refund',
+                    'Revoked' => 'revoked',
                     'Refunded' => 'refunded'
                 ],
-                'attr' => ['class' => 'form-select']
+                'attr' => [
+                    'class' => 'form-select payment-field',
+                    'id' => 'request_paymentStatus'
+                ]
             ])
             ->add('expectedCompletionAt', DateTimeType::class, [
                 'label' => 'Expected Completion Date',
                 'widget' => 'single_text',
                 'required' => false,
                 'attr' => [
-                    'class' => 'form-control',
-                    'id' => 'request_expectedCompletionAt'
+                    'class' => 'form-control timeline-field',
+                    'id' => 'request_expectedCompletionAt',
+                    'readonly' => true,
+                    'title' => 'This field is automatically calculated based on the procedure'
                 ]
             ])
             ->add('completedAt', DateTimeType::class, [
                 'label' => 'Completion Date',
                 'widget' => 'single_text',
                 'required' => false,
-                'attr' => ['class' => 'form-control']
+                'attr' => [
+                    'class' => 'form-control timeline-field'
+                ]
             ])
             ->add('comments', TextareaType::class, [
                 'label' => 'Citizen Comments',
@@ -153,6 +169,69 @@ class RequestType extends AbstractType
                 ],
                 'data' => $options['data']->getDisplayOrder() ?: 0
             ]);
+
+        // Ajouter des événements pour gérer la logique dynamique
+        $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
+            $request = $event->getData();
+            $form = $event->getForm();
+
+            if ($request && $request->isPaymentTimelineSectionDisabled()) {
+                // Désactiver les champs de paiement et timeline pour les statuts rejected/cancelled
+                $this->disablePaymentTimelineFields($form);
+            }
+        });
+
+        $builder->addEventListener(FormEvents::PRE_SUBMIT, function (FormEvent $event) {
+            $data = $event->getData();
+            $form = $event->getForm();
+
+            if (isset($data['status']) && in_array($data['status'], ['rejected', 'cancelled'])) {
+                // Désactiver les champs de paiement et timeline
+                $this->disablePaymentTimelineFields($form);
+            }
+        });
+    }
+
+    private function disablePaymentTimelineFields($form): void
+    {
+        // Modifier les attributs des champs de paiement
+        $form->add('paidAmount', MoneyType::class, [
+            'label' => 'Paid Amount',
+            'currency' => 'XAF',
+            'required' => false,
+            'attr' => [
+                'class' => 'form-control payment-field',
+                'placeholder' => '0.00',
+                'readonly' => true,
+                'disabled' => true,
+                'title' => 'Payment section is disabled for rejected/cancelled requests'
+            ]
+        ]);
+
+        // Modifier les champs de timeline
+        $form->add('expectedCompletionAt', DateTimeType::class, [
+            'label' => 'Expected Completion Date',
+            'widget' => 'single_text',
+            'required' => false,
+            'attr' => [
+                'class' => 'form-control timeline-field',
+                'readonly' => true,
+                'disabled' => true,
+                'title' => 'Timeline section is disabled for rejected/cancelled requests'
+            ]
+        ]);
+
+        $form->add('completedAt', DateTimeType::class, [
+            'label' => 'Completion Date',
+            'widget' => 'single_text',
+            'required' => false,
+            'attr' => [
+                'class' => 'form-control timeline-field',
+                'readonly' => true,
+                'disabled' => true,
+                'title' => 'Timeline section is disabled for rejected/cancelled requests'
+            ]
+        ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
