@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\DocumentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: DocumentRepository::class)]
@@ -15,43 +16,54 @@ class Document
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['document:read', 'procedure:read', 'request:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Document name is required')]
     #[Assert\Length(max: 255)]
+    #[Groups(['document:read', 'document:write', 'procedure:read', 'request:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 20)]
     #[Assert\NotBlank(message: 'Document type is required')]
     #[Assert\Choice(choices: ['input', 'output'], message: 'Type must be either input or output')]
+    #[Groups(['document:read', 'document:write'])]
     private ?string $type = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['document:read', 'document:write'])]
     private ?string $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['document:read'])]
     private ?string $filePath = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['document:read'])]
     private ?string $fileSize = null;
 
     #[ORM\Column(length: 50, nullable: true)]
+    #[Groups(['document:read'])]
     private ?string $mimeType = null;
 
     #[ORM\ManyToOne(targetEntity: Procedure::class, inversedBy: 'documents')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['document:read', 'document:write'])]
     private ?Procedure $procedure = null;
 
     #[ORM\ManyToOne(targetEntity: Person::class, inversedBy: 'documents')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['document:read', 'document:write'])]
     private ?Person $person = null;
 
     #[ORM\ManyToOne(targetEntity: Request::class, inversedBy: 'documents')]
     #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['document:read', 'document:write'])]
     private ?Request $request = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Groups(['document:read', 'document:write'])]
     private ?\DateTimeInterface $expirationDate = null;
 
     #[ORM\Column(length: 50)]
@@ -59,24 +71,31 @@ class Document
         choices: ['draft', 'pending', 'approved', 'rejected', 'expired', 'active'], 
         message: 'Invalid status'
     )]
+    #[Groups(['document:read', 'document:write'])]
     private ?string $status = 'draft';
 
     #[ORM\Column]
+    #[Groups(['document:read', 'document:write'])]
     private ?bool $isRequired = false;
 
     #[ORM\Column]
+    #[Groups(['document:read', 'document:write'])]
     private ?bool $isActive = true;
 
     #[ORM\Column]
+    #[Groups(['document:read'])]
     private ?bool $isDeleted = false;
 
     #[ORM\Column]
+    #[Groups(['document:read', 'document:write'])]
     private ?int $displayOrder = 0;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['document:read'])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['document:read'])]
     private ?\DateTimeInterface $updatedAt = null;
 
     public function __construct()
@@ -303,9 +322,6 @@ class Document
         return $this;
     }
 
-    /**
-     * Get the main association (Request > Procedure > Person in priority order)
-     */
     public function getMainAssociation(): array
     {
         if ($this->request) {
@@ -347,17 +363,11 @@ class Document
         ];
     }
 
-    /**
-     * Check if document is associated with a specific request
-     */
     public function belongsToRequest(Request $request): bool
     {
         return $this->request && $this->request->getId() === $request->getId();
     }
 
-    /**
-     * Get context info for display
-     */
     public function getContextInfo(): string
     {
         $parts = [];

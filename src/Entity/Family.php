@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: FamilyRepository::class)]
@@ -17,30 +18,38 @@ class Family
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['family:read', 'procedure:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Family name is required')]
     #[Assert\Length(max: 255)]
+    #[Groups(['family:read', 'family:write', 'procedure:read'])]
     private ?string $fname = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Description is required')]
+    #[Groups(['family:read', 'family:write'])]
     private ?string $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['family:read', 'family:write'])]
     private ?string $icon = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['family:read'])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['family:read'])]
     private ?\DateTimeInterface $updatedAt = null;
 
     #[ORM\Column]
+    #[Groups(['family:read', 'family:write'])]
     private ?int $displayOrder = 0;
 
     #[ORM\Column]
+    #[Groups(['family:read', 'family:write'])]
     private ?bool $isActive = true;
 
     #[ORM\OneToMany(mappedBy: 'family', targetEntity: Procedure::class)]

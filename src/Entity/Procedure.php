@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: ProcedureRepository::class)]
@@ -17,58 +18,73 @@ class Procedure
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['procedure:read', 'request:read', 'document:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: 'Procedure name is required')]
     #[Assert\Length(max: 255)]
+    #[Groups(['procedure:read', 'procedure:write', 'request:read', 'document:read'])]
     private ?string $pname = null;
 
     #[ORM\ManyToOne(targetEntity: Family::class, inversedBy: 'procedures')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Family is required')]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?Family $family = null;
 
     #[ORM\ManyToOne(targetEntity: PublicEntity::class, inversedBy: 'procedures')]
     #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?PublicEntity $providingAdministration = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Short description is required')]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?string $shortdesc = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: 'Long description is required')]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?string $longdesc = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Process time is required')]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?string $processtime = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotBlank(message: 'Service cost is required')]
     #[Assert\PositiveOrZero(message: 'Service cost must be positive or zero')]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?string $servicecost = null; 
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?string $image = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?string $legaltext = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['procedure:read'])]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['procedure:read'])]
     private ?\DateTimeInterface $updatedAt = null;
 
     #[ORM\Column]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?bool $published = true;
 
     #[ORM\Column]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?int $displayOrder = 0;
 
     #[ORM\Column]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private ?bool $isActive = true;
 
     #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Document::class)]
@@ -77,9 +93,9 @@ class Procedure
     #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Request::class)]
     private Collection $requests;
 
-    // NEW: Relation bidirectionnelle avec Workflow
     #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Workflow::class, cascade: ['persist', 'remove'])]
     #[ORM\OrderBy(['stepOrder' => 'ASC', 'displayOrder' => 'ASC'])]
+    #[Groups(['procedure:read'])]
     private Collection $workflows;
 
     public function __construct()
@@ -277,7 +293,6 @@ class Procedure
     public function removeDocument(Document $document): static
     {
         if ($this->documents->removeElement($document)) {
-            // set the owning side to null (unless already changed)
             if ($document->getProcedure() === $this) {
                 $document->setProcedure(null);
             }
@@ -315,7 +330,6 @@ class Procedure
         return $this;
     }
 
-    // NEW: Workflow management methods
     /**
      * @return Collection<int, Workflow>
      */
@@ -385,7 +399,6 @@ class Procedure
         return $maxOrder + 1;
     }
 
-    // Existing methods...
     public function getActiveRequests(): Collection
     {
         return $this->requests->filter(fn(Request $req) => $req->isActive() && !$req->isDeleted());

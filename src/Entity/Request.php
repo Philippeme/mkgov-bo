@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: RequestRepository::class)]
@@ -17,19 +18,23 @@ class Request
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['request:read', 'document:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['request:read'])]
     private ?string $reference = null;
 
     #[ORM\ManyToOne(targetEntity: Procedure::class, inversedBy: 'requests')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Procedure is required')]
+    #[Groups(['request:read', 'request:write'])]
     private ?Procedure $procedure = null;
 
     #[ORM\ManyToOne(targetEntity: Person::class, inversedBy: 'requests')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Person is required')]
+    #[Groups(['request:read', 'request:write'])]
     private ?Person $person = null;
 
     #[ORM\Column(length: 50)]
@@ -38,6 +43,7 @@ class Request
         choices: ['pending', 'processing', 'completed', 'rejected', 'cancelled'],
         message: 'Invalid status'
     )]
+    #[Groups(['request:read', 'request:write'])]
     private ?string $status = 'pending';
 
     #[ORM\Column(length: 20)]
@@ -46,19 +52,24 @@ class Request
         choices: ['low', 'normal', 'high', 'urgent'],
         message: 'Invalid priority'
     )]
+    #[Groups(['request:read', 'request:write'])]
     private ?string $priority = 'normal';
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['request:read', 'request:write'])]
     private ?string $comments = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['request:read', 'request:write'])]
     private ?string $adminNotes = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
+    #[Groups(['request:read', 'request:write'])]
     private ?string $totalCost = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero(message: 'Paid amount must be positive or zero')]
+    #[Groups(['request:read', 'request:write'])]
     private ?string $paidAmount = null;
 
     #[ORM\Column(length: 30, nullable: true)]
@@ -66,27 +77,35 @@ class Request
         choices: ['pending', 'partial', 'completed', 'pending_refund', 'revoked', 'refunded'],
         message: 'Invalid payment status'
     )]
+    #[Groups(['request:read', 'request:write'])]
     private ?string $paymentStatus = 'pending';
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['request:read'])]
     private ?\DateTimeInterface $submittedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['request:read'])]
     private ?\DateTimeInterface $updatedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups(['request:read'])]
     private ?\DateTimeInterface $completedAt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    #[Groups(['request:read', 'request:write'])]
     private ?\DateTimeInterface $expectedCompletionAt = null;
 
     #[ORM\Column]
+    #[Groups(['request:read', 'request:write'])]
     private ?int $displayOrder = 0;
 
     #[ORM\Column]
+    #[Groups(['request:read', 'request:write'])]
     private ?bool $isActive = true;
 
     #[ORM\Column]
+    #[Groups(['request:read'])]
     private ?bool $isDeleted = false;
 
     #[ORM\OneToMany(mappedBy: 'request', targetEntity: Document::class)]
@@ -118,9 +137,6 @@ class Request
         $this->reference = 'REQ-' . date('Y') . '-' . strtoupper(bin2hex(random_bytes(4)));
     }
 
-    /**
-     * Mise à jour automatique du statut de paiement selon le statut de la requête
-     */
     private function updatePaymentStatusBasedOnRequestStatus(): void
     {
         if (in_array($this->status, ['rejected', 'cancelled'])) {
@@ -134,9 +150,6 @@ class Request
         }
     }
 
-    /**
-     * Validation du montant payé par rapport au coût total
-     */
     #[Assert\Callback]
     public function validatePaidAmount(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
     {
@@ -199,12 +212,10 @@ class Request
     {
         $this->status = $status;
         
-        // Auto-set completion date when status changes to completed
         if ($status === 'completed' && !$this->completedAt) {
             $this->completedAt = new \DateTime();
         }
         
-        // Update payment status based on new request status
         $this->updatePaymentStatusBasedOnRequestStatus();
         
         return $this;
@@ -289,13 +300,10 @@ class Request
         return $this;
     }
 
-    /**
-     * Mise à jour automatique du statut de paiement selon le montant payé
-     */
     private function updatePaymentStatusBasedOnPaidAmount(): void
     {
         if (in_array($this->status, ['rejected', 'cancelled'])) {
-            return; // Ne pas mettre à jour si la requête est rejetée/annulée
+            return;
         }
 
         if ($this->paidAmount !== null && $this->totalCost !== null) {
@@ -349,9 +357,6 @@ class Request
         };
     }
 
-    /**
-     * Calcul du montant restant à payer
-     */
     public function getRemainingAmount(): float
     {
         if ($this->totalCost === null) {
@@ -364,9 +369,6 @@ class Request
         return max(0, $totalCost - $paidAmount);
     }
 
-    /**
-     * Pourcentage de paiement effectué
-     */
     public function getPaymentProgressPercentage(): int
     {
         if ($this->totalCost === null || (float) $this->totalCost === 0.0) {
@@ -379,17 +381,11 @@ class Request
         return min(100, (int) round(($paidAmount / $totalCost) * 100));
     }
 
-    /**
-     * Vérifie si les sections paiement/timeline doivent être désactivées
-     */
     public function isPaymentTimelineSectionDisabled(): bool
     {
         return in_array($this->status, ['rejected', 'cancelled']);
     }
 
-    /**
-     * Obtient les statuts de paiement valides selon le statut de la requête
-     */
     public function getValidPaymentStatuses(): array
     {
         if (in_array($this->status, ['rejected', 'cancelled'])) {
