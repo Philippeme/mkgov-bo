@@ -1,0 +1,588 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <!-- Leaflet CSS pour la carte -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        .dashboard-header {
+            background: linear-gradient(135deg, #1a4b8f 0%, #2c5282 50%, #3182ce 100%);
+            color: white;
+            padding: 2rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border: none;
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stats-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-label {
+            font-size: 0.95rem;
+            color: #6c757d;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-icon {
+            font-size: 2.5rem;
+            opacity: 0.7;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            height: 100%;
+            position: relative;
+        }
+
+        .chart-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-controls {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* Enhanced Map Styles */
+        .map-container {
+            height: 500px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        #guineaBissauMap {
+            height: 100%;
+            width: 100%;
+            border-radius: 12px;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.95);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 0.85rem;
+        }
+
+        .auto-refresh-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1001;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .filter-badge {
+            background: #e2e8f0;
+            color: #2d3748;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .filter-badge .remove {
+            cursor: pointer;
+            color: #e53e3e;
+            font-weight: bold;
+        }
+
+        #lineChart, #donutChart, #barChart {
+            max-height: 300px;
+        }
+
+        .chart-legend {
+            margin-top: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .export-dropdown {
+            position: relative;
+        }
+
+        .quick-action-export {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 1rem;
+            border: 2px dashed #1a4b8f;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #1a4b8f;
+            transition: all 0.3s ease;
+            background: #fff;
+            height: 100px;
+            cursor: pointer;
+        }
+
+        .quick-action-export:hover {
+            border-color: #f18221;
+            color: #f18221;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+
+        .quick-action-export i {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .quick-action-export span {
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* Custom popup styles for map */
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 12px 16px;
+            font-size: 0.9rem;
+        }
+
+        .popup-content strong {
+            color: #1a4b8f;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-header {
+                padding: 1rem;
+                margin: -2rem -1rem 1rem -1rem;
+            }
+            
+            .stats-value {
+                font-size: 2rem;
+            }
+            
+            .chart-container {
+                padding: 1rem;
+            }
+
+            .map-container {
+                height: 400px;
+            }
+
+            .map-controls {
+                top: 10px;
+                right: 10px;
+                padding: 8px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="mb-2">
+                <i class="bi-speedometer2 me-3"></i>
+                MK Gov Dashboard
+            </h1>
+            <p class="mb-0 opacity-75">Administrative portal overview and statistics</p>
+        </div>
+        <div class="text-end">
+            <!-- Auto-refresh Toggle -->
+            <div class="form-check form-switch mt-2">
+                <input class="form-check-input" type="checkbox" id="autoRefreshToggle">
+                <label class="form-check-label small text-white" for="autoRefreshToggle">
+                    Auto-refresh: <span id="autoRefreshStatus">OFF</span>
+                </label>
+            </div>
+            <div class="h4 mb-1">Welcome!</div>
+            <div class="small opacity-75">Admin,</div>
+            
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-primary" id="stat-institutions">{{ stats.institutions }}</div>
+                    <div class="stats-label">Number of Institutions</div>
+                </div>
+                <i class="bi-building stats-icon text-primary"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-success" id="stat-procedures">{{ stats.procedures }}</div>
+                    <div class="stats-label">Number of Procedures</div>
+                </div>
+                <i class="bi-gear stats-icon text-success"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-info" id="stat-families">{{ stats.families }}</div>
+                    <div class="stats-label">Procedure Families</div>
+                </div>
+                <i class="bi-collection stats-icon text-info"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-warning" id="stat-requests">{{ stats.requests }}</div>
+                    <div class="stats-label">Number of Requests</div>
+                </div>
+                <i class="bi-journal-text stats-icon text-warning"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-danger" id="stat-pending-admin">{{ stats.pending_admin }}</div>
+                    <div class="stats-label">Pending (Administration)</div>
+                </div>
+                <i class="bi-clock-history stats-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-2 col-md-4 col-sm-6">
+        <div class="stats-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stats-value text-secondary" id="stat-pending-requestor">{{ stats.pending_requestor }}</div>
+                    <div class="stats-label">Pending (Requestor)</div>
+                </div>
+                <i class="bi-person-clock stats-icon text-secondary"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Requests per Family (Donut Chart) -->
+    <div class="col-lg-4 col-md-6">
+        <div class="chart-container">
+            <div class="chart-title">
+                <i class="bi-pie-chart text-primary"></i>
+                Requests per Family
+            </div>
+            <canvas id="donutChart" width="300" height="300"></canvas>
+            <div class="loading-spinner" id="donutLoading">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Requests per Gender (Bar Chart) -->
+    <div class="col-lg-4 col-md-6">
+        <div class="chart-container">
+            <div class="chart-title">
+                <i class="bi-bar-chart text-success"></i>
+                Requests per Gender
+            </div>
+            <canvas id="barChart" width="300" height="300"></canvas>
+            <div class="loading-spinner" id="barLoading">
+                <div class="spinner-border text-success" role="status"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Requests over 12 months (Line Chart) -->
+    <div class="col-lg-4 col-md-12">
+        <div class="chart-container">
+            <div class="chart-title">
+                <i class="bi-graph-up text-info"></i>
+                Requests over Last 12 Months
+            </div>
+            <canvas id="lineChart" width="400" height="300"></canvas>
+            <div class="loading-spinner" id="lineLoading">
+                <div class="spinner-border text-info" role="status"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Controls -->
+<div class="filter-controls">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label for="regionFilter" class="form-label fw-bold small">Region</label>
+                    <select id="regionFilter" class="form-select form-select-sm">
+                        <option value="">All Regions</option>
+                        <option value="Bissau">Bissau</option>
+                        <option value="Biombo">Biombo</option>
+                        <option value="Bolama">Bolama</option>
+                        <option value="Cacheu">Cacheu</option>
+                        <option value="Gabu">Gabu</option>
+                        <option value="Oio">Oio</option>
+                        <option value="Quinara">Quinara</option>
+                        <option value="Tombali">Tombali</option>
+                        <option value="Bafata">Bafata</option>
+                        <option value="Setor Autônomo de Bissau">Setor Autônomo de Bissau</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="familyFilter" class="form-label fw-bold small">Service Family</label>
+                    <select id="familyFilter" class="form-select form-select-sm">
+                        <option value="">All Families</option>
+                        <option value="1">Police & Justice</option>
+                        <option value="2">Family</option>
+                        <option value="3">Transport</option>
+                        <option value="4">Education</option>
+                        <option value="5">Enterprises</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="requestFilter" class="form-label fw-bold small">Request Type</label>
+                    <select id="requestFilter" class="form-select form-select-sm">
+                        <option value="">All Requests</option>
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="yearFilter" class="form-label fw-bold small">Year</label>
+                    <select id="yearFilter" class="form-select form-select-sm">
+                        <option value="">All Years</option>
+                        <option value="2024">2024</option>
+                        <option value="2025" selected>2025</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="dropdown d-inline-block me-2">
+                <button class="btn btn-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi-download me-2"></i>Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" onclick="exportDashboard('json')">
+                        <i class="bi-filetype-json me-2"></i>JSON
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportDashboard('excel')">
+                        <i class="bi-file-excel me-2"></i>Excel
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" onclick="exportDashboard('pdf')">
+                        <i class="bi-file-pdf me-2"></i>PDF Report
+                    </a></li>
+                </ul>
+            </div>
+            <button type="button" class="btn btn-primary btn-sm" onclick="applyFilters()">
+                <i class="bi-funnel me-2"></i>Apply Filters
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="clearFilters()">
+                <i class="bi-x-circle me-2"></i>Clear
+            </button>
+        </div>
+    </div>
+    
+    <!-- Active Filters -->
+    <div id="activeFilters" class="mt-3" style="display: none;">
+        <span class="small text-muted me-2">Active filters:</span>
+        <div class="d-inline-block" id="filterBadges"></div>
+    </div>
+</div>
+
+<!-- Enhanced Map Section with Real Guinea-Bissau Map -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="chart-container">
+            <div class="chart-title">
+                <i class="bi-geo-alt text-warning"></i>
+                Requests by Region - Guinea-Bissau
+            </div>
+            
+            <div class="map-container">
+                <div id="guineaBissauMap"></div>
+                <div class="map-controls">
+                    <div><strong>Guinea-Bissau</strong></div>
+                    <div class="small text-muted mt-1">
+                        <i class="bi-info-circle me-1"></i>Click markers for details
+                    </div>
+                    <div class="small text-muted mt-1">
+                        <i class="bi-zoom-in me-1"></i>Scroll to zoom
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Widgets -->
+{% include 'admin/dashboard/_widgets.html.twig' %}
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet JS pour la carte -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Dashboard data for JavaScript -->
+    <script>
+        window.dashboardData = {
+            requestsByFamily: {{ requestsByFamily|json_encode|raw }},
+            monthlyRequests: {{ monthlyRequests|json_encode|raw }},
+            requestsByGender: {{ requestsByGender|json_encode|raw }},
+            requestsByLocation: {{ requestsByLocation|json_encode|raw }},
+            stats: {{ stats|json_encode|raw }}
+        };
+    </script>
+    
+    <!-- Enhanced Dashboard JavaScript -->
+    <script src="{{ asset('js/dashboard.js') }}"></script>
+    
+    <!-- Export and Map Functions -->
+    <script>
+        // Export functions
+        function exportDashboard(format) {
+            const filters = getCurrentFilters();
+            const params = new URLSearchParams(filters);
+            params.set('format', format);
+            
+            // Show loading indicator
+            const loadingMsg = showToast('info', `Preparing ${format.toUpperCase()} export...`);
+            
+            window.location.href = `{{ path('admin_dashboard_export') }}?${params.toString()}`;
+            
+            // Hide loading after delay
+            setTimeout(() => {
+                hideToast(loadingMsg);
+                showToast('success', `${format.toUpperCase()} export completed!`);
+            }, 2000);
+        }
+        
+        function getCurrentFilters() {
+            return {
+                region: document.getElementById('regionFilter').value,
+                family: document.getElementById('familyFilter').value,
+                request: document.getElementById('requestFilter').value,
+                year: document.getElementById('yearFilter').value
+            };
+        }
+        
+        // Toast notification system
+        function showToast(type, message) {
+            const toast = document.createElement('div');
+            toast.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 1060; min-width: 300px;';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(toast);
+            return toast;
+        }
+        
+        function hideToast(toast) {
+            if (toast && toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }
+        
+        // Legacy function wrappers
+        function applyFilters() {
+            if (window.mkgovDashboard) {
+                window.mkgovDashboard.applyFilters();
+            }
+        }
+        
+        function clearFilters() {
+            if (window.mkgovDashboard) {
+                window.mkgovDashboard.clearFilters();
+            }
+        }
+    </script>
+{% endblock %}

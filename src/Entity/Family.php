@@ -53,6 +53,7 @@ class Family
     private ?bool $isActive = true;
 
     #[ORM\OneToMany(mappedBy: 'family', targetEntity: Procedure::class)]
+    #[Groups(['family:read', 'family:write'])]
     private Collection $procedures;
 
     public function __construct()

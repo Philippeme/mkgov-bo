@@ -32,7 +32,7 @@ class Document
     private ?string $type = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
-    #[Groups(['document:read', 'document:write'])]
+    #[Groups(['document:read', 'document:write', 'procedure:read', 'request:read'])]
     private ?string $description = null;
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -49,7 +49,6 @@ class Document
 
     #[ORM\ManyToOne(targetEntity: Procedure::class, inversedBy: 'documents')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['document:read', 'document:write'])]
     private ?Procedure $procedure = null;
 
     #[ORM\ManyToOne(targetEntity: Person::class, inversedBy: 'documents')]
@@ -75,7 +74,7 @@ class Document
     private ?string $status = 'draft';
 
     #[ORM\Column]
-    #[Groups(['document:read', 'document:write'])]
+    #[Groups(['document:read', 'document:write', 'procedure:read', 'request:read'])]
     private ?bool $isRequired = false;
 
     #[ORM\Column]

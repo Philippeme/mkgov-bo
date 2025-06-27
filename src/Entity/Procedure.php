@@ -30,7 +30,6 @@ class Procedure
     #[ORM\ManyToOne(targetEntity: Family::class, inversedBy: 'procedures')]
     #[ORM\JoinColumn(nullable: false)]
     #[Assert\NotNull(message: 'Family is required')]
-    #[Groups(['procedure:read', 'procedure:write'])]
     private ?Family $family = null;
 
     #[ORM\ManyToOne(targetEntity: PublicEntity::class, inversedBy: 'procedures')]
@@ -88,6 +87,7 @@ class Procedure
     private ?bool $isActive = true;
 
     #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Document::class)]
+    #[Groups(['procedure:read', 'procedure:write'])]
     private Collection $documents;
 
     #[ORM\OneToMany(mappedBy: 'procedure', targetEntity: Request::class)]
