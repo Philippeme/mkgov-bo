@@ -46,12 +46,6 @@ services:
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
-
-    # Dashboard Controller - Configuration explicite pour injection du service
-    App\Controller\Admin\DashboardController:
-        arguments:
-            $dashboardService: '@App\Service\DashboardService'
-        tags: ['controller.service_arguments']
         
 
     # CORRECTION PRINCIPALE: Désactivation complète de l'extracteur PHPStan

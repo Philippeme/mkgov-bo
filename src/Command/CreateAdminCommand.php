@@ -14,7 +14,7 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 #[AsCommand(
     name: 'app:create-admin',
-    description: 'Create admin user with correct password hash',
+    description: 'Créer un utilisateur admin avec les rôles appropriés',
 )]
 class CreateAdminCommand extends Command
 {
@@ -30,71 +30,112 @@ class CreateAdminCommand extends Command
         $io = new SymfonyStyle($input, $output);
 
         try {
-            // Check if admin user already exists by username OR email
-            $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['username' => 'admin']);
-            $existingUserByEmail = $this->entityManager->getRepository(User::class)->findOneBy(['email' => 'admin@mkgov.cm']);
+            // Créer les rôles par défaut
+            $this->createDefaultRoles($io);
             
-            if ($existingUser || $existingUserByEmail) {
-                $user = $existingUser ?: $existingUserByEmail;
-                $io->warning('Admin user already exists. Updating...');
-                
-                // Update all fields
-                $user->setUsername('admin');
-                $user->setEmail('admin@mkgov.cm');
-                $user->setFirstName('System');
-                $user->setLastName('Administrator');
-                $user->setIsActive(true);
-                $user->setIsVerified(true);
-            } else {
-                $io->info('Creating new admin user...');
-                $user = new User();
-                $user->setUsername('admin');
-                $user->setEmail('admin@mkgov.cm');
-                $user->setFirstName('System');
-                $user->setLastName('Administrator');
-                $user->setIsActive(true);
-                $user->setIsVerified(true);
-                $user->setDisplayOrder(1);
-                $this->entityManager->persist($user);
-            }
-
-            // Hash the password correctly
-            $hashedPassword = $this->passwordHasher->hashPassword($user, 'admin123');
-            $user->setPassword($hashedPassword);
-
-            // Find or create SUPER_ADMIN role
-            $superAdminRole = $this->entityManager->getRepository(Role::class)->findOneBy(['name' => 'ROLE_SUPER_ADMIN']);
-            
-            if (!$superAdminRole) {
-                $io->info('Creating ROLE_SUPER_ADMIN...');
-                $superAdminRole = new Role();
-                $superAdminRole->setName('ROLE_SUPER_ADMIN');
-                $superAdminRole->setDisplayName('Super Administrator');
-                $superAdminRole->setDescription('Full system access and administration rights');
-                $superAdminRole->setIsSystem(true);
-                $superAdminRole->setIsActive(true);
-                $superAdminRole->setDisplayOrder(1);
-                $this->entityManager->persist($superAdminRole);
-            }
-
-            // Assign role to user
-            $user->addRole($superAdminRole);
-
-            if (!$existingUser) {
-                $this->entityManager->persist($user);
-            }
+            // Créer l'utilisateur admin
+            $this->createAdminUser($io);
 
             $this->entityManager->flush();
 
-            $io->success('Admin user created/updated successfully!');
-            $io->info('Username: admin');
-            $io->info('Password: admin123');
-            $io->info('You can now login to the admin panel.');
+            $io->success('Utilisateur admin créé avec succès !');
+            $io->info('Nom d\'utilisateur: admin');
+            $io->info('Mot de passe: admin123');
+            $io->info('Email: admin@mkba.cm');
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
-            $io->error('Error creating admin user: ' . $e->getMessage());
+            $io->error('Erreur lors de la création de l\'admin: ' . $e->getMessage());
             return Command::FAILURE;
+        }
+    }
+
+    private function createDefaultRoles(SymfonyStyle $io): void
+    {
+        $defaultRoles = [
+            [
+                'name' => 'ROLE_SUPER_ADMIN',
+                'displayName' => 'Super Administrateur',
+                'description' => 'Accès complet au système',
+                'isSystem' => true,
+                'displayOrder' => 1
+            ],
+            [
+                'name' => 'ROLE_ADMIN',
+                'displayName' => 'Administrateur',
+                'description' => 'Accès administratif général',
+                'isSystem' => true,
+                'displayOrder' => 2
+            ],
+            [
+                'name' => 'ROLE_MANAGER',
+                'displayName' => 'Gestionnaire',
+                'description' => 'Gestion des contenus et utilisateurs',
+                'isSystem' => false,
+                'displayOrder' => 3
+            ],
+            [
+                'name' => 'ROLE_USER',
+                'displayName' => 'Utilisateur',
+                'description' => 'Utilisateur standard',
+                'isSystem' => true,
+                'displayOrder' => 4
+            ]
+        ];
+
+        foreach ($defaultRoles as $roleData) {
+            $existingRole = $this->entityManager->getRepository(Role::class)
+                ->findOneBy(['name' => $roleData['name']]);
+
+            if (!$existingRole) {
+                $role = new Role();
+                $role->setName($roleData['name']);
+                $role->setDisplayName($roleData['displayName']);
+                $role->setDescription($roleData['description']);
+                $role->setIsSystem($roleData['isSystem']);
+                $role->setIsActive(true);
+                $role->setDisplayOrder($roleData['displayOrder']);
+
+                $this->entityManager->persist($role);
+                $io->info('Rôle créé: ' . $roleData['displayName']);
+            }
+        }
+    }
+
+    private function createAdminUser(SymfonyStyle $io): void
+    {
+        // Vérifier si admin existe déjà
+        $existingUser = $this->entityManager->getRepository(User::class)
+            ->findOneBy(['username' => 'admin']);
+
+        if ($existingUser) {
+            $io->warning('L\'utilisateur admin existe déjà. Mise à jour...');
+            $user = $existingUser;
+        } else {
+            $io->info('Création d\'un nouvel utilisateur admin...');
+            $user = new User();
+            $user->setUsername('admin');
+            $user->setDisplayOrder(1);
+            $this->entityManager->persist($user);
+        }
+
+        // Configurer l'utilisateur
+        $user->setEmail('admin@mkba.cm');
+        $user->setFirstName('System');
+        $user->setLastName('Administrator');
+        $user->setIsActive(true);
+        $user->setIsVerified(true);
+
+        // Hasher le mot de passe
+        $hashedPassword = $this->passwordHasher->hashPassword($user, 'admin123');
+        $user->setPassword($hashedPassword);
+
+        // Assigner le rôle SUPER_ADMIN
+        $superAdminRole = $this->entityManager->getRepository(Role::class)
+            ->findOneBy(['name' => 'ROLE_SUPER_ADMIN']);
+
+        if ($superAdminRole) {
+            $user->addRole($superAdminRole);
         }
     }
 }

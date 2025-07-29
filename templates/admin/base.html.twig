@@ -1,32 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Administration{% endblock %} - MK Gov</title>
+    <title>{% block title %}Administration{% endblock %} - MK BA</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet"href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"/>
 
-    
     <style>
         :root {
-            --primary-color: #1a4b8f;
-            --secondary-color: #f18221;
-            --success-color: #28a745;
-            --danger-color: #dc3545;
-            --warning-color: #ffc107;
+            /* MK BA Color Palette */
+            --mk-primary: #6d5192;
+            --mk-secondary: #8e32e9;
+            --mk-accent: #a855f7;
+            --mk-dark: #1c273c;
+            --mk-darker: #0f172a;
+            --mk-gray: #6c7293;
+            --mk-gray-light: #9ca3af;
+            --mk-light: #f8f9fa;
+            --mk-lighter: #ffffff;
+            --mk-success: #10b981;
+            --mk-warning: #f59e0b;
+            --mk-danger: #ef4444;
+            --mk-info: #3b82f6;
+            
+            /* Gradients */
+            --mk-gradient-primary: linear-gradient(135deg, #6d5192 0%, #8e32e9 100%);
+            --mk-gradient-dark: linear-gradient(180deg, #1c273c 0%, #0f172a 100%);
+            --mk-gradient-light: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            
+            /* Sidebar */
             --sidebar-width: 280px;
             --sidebar-collapsed-width: 70px;
             --transition-speed: 0.3s;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f8f9fa;
+            font-family: 'Inter', 'Roboto', sans-serif;
+            background: var(--mk-light);
+            margin: 0;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1.6;
         }
 
         .admin-wrapper {
@@ -34,173 +64,99 @@
             min-height: 100vh;
         }
 
+        /* ========== SIDEBAR ========== */
         .admin-sidebar {
             width: var(--sidebar-width);
-            background: linear-gradient(180deg, #1a1d29 0%, #2c3e50 100%);
+            background: var(--mk-gradient-dark);
             color: white;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-xl);
             position: fixed;
             height: 100vh;
             overflow-y: auto;
             overflow-x: hidden;
             transition: width var(--transition-speed) ease;
             z-index: 1000;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .admin-sidebar.collapsed {
             width: var(--sidebar-collapsed-width);
         }
 
-        .admin-content {
-            flex: 1;
-            margin-left: var(--sidebar-width);
-            min-height: 100vh;
-            transition: margin-left var(--transition-speed) ease;
+        .admin-sidebar::-webkit-scrollbar {
+            width: 4px;
         }
 
-        .admin-content.collapsed {
-            margin-left: var(--sidebar-collapsed-width);
+        .admin-sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        /* Styles pour les accordéons cliquables */
-        .admin-sidebar .nav-item.dropdown {
-            position: relative;
+        .admin-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
         }
 
-        .admin-sidebar .nav-item.dropdown .nav-link {
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .admin-sidebar .nav-item.dropdown .nav-link:hover {
-            background-color: rgba(255,255,255,0.1);
-            color: white;
-            padding-left: 2rem;
-        }
-
-        /* Accordéon fermé par défaut (horizontal/caché) */
-        .admin-sidebar .dropdown-menu {
-            position: static;
-            float: none;
-            display: none;
-            margin: 0;
-            border: none;
-            background: transparent;
-            box-shadow: none;
-            opacity: 0;
-            max-height: 0;
-            overflow: hidden;
-            transition: all 0.4s ease;
-            transform: scaleY(0);
-            transform-origin: top;
-        }
-
-        /* Accordéon ouvert (vertical) */
-        .admin-sidebar .dropdown-menu.show {
-            display: block;
-            opacity: 1;
-            max-height: 300px;
-            transform: scaleY(1);
-            background: rgba(0,0,0,0.1);
-            border-radius: 4px;
-            margin-top: 5px;
-            padding: 5px 0;
-        }
-
-        /* Styles pour les éléments des sous-menus */
-        .admin-sidebar .dropdown-item {
-            padding: 0.5rem 1rem 0.5rem 2.5rem;
-            transition: all 0.3s ease;
-            border-radius: 4px;
-            margin: 2px 8px;
-        }
-
-        .admin-sidebar .dropdown-item:hover {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            transform: translateX(5px);
-        }
-
-        /* Rotation de l'icône chevron */
-        .admin-sidebar .nav-item.dropdown .bi-chevron-down {
-            transition: transform 0.3s ease;
-        }
-
-        .admin-sidebar .nav-item.dropdown.open .bi-chevron-down {
-            transform: rotate(180deg);
-        }
-
-        /* Effet d'ouverture progressif des éléments du menu */
-        .admin-sidebar .dropdown-menu.show .dropdown-item {
-            animation: slideInLeft 0.3s ease forwards;
-            opacity: 0;
-        }
-
-        .admin-sidebar .dropdown-menu.show .dropdown-item:nth-child(1) {
-            animation-delay: 0.1s;
-        }
-
-        .admin-sidebar .dropdown-menu.show .dropdown-item:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        .admin-sidebar .dropdown-menu.show .dropdown-item:nth-child(3) {
-            animation-delay: 0.3s;
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .admin-header {
-            background: white;
-            padding: 1rem 2rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .admin-main {
-            padding: 2rem;
-        }
-
+        /* Sidebar Header */
         .sidebar-header {
-            padding: 1.5rem;
+            padding: 2rem 1.5rem;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             position: relative;
-            background: rgba(26, 75, 143, 0.1);
+            background: rgba(109, 81, 146, 0.1);
         }
 
-        .sidebar-header img {
-            max-height: 40px;
-            filter: brightness(0) invert(1);
-            margin-bottom: 10px;
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-frame {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .logo-frame:hover {
+            transform: scale(1.05);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ffffff, #f8f9fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .sidebar-header h4 {
             margin: 0;
             font-size: 18px;
-            font-weight: 600;
+            font-weight: 700;
             transition: opacity var(--transition-speed) ease;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .collapsed .sidebar-header h4 {
             opacity: 0;
         }
 
-        /* Hamburger Toggle Button */
+        /* Hamburger Toggle */
         .hamburger-toggle {
             position: absolute;
             top: 20px;
             right: 15px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             border: none;
             color: white;
             width: 35px;
@@ -215,7 +171,7 @@
         }
 
         .hamburger-toggle:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 255, 255, 0.2);
             transform: scale(1.05);
         }
 
@@ -228,7 +184,7 @@
             transform: rotate(180deg);
         }
 
-        /* Navigation Improvements */
+        /* Navigation */
         .sidebar-nav {
             padding: 0;
             list-style: none;
@@ -245,8 +201,8 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: rgba(255,255,255,0.5);
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: rgba(255, 255, 255, 0.6);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             margin-bottom: 8px;
             transition: opacity var(--transition-speed) ease;
         }
@@ -260,31 +216,33 @@
         }
 
         .sidebar-nav li {
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .sidebar-nav a {
             display: flex;
             align-items: center;
-            padding: 12px 20px;
-            color: rgba(255,255,255,0.9);
+            padding: 14px 20px;
+            color: rgba(255, 255, 255, 0.9);
             text-decoration: none;
             transition: all 0.3s ease;
             font-weight: 500;
             font-size: 14px;
+            position: relative;
         }
 
         .sidebar-nav a:hover,
         .sidebar-nav a.active {
-            background: linear-gradient(90deg, rgba(26, 75, 143, 0.3) 0%, rgba(241, 130, 33, 0.1) 100%);
+            background: rgba(255, 255, 255, 0.1);
             color: white;
             padding-left: 2rem;
             text-decoration: none;
         }
 
         .sidebar-nav a.active {
-            background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            box-shadow: 0 2px 8px rgba(26, 75, 143, 0.3);
+            background: linear-gradient(90deg, #1a4b8f 0%, #f18221 100%);
+            box-shadow: 0 4px 12px rgba(109, 81, 146, 0.3);
+            position: relative;
         }
 
         .sidebar-nav a.active::before {
@@ -294,7 +252,7 @@
             top: 0;
             bottom: 0;
             width: 4px;
-            background: var(--secondary-color);
+            background: #f18221;;
         }
 
         .sidebar-nav i {
@@ -327,12 +285,12 @@
         }
 
         .nav-badge {
-            background: var(--danger-color);
+            background: var(--mk-danger);
             color: white;
             font-size: 10px;
             font-weight: bold;
-            padding: 2px 6px;
-            border-radius: 10px;
+            padding: 3px 7px;
+            border-radius: 12px;
             margin-left: auto;
             min-width: 18px;
             text-align: center;
@@ -343,13 +301,70 @@
             opacity: 0;
         }
 
+        /* Dropdown Menus */
+        .nav-item.dropdown {
+            position: relative;
+        }
+
+        .nav-item.dropdown .nav-link {
+            cursor: pointer;
+        }
+
+        .dropdown-menu {
+            position: static;
+            float: none;
+            display: none;
+            margin: 0;
+            border: none;
+            background: rgba(0, 0, 0, 0.1);
+            box-shadow: none;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            transform: scaleY(0);
+            transform-origin: top;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+            opacity: 1;
+            max-height: 300px;
+            transform: scaleY(1);
+            border-radius: 4px;
+            margin-top: 5px;
+            padding: 5px 0;
+        }
+
+        .dropdown-item {
+            padding: 0.5rem 1rem 0.5rem 2.5rem;
+            transition: all 0.3s ease;
+            border-radius: 4px;
+            margin: 2px 8px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .nav-item.dropdown .bi-chevron-down {
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item.dropdown.open .bi-chevron-down {
+            transform: rotate(180deg);
+        }
+
         /* Tooltip for collapsed state */
         .tooltip {
             position: absolute;
             left: calc(100% + 10px);
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(0,0,0,0.8);
+            background: rgba(0, 0, 0, 0.9);
             color: white;
             padding: 8px 12px;
             border-radius: 6px;
@@ -368,99 +383,355 @@
             top: 50%;
             transform: translateY(-50%);
             border: 4px solid transparent;
-            border-right-color: rgba(0,0,0,0.8);
+            border-right-color: rgba(0, 0, 0, 0.9);
         }
 
         .collapsed .sidebar-nav a:hover .tooltip {
             opacity: 1;
         }
 
-        .user-info {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            margin-top: auto;
+        /* ========== MAIN CONTENT ========== */
+        .admin-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left var(--transition-speed) ease;
+            background: var(--mk-light);
         }
 
-        .user-info strong {
-            display: block;
-            margin-bottom: 5px;
+        .admin-content.collapsed {
+            margin-left: var(--sidebar-collapsed-width);
         }
 
-        .user-info small {
-            color: rgba(255,255,255,0.7);
+        /* Header */
+        .admin-header {
+            background: var(--mk-lighter);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow-md);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .logout-btn {
+        .header-left-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+
+        .search-container {
+            position: relative;
+            min-width: 300px;
+        }
+
+        .search-input {
             width: 100%;
-            margin-top: 15px;
-            background: transparent;
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 16px;
+            padding: 10px 40px 10px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: var(--mk-light);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--mk-primary);
+            box-shadow: 0 0 0 3px rgba(109, 81, 146, 0.1);
+            background: var(--mk-lighter);
+        }
+
+        .search-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--mk-gray);
+            cursor: pointer;
+            padding: 4px;
             border-radius: 4px;
             transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            color: var(--mk-primary);
+            background: rgba(109, 81, 146, 0.1);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .breadcrumb-path {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--mk-gray);
+            font-size: 14px;
+        }
+
+        .breadcrumb-item {
+            color: var(--mk-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .breadcrumb-item:hover {
+            text-decoration: underline;
+        }
+
+        .breadcrumb-item.current {
+            color: var(--mk-gray);
+            font-weight: 600;
+        }
+
+        .breadcrumb-separator {
+            color: var(--mk-gray-light);
+        }
+
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-timestamp {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--mk-gray);
+            font-size: 14px;
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: var(--mk-light);
+        }
+
+        .language-selector .dropdown-toggle {
+            background: none;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: var(--mk-gray);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
             cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
+            transition: all 0.3s ease;
         }
 
-        .logout-btn:hover {
-            background: rgba(255,255,255,0.1);
+        .language-selector .dropdown-toggle:hover {
+            border-color: var(--mk-primary);
+            color: var(--mk-primary);
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            color: var(--mk-gray);
+            font-size: 18px;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .notification-btn:hover {
+            background: var(--mk-light);
+            color: var(--mk-primary);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--mk-danger);
             color: white;
-            text-decoration: none;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
 
-        .breadcrumb {
-            background: transparent;
-            padding: 0;
-            margin-bottom: 1rem;
+        /* User Profile */
+        .user-profile {
+            position: relative;
         }
 
-        .breadcrumb-item + .breadcrumb-item::before {
-            color: #6c757d;
+        .profile-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
 
+        .profile-toggle:hover {
+            background: var(--mk-light);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--mk-gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            border: 2px solid var(--mk-lighter);
+            box-shadow: var(--shadow-md);
+        }
+
+        .user-info-header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .user-name {
+            font-weight: 600;
+            color: var(--mk-dark);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: var(--mk-gray);
+            margin: 0;
+        }
+
+        /* Main Content */
+        .admin-main {
+            padding: 2rem;
+        }
+
+        /* Cards */
         .card {
             border: none;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 1.5rem;
         }
 
         .card-header {
-            background: var(--primary-color);
-            color: white;
-            border-bottom: none;
-            border-radius: 8px 8px 0 0 !important;
+            background: var(--mk-lighter);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: 12px 12px 0 0 !important;
             font-weight: 600;
+            color: var(--mk-dark);
+            padding: 1.25rem 1.5rem;
         }
 
+        /* Buttons */
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background: var(--mk-gradient-primary);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
         }
 
         .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .table th {
-            background-color: #f8f9fa;
-            border-top: none;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .badge {
-            font-size: 0.75em;
-        }
-
-        .alert {
-            border-radius: 6px;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(109, 81, 146, 0.3);
+            background: var(--mk-gradient-primary);
             border: none;
         }
 
+        .btn-secondary {
+            background: var(--mk-gray);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 10px 20px;
+        }
+
+        /* Tables */
+        .table {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table th {
+            background: var(--mk-light);
+            border-top: none;
+            font-weight: 600;
+            color: var(--mk-dark);
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .table td {
+            vertical-align: middle;
+            border-color: #f3f4f6;
+        }
+
+        .table-hover tbody tr:hover {
+            background: rgba(109, 81, 146, 0.05);
+        }
+
+        /* Badges */
+        .badge {
+            font-size: 0.75em;
+            font-weight: 600;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+
+        /* Alerts */
+        .alert {
+            border-radius: 8px;
+            border: none;
+            padding: 1rem 1.25rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+            border-left: 4px solid var(--mk-success);
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: #7f1d1d;
+            border-left: 4px solid var(--mk-danger);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #78350f;
+            border-left: 4px solid var(--mk-warning);
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            color: #1e3a8a;
+            border-left: 4px solid var(--mk-info);
+        }
+
+        /* Flash Messages */
         .flash-messages {
             position: fixed;
             top: 20px;
@@ -485,6 +756,7 @@
             }
         }
 
+        /* Mobile Responsiveness */
         @media (max-width: 768px) {
             .admin-sidebar {
                 margin-left: calc(-1 * var(--sidebar-width));
@@ -502,378 +774,28 @@
             .mobile-menu-toggle {
                 display: block;
             }
+
+            .search-container {
+                min-width: 200px;
+            }
+
+            .user-info-header {
+                display: none;
+            }
+
+            .header-left-section {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
         }
 
         .mobile-menu-toggle {
             display: none;
             background: none;
             border: none;
-            color: var(--primary-color);
+            color: var(--mk-primary);
             font-size: 1.5rem;
-        }
-
-        /* Styles pour le header et profil utilisateur */
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .header-left-section {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex: 1;
-        }
-
-        .search-container {
-            position: relative;
-            min-width: 300px;
-        }
-
-        .search-input {
-            width: 100%;
-            padding: 8px 40px 8px 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(26, 75, 143, 0.25);
-        }
-
-        .search-btn {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #6c757d;
-            cursor: pointer;
-            padding: 4px;
-        }
-
-        .search-btn:hover {
-            color: var(--primary-color);
-        }
-
-        .breadcrumb-nav {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .breadcrumb-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .breadcrumb-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            background: white;
-            color: #6c757d;
-            text-decoration: none;
-            font-size: 13px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .breadcrumb-btn:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        .breadcrumb-btn.primary {
-            background: var(--primary-color);
-            border-color: var(--primary-color);
-            color: white;
-        }
-
-        .breadcrumb-btn.primary:hover {
-            background: var(--secondary-color);
-            border-color: var(--secondary-color);
-            color: white;
-        }
-
-        .breadcrumb-path {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #6c757d;
-            font-size: 14px;
-        }
-
-        .breadcrumb-separator {
-            color: #adb5bd;
-        }
-
-        .breadcrumb-item {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        .breadcrumb-item:hover {
-            text-decoration: underline;
-        }
-
-        .breadcrumb-item.current {
-            color: #6c757d;
-            font-weight: 500;
-        }
-
-        .header-timestamp {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #6c757d;
-            font-size: 14px;
-            padding: 8px 12px;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            background: #f8f9fa;
-        }
-
-        .language-selector {
-            position: relative;
-        }
-
-        .language-selector .dropdown-toggle {
-            background: none;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            padding: 8px 12px;
-            color: #6c757d;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .language-selector .dropdown-toggle:hover {
-            border-color: var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .language-selector .dropdown-menu {
-            min-width: 120px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border: 1px solid #e9ecef;
-        }
-
-        .notifications-container {
-            position: relative;
-        }
-
-        .notification-btn {
-            background: none;
-            border: none;
-            color: #6c757d;
-            font-size: 18px;
-            padding: 8px;
-            border-radius: 50%;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .notification-btn:hover {
-            background-color: #f8f9fa;
-            color: var(--primary-color);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-        }
-
-        .user-profile {
-            position: relative;
-        }
-
-        .profile-toggle {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 5px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .profile-toggle:hover {
-            background-color: #f8f9fa;
-        }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #228B22 0%, #006400 50%, #FFD700 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-            border: 2px solid #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .user-info-header {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-
-        .user-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-            margin: 0;
-        }
-
-        .user-role {
-            font-size: 12px;
-            color: #6c757d;
-            margin: 0;
-        }
-
-        .profile-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border: 1px solid #e9ecef;
-            min-width: 200px;
-            z-index: 1000;
-            display: none;
-            opacity: 0;
-            transform: translateY(-10px);
-            transition: all 0.3s ease;
-        }
-
-        .profile-dropdown.show {
-            display: block;
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .profile-dropdown-header {
-            padding: 15px;
-            border-bottom: 1px solid #e9ecef;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .profile-dropdown-header .user-avatar {
-            width: 48px;
-            height: 48px;
-            font-size: 18px;
-        }
-
-        .profile-dropdown-items {
-            padding: 8px 0;
-        }
-
-        .profile-dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 15px;
-            color: #333;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            cursor: pointer;
-        }
-
-        .profile-dropdown-item:hover {
-            background-color: #f8f9fa;
-            color: var(--primary-color);
-        }
-
-        .profile-dropdown-item i {
-            width: 18px;
-            color: #6c757d;
-        }
-
-        .profile-dropdown-divider {
-            border-top: 1px solid #e9ecef;
-            margin: 8px 0;
-        }
-
-        @media (max-width: 992px) {
-            .search-container {
-                min-width: 200px;
-            }
-            
-            .breadcrumb-actions {
-                gap: 4px;
-            }
-            
-            .breadcrumb-btn {
-                padding: 6px 8px;
-                font-size: 12px;
-            }
-            
-            .user-info-header {
-                display: none;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header-left-section {
-                flex-direction: column;
-                gap: 10px;
-                align-items: flex-start;
-            }
-            
-            .search-container {
-                min-width: 100%;
-            }
-            
-            .breadcrumb-nav {
-                width: 100%;
-                justify-content: space-between;
-            }
-            
-            .breadcrumb-path {
-                display: none;
-            }
         }
     </style>
 
@@ -897,7 +819,11 @@
         <!-- Sidebar -->
         <div class="admin-sidebar" id="adminSidebar">
             <div class="sidebar-header">
-                <h3><b>MK Gov</b></h3>
+                <div class="logo-container">
+                    <div class="logo-frame">
+                        <div class="logo-text">MK</div>
+                    </div>
+                </div>
                 <button class="hamburger-toggle" id="hamburgerToggle">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -911,7 +837,7 @@
 
                 <li class="nav-item">
                     <a href="{{ path('admin_dashboard') }}" class="nav-link {{ app.request.get('_route') starts with 'admin_dashboard' ? 'active' : '' }}">
-                        <i class="bi-speedometer2 me-2"></i>
+                        <i class="bi-speedometer2"></i>
                         <span class="nav-text">Dashboard</span>
                         <div class="tooltip">Dashboard</div>
                     </a>
@@ -919,291 +845,126 @@
 
                 <!-- SERVICE MANAGEMENT SECTION -->
                 <li class="nav-section">
-                    <div class="nav-section-title">Service Management</div>
+                    <div class="nav-section-title">Gestion des Services</div>
                 </li>
 
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_request' ? 'active' : '' }}" data-dropdown="requests">
-                        <span>
-                            <i class="bi-journal-text me-2"></i>
-                            <span class="nav-text">Requests</span>
+                        <span class="d-flex align-items-center">
+                            <i class="bi-journal-text"></i>
+                            <span class="nav-text">Demandes</span>
                         </span>
                         <span class="nav-badge">23</span>
                         <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">Requests Management</div>
+                        <div class="tooltip">Gestion des Demandes</div>
                     </a>
                     <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-plus-circle me-2"></i>
-                                <span class="ms-2">New Request</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-list-ul me-2"></i>
-                                <span class="ms-2">All Requests</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-clock me-2"></i>
-                                <span class="ms-2">Pending Requests</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-check-circle me-2"></i>
-                                <span class="ms-2">Completed</span>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-plus-circle me-2"></i>Nouvelle Demande</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-list-ul me-2"></i>Toutes les Demandes</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-clock me-2"></i>En Attente</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-check-circle me-2"></i>Terminées</a></li>
                     </ul>
                 </li>
 
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_procedure' ? 'active' : '' }}" data-dropdown="procedures">
-                        <span>
-                            <i class="bi-file-earmark-text me-2"></i>
-                            <span class="nav-text">Procedures</span>
+                        <span class="d-flex align-items-center">
+                            <i class="bi-file-earmark-text"></i>
+                            <span class="nav-text">Procédures</span>
                         </span>
                         <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">Procedures Management</div>
+                        <div class="tooltip">Gestion des Procédures</div>
                     </a>
                     <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-plus-circle me-2"></i>
-                                <span class="ms-2">New Procedure</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-list-ul me-2"></i>
-                                <span class="ms-2">All Procedures</span>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-plus-circle me-2"></i>Nouvelle Procédure</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-list-ul me-2"></i>Toutes les Procédures</a></li>
                     </ul>
                 </li>
 
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_family' ? 'active' : '' }}" data-dropdown="families">
-                        <span>
-                            <i class="bi-collection me-2"></i>
-                            <span class="nav-text">Service Families</span>
+                        <span class="d-flex align-items-center">
+                            <i class="bi-collection"></i>
+                            <span class="nav-text">Familles de Services</span>
                         </span>
                         <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">Service Families</div>
+                        <div class="tooltip">Familles de Services</div>
                     </a>
                     <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="{{ path('admin_family_new') }}">
-                                <i class="bi-plus-circle me-2"></i>
-                                <span class="ms-2">New Family</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{{ path('admin_family_index') }}">
-                                <i class="bi-list-ul me-2"></i>
-                                <span class="ms-2">All Families</span>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item" href="{{ path('admin_family_new') }}"><i class="bi-plus-circle me-2"></i>Nouvelle Famille</a></li>
+                        <li><a class="dropdown-item" href="{{ path('admin_family_index') }}"><i class="bi-list-ul me-2"></i>Toutes les Familles</a></li>
                     </ul>
                 </li>
 
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_document' ? 'active' : '' }}" data-dropdown="documents">
-                        <span>
-                            <i class="bi-folder me-2"></i>
+                        <span class="d-flex align-items-center">
+                            <i class="bi-folder"></i>
                             <span class="nav-text">Documents</span>
                         </span>
                         <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">Documents Management</div>
+                        <div class="tooltip">Gestion des Documents</div>
                     </a>
                     <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-upload me-2"></i>
-                                <span class="ms-2">Upload Document</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-list-ul me-2"></i>
-                                <span class="ms-2">All Documents</span>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-upload me-2"></i>Télécharger Document</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-list-ul me-2"></i>Tous les Documents</a></li>
                     </ul>
                 </li>
 
-                 <!-- USER & ENTITY MANAGEMENT SECTION -->
+                <!-- USER & ENTITY MANAGEMENT SECTION -->
                 <li class="nav-section">
-                    <div class="nav-section-title">User & Entity Management</div>
+                    <div class="nav-section-title">Gestion Utilisateurs & Entités</div>
                 </li>
 
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_user' ? 'active' : '' }}" data-dropdown="users">
-                        <span>
-                            <i class="bi-people me-2"></i>
-                            <span class="nav-text">User Management</span>
+                        <span class="d-flex align-items-center">
+                            <i class="bi-people"></i>
+                            <span class="nav-text">Utilisateurs</span>
                         </span>
                         <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">User Management</div>
+                        <div class="tooltip">Gestion des Utilisateurs</div>
                     </a>
                     <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-person-plus me-2"></i>
-                                <span class="ms-2">New User</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-people me-2"></i>
-                                <span class="ms-2">All Users</span>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-person-plus me-2"></i>Nouvel Utilisateur</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-people me-2"></i>Tous les Utilisateurs</a></li>
                     </ul>
                 </li>
 
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_role' ? 'active' : '' }}" data-dropdown="roles">
-                        <span>
-                            <i class="bi-shield-check me-2"></i>
-                            <span class="nav-text">Roles & Permissions</span>
+                        <span class="d-flex align-items-center">
+                            <i class="bi-shield-check"></i>
+                            <span class="nav-text">Rôles & Permissions</span>
                         </span>
                         <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">Roles & Permissions</div>
+                        <div class="tooltip">Rôles & Permissions</div>
                     </a>
                     <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-plus-circle me-2"></i>
-                                <span class="ms-2">New Role</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-shield-check me-2"></i>
-                                <span class="ms-2">All Roles</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="{{ path('admin_permission_index') }}">
-                                <i class="bi-key me-2"></i>
-                                <span class="ms-2">Permissions</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_person' ? 'active' : '' }}" data-dropdown="persons">
-                        <span>
-                            <i class="bi-person-vcard me-2"></i>
-                            <span class="nav-text">Citizens</span>
-                        </span>
-                        <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">Citizens Registry</div>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-person-plus me-2"></i>
-                                <span class="ms-2">Register Citizen</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-person-vcard me-2"></i>
-                                <span class="ms-2">Citizens Registry</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_institution' ? 'active' : '' }}" data-dropdown="entities">
-                        <span>
-                            <i class="bi-building me-2"></i>
-                            <span class="nav-text">Public Entities</span>
-                        </span>
-                        <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">Public Entities</div>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-plus-circle me-2"></i>
-                                <span class="ms-2">New Entity</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-building me-2"></i>
-                                <span class="ms-2">All Entities</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <li class="nav-item dropdown">
-                    <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_department' ? 'active' : '' }}" data-dropdown="departments">
-                        <span>
-                            <i class="bi bi-layers me-2"></i>
-                            <span class="nav-text">Departments</span>
-                        </span>
-                        <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">Departments</div>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-plus-circle me-2"></i>
-                                <span class="ms-2">New Department</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-list-ul me-2"></i>
-                                <span class="ms-2">All Departments</span>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-plus-circle me-2"></i>Nouveau Rôle</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-shield-check me-2"></i>Tous les Rôles</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-key me-2"></i>Permissions</a></li>
                     </ul>
                 </li>
 
                 <!-- SYSTEM SECTION -->
                 <li class="nav-section">
-                    <div class="nav-section-title">System</div>
+                    <div class="nav-section-title">Système</div>
                 </li>
 
                 <li class="nav-item dropdown">
                     <a href="#" class="nav-link d-flex align-items-center justify-content-between dropdown-toggle-custom" data-dropdown="system">
-                        <span>
-                            <i class="bi-gear me-2"></i>
-                            <span class="nav-text">System</span>
+                        <span class="d-flex align-items-center">
+                            <i class="bi-gear"></i>
+                            <span class="nav-text">Configuration</span>
                         </span>
                         <i class="bi-chevron-down nav-arrow"></i>
-                        <div class="tooltip">System Management</div>
+                        <div class="tooltip">Configuration Système</div>
                     </a>
                     <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-sliders2 me-2"></i>
-                                <span class="ms-2">Settings</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-database me-2"></i>
-                                <span class="ms-2">Reference Data</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                <i class="bi-clock-history me-2"></i>
-                                <span class="ms-2">Logs</span>
-                            </a>
-                        </li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-sliders2 me-2"></i>Paramètres</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-database me-2"></i>Données de Référence</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-clock-history me-2"></i>Journaux</a></li>
                     </ul>
                 </li>
             </ul>
@@ -1220,7 +981,7 @@
                         
                         <!-- Search Container -->
                         <div class="search-container">
-                            <input type="text" class="search-input" placeholder="Search procedures, institutions, requests..." id="headerSearch">
+                            <input type="text" class="search-input" placeholder="Rechercher procédures, institutions, demandes..." id="headerSearch">
                             <button class="search-btn" type="button">
                                 <i class="fas fa-search"></i>
                             </button>
@@ -1235,19 +996,6 @@
                                 <span class="breadcrumb-item current">{{ block('title') }}</span>
                                 {% endif %}
                             </div>
-                            
-                            <div class="breadcrumb-actions">
-                                <a href="{{ path('admin_dashboard') }}" class="breadcrumb-btn">
-                                    <i class="fas fa-tachometer-alt"></i>
-                                    <span class="d-none d-lg-inline">Dashboard</span>
-                                </a>
-                                {% if app.request.get('_route') != 'admin_dashboard' %}
-                                <a href="javascript:history.back()" class="breadcrumb-btn">
-                                    <i class="fas fa-arrow-left"></i>
-                                    <span class="d-none d-lg-inline">Back</span>
-                                </a>
-                                {% endif %}
-                            </div>
                         </div>
                     </div>
                     
@@ -1260,21 +1008,14 @@
                         
                         <!-- Language Selector -->
                         <div class="language-selector dropdown">
-                            <button class="dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <button class="dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown">
                                 <i class="fas fa-globe"></i>
-                                <span>EN</span>
+                                <span>FR</span>
                                 <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
                             </button>
-                            <ul class="dropdown-menu" aria-labelledby="languageDropdown">
-                                <li><a class="dropdown-item" href="#" data-lang="en">
-                                    <i class="fas fa-flag-usa me-2"></i>English
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" data-lang="fr">
-                                    <i class="fas fa-flag me-2"></i>Français
-                                </a></li>
-                                <li><a class="dropdown-item" href="#" data-lang="pt">
-                                    <i class="fas fa-flag me-2"></i>Português
-                                </a></li>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" data-lang="fr"><i class="fas fa-flag me-2"></i>Français</a></li>
+                                <li><a class="dropdown-item" href="#" data-lang="en"><i class="fas fa-flag-usa me-2"></i>English</a></li>
                             </ul>
                         </div>
 
@@ -1282,50 +1023,22 @@
                         <div class="notifications-container">
                             <button class="notification-btn" id="notificationBtn">
                                 <i class="fas fa-bell"></i>
-                                <span class="notification-badge">1</span>
+                                <span class="notification-badge">3</span>
                             </button>
                         </div>
 
                         <!-- User Profile -->
                         <div class="user-profile">
                             <button class="profile-toggle" id="profileToggle">
-                                <div class="user-avatar">AG</div>
+                                <div class="user-avatar">
+                                    {{ app.user ? (app.user.firstName|first ~ app.user.lastName|first) : 'AD' }}
+                                </div>
                                 <div class="user-info-header d-none d-md-block">
-                                    <div class="user-name">Admin User</div>
-                                    <div class="user-role">Administrator</div>
+                                    <div class="user-name">{{ app.user ? (app.user.firstName ~ ' ' ~ app.user.lastName) : 'Administrateur' }}</div>
+                                    <div class="user-role">Administrateur</div>
                                 </div>
-                                <i class="fas fa-chevron-down" style="font-size: 10px; color: #6c757d;"></i>
+                                <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--mk-gray);"></i>
                             </button>
-                            
-                            <div class="profile-dropdown" id="profileDropdown">
-                                <div class="profile-dropdown-header">
-                                    <div>
-                                        <div class="user-name">Admin User</div>
-                                        <div class="user-role">System Administrator</div>
-                                        <small class="text-muted">MK Gov</small>
-                                    </div>
-                                </div>
-                                
-                                <div class="profile-dropdown-items">
-                                    <a href="#" class="profile-dropdown-item">
-                                        <i class="fas fa-user"></i>
-                                        <span>My Profile</span>
-                                    </a>
-                                    <a href="#" class="profile-dropdown-item">
-                                        <i class="fas fa-cog"></i>
-                                        <span>Settings</span>
-                                    </a>
-                                    <a href="#" class="profile-dropdown-item">
-                                        <i class="fas fa-sliders-h"></i>
-                                        <span>Preferences</span>
-                                    </a>
-                                    <div class="profile-dropdown-divider"></div>
-                                    <button class="profile-dropdown-item" onclick="logout()">
-                                        <i class="fas fa-sign-out-alt"></i>
-                                        <span>Logout</span>
-                                    </button>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1341,17 +1054,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Gestion de la recherche dans le header
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('adminSidebar');
             const content = document.getElementById('adminContent');
             const hamburgerToggle = document.getElementById('hamburgerToggle');
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-            const searchInput = document.getElementById('headerSearch');
-            const searchBtn = document.querySelector('.search-btn');
-            const profileToggle = document.getElementById('profileToggle');
-            const profileDropdown = document.getElementById('profileDropdown');
-            const notificationBtn = document.getElementById('notificationBtn');
 
             // Hamburger toggle functionality
             if (hamburgerToggle) {
@@ -1359,7 +1066,6 @@
                     sidebar.classList.toggle('collapsed');
                     content.classList.toggle('collapsed');
                     
-                    // Update hamburger icon
                     const icon = this.querySelector('i');
                     if (sidebar.classList.contains('collapsed')) {
                         icon.className = 'fas fa-chevron-right';
@@ -1373,64 +1079,6 @@
             if (mobileMenuToggle) {
                 mobileMenuToggle.addEventListener('click', function() {
                     sidebar.classList.toggle('show');
-                });
-            }
-
-            // Search functionality
-            if (searchInput && searchBtn) {
-                function performSearch() {
-                    const query = searchInput.value.trim();
-                    if (query.length > 0) {
-                        console.log('Searching for:', query);
-                        // Add search logic here
-                    }
-                }
-                
-                searchBtn.addEventListener('click', performSearch);
-                
-                searchInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        performSearch();
-                    }
-                });
-            }
-
-            // Profile dropdown
-            if (profileToggle && profileDropdown) {
-                profileToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    profileDropdown.classList.toggle('show');
-                });
-                
-                document.addEventListener('click', function(e) {
-                    if (!e.target.closest('.user-profile')) {
-                        profileDropdown.classList.remove('show');
-                    }
-                });
-            }
-
-            // Language selector
-            const languageLinks = document.querySelectorAll('[data-lang]');
-            const currentLangDisplay = document.querySelector('#languageDropdown span');
-            
-            languageLinks.forEach(function(link) {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const selectedLang = this.getAttribute('data-lang').toUpperCase();
-                    if (currentLangDisplay) {
-                        currentLangDisplay.textContent = selectedLang;
-                    }
-                    console.log('Language changed to:', selectedLang);
-                });
-            });
-
-            // Notifications
-            if (notificationBtn) {
-                notificationBtn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('Notifications clicked');
                 });
             }
 
@@ -1463,16 +1111,6 @@
                     }
                 });
             });
-            
-            // Fermer les accordéons si on clique ailleurs
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.nav-item.dropdown')) {
-                    document.querySelectorAll('.nav-item.dropdown.open').forEach(function(openItem) {
-                        openItem.classList.remove('open');
-                        openItem.querySelector('.dropdown-menu').classList.remove('show');
-                    });
-                }
-            });
 
             // Handle window resize
             window.addEventListener('resize', function() {
@@ -1481,15 +1119,6 @@
                 }
             });
         });
-
-        // Logout functionality
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                console.log('User logged out');
-                // Add logout logic here
-                // window.location.href = '/logout';
-            }
-        }
 
         // Auto-dismiss des messages flash après 5 secondes
         setTimeout(function() {

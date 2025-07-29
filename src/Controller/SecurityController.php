@@ -12,16 +12,20 @@ class SecurityController extends AbstractController
     #[Route(path: '/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
-        // if ($this->getUser()) {
-        //     return $this->redirectToRoute('admin_user_index');
-        // }
+        // Rediriger vers le dashboard si déjà connecté
+        if ($this->getUser()) {
+            return $this->redirectToRoute('admin_dashboard');
+        }
 
-        // get the login error if there is one
+        // Récupérer l'erreur de connexion s'il y en a une
         $error = $authenticationUtils->getLastAuthenticationError();
-        // last username entered by the user
+        // Dernier nom d'utilisateur saisi
         $lastUsername = $authenticationUtils->getLastUsername();
 
-        return $this->render('security/login.html.twig', ['last_username' => $lastUsername, 'error' => $error]);
+        return $this->render('security/login.html.twig', [
+            'last_username' => $lastUsername, 
+            'error' => $error
+        ]);
     }
 
     #[Route(path: '/logout', name: 'app_logout')]
@@ -33,8 +37,9 @@ class SecurityController extends AbstractController
     #[Route('/', name: 'app_home')]
     public function home(): Response
     {
+        // Rediriger vers le dashboard si connecté, sinon vers la page de connexion
         if ($this->getUser()) {
-            return $this->redirectToRoute('admin_user_index');
+            return $this->redirectToRoute('admin_dashboard');
         }
 
         return $this->redirectToRoute('app_login');
