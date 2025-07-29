@@ -52,10 +52,6 @@ class Family
     #[Groups(['family:read', 'family:write'])]
     private ?bool $isActive = true;
 
-    #[ORM\OneToMany(mappedBy: 'family', targetEntity: Procedure::class)]
-    #[Groups(['family:read', 'family:write'])]
-    private Collection $procedures;
-
     public function __construct()
     {
         $this->createdAt = new \DateTime();
@@ -148,36 +144,6 @@ class Family
     public function setIsActive(bool $isActive): static
     {
         $this->isActive = $isActive;
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Procedure>
-     */
-    public function getProcedures(): Collection
-    {
-        return $this->procedures;
-    }
-
-    public function addProcedure(Procedure $procedure): static
-    {
-        if (!$this->procedures->contains($procedure)) {
-            $this->procedures->add($procedure);
-            $procedure->setFamily($this);
-        }
-
-        return $this;
-    }
-
-    public function removeProcedure(Procedure $procedure): static
-    {
-        if ($this->procedures->removeElement($procedure)) {
-            // set the owning side to null (unless already changed)
-            if ($procedure->getFamily() === $this) {
-                $procedure->setFamily(null);
-            }
-        }
-
         return $this;
     }
 
