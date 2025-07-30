@@ -1,0 +1,352 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Nouveau Document{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .document-form-header {
+            background: linear-gradient(135deg, #6d5192 0%, #f18221 100%);
+            color: white;
+            padding: 2rem 0;
+            margin: -2rem -2rem 2rem -2rem;
+        }
+        
+        .form-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .file-preview {
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .file-preview.dragover {
+            border-color: #6d5192;
+            background-color: rgba(109, 81, 146, 0.05);
+        }
+        
+        .file-preview-content {
+            display: none;
+            margin-top: 15px;
+        }
+        
+        .file-info {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        
+        .preview-image {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .btn-submit {
+            background: linear-gradient(135deg, #6d5192 0%, #f18221 100%);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(109, 81, 146, 0.3);
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="document-form-header">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="bi-plus-circle me-3"></i>
+                    Nouveau Document
+                </h1>
+                <p class="mb-0">Ajoutez un nouveau document à la bibliothèque</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ path('admin_document_index') }}" class="btn btn-outline-light">
+                    <i class="bi-arrow-left me-2"></i>
+                    Retour à la liste
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid">
+    {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+    
+    <!-- Informations générales -->
+    <div class="form-section">
+        <h3 class="section-title mb-4">
+            <i class="bi-info-circle text-primary me-2"></i>
+            Informations générales
+        </h3>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.nom) }}
+                    {{ form_widget(form.nom) }}
+                    {{ form_errors(form.nom) }}
+                    {{ form_help(form.nom) }}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    {{ form_label(form.displayOrder) }}
+                    {{ form_widget(form.displayOrder) }}
+                    {{ form_errors(form.displayOrder) }}
+                    {{ form_help(form.displayOrder) }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-3">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description) }}
+            {{ form_errors(form.description) }}
+            {{ form_help(form.description) }}
+        </div>
+        
+        <div class="mb-3">
+            <div class="form-check">
+                {{ form_widget(form.isActive) }}
+                {{ form_label(form.isActive) }}
+            </div>
+            {{ form_errors(form.isActive) }}
+            {{ form_help(form.isActive) }}
+        </div>
+    </div>
+    
+    <!-- Upload de fichier -->
+    <div class="form-section">
+        <h3 class="section-title mb-4">
+            <i class="bi-cloud-upload text-primary me-2"></i>
+            Fichier
+        </h3>
+        
+        <div class="mb-3">
+            {{ form_label(form.uploadedFile) }}
+            {{ form_widget(form.uploadedFile) }}
+            {{ form_errors(form.uploadedFile) }}
+            {{ form_help(form.uploadedFile) }}
+            
+            <div class="file-preview" id="filePreview">
+                <div class="file-preview-placeholder">
+                    <i class="bi-cloud-upload text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-2">Glissez-déposez un fichier ici ou cliquez pour sélectionner</p>
+                    <small class="text-muted">Formats acceptés: PDF, Office, Images, Archives (max. 10MB)</small>
+                </div>
+                <div class="file-preview-content" id="filePreviewContent">
+                    <div id="previewImage"></div>
+                    <div class="file-info" id="fileInfo"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="form-section">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-submit">
+                    <i class="bi-check-circle me-2"></i>
+                    Créer le document
+                </button>
+                <a href="{{ path('admin_document_index') }}" class="btn btn-outline-secondary ms-2">
+                    <i class="bi-x-circle me-2"></i>
+                    Annuler
+                </a>
+            </div>
+            <div class="col-md-6 text-end">
+                <small class="text-muted">
+                    <i class="bi-info-circle me-1"></i>
+                    Les champs marqués d'un * sont obligatoires
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const fileInput = document.querySelector('#document_uploadedFile');
+            const filePreview = document.getElementById('filePreview');
+            const filePreviewContent = document.getElementById('filePreviewContent');
+            const previewImage = document.getElementById('previewImage');
+            const fileInfo = document.getElementById('fileInfo');
+            
+            if (fileInput) {
+                fileInput.addEventListener('change', handleFileSelect);
+                
+                // Drag & Drop
+                filePreview.addEventListener('dragover', handleDragOver);
+                filePreview.addEventListener('dragleave', handleDragLeave);
+                filePreview.addEventListener('drop', handleFileDrop);
+                
+                // Click sur la zone de preview
+                filePreview.addEventListener('click', function() {
+                    fileInput.click();
+                });
+            }
+            
+            function handleFileSelect(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    displayFilePreview(file);
+                }
+            }
+            
+            function handleDragOver(event) {
+                event.preventDefault();
+                filePreview.classList.add('dragover');
+            }
+            
+            function handleDragLeave(event) {
+                event.preventDefault();
+                filePreview.classList.remove('dragover');
+            }
+            
+            function handleFileDrop(event) {
+                event.preventDefault();
+                filePreview.classList.remove('dragover');
+                
+                const files = event.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    
+                    // Mettre à jour l'input file
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    fileInput.files = dt.files;
+                    
+                    displayFilePreview(file);
+                }
+            }
+            
+            function displayFilePreview(file) {
+                // Afficher les informations du fichier
+                const fileSize = formatBytes(file.size);
+                const fileType = file.type || 'Type inconnu';
+                
+                fileInfo.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="bi-file-earmark text-primary me-2" style="font-size: 1.5rem;"></i>
+                        <div>
+                            <div class="fw-bold">${file.name}</div>
+                            <small class="text-muted">${fileSize} • ${fileType}</small>
+                        </div>
+                    </div>
+                `;
+                
+                previewImage.innerHTML = '';
+                
+                // Prévisualisation pour les images
+                if (file.type && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewImage.innerHTML = `<img src="${e.target.result}" class="preview-image" alt="Prévisualisation">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // Icône par type de fichier
+                    let iconClass = 'bi-file-earmark';
+                    if (file.type === 'application/pdf') {
+                        iconClass = 'bi-file-earmark-pdf';
+                    } else if (file.type.includes('word') || file.type.includes('document')) {
+                        iconClass = 'bi-file-earmark-word';
+                    } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
+                        iconClass = 'bi-file-earmark-excel';
+                    } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
+                        iconClass = 'bi-file-earmark-ppt';
+                    }
+                    
+                    previewImage.innerHTML = `<i class="${iconClass} text-primary" style="font-size: 4rem;"></i>`;
+                }
+                
+                filePreviewContent.style.display = 'block';
+            }
+            
+            function formatBytes(bytes) {
+                if (bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // Validation côté client
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    let isValid = true;
+                    
+                    // Validation du nom
+                    const nomInput = document.querySelector('#document_nom');
+                    if (nomInput && !nomInput.value.trim()) {
+                        showFieldError(nomInput, 'Le nom du document est requis');
+                        isValid = false;
+                    } else {
+                        clearFieldError(nomInput);
+                    }
+                    
+                    // Validation de la description
+                    const descInput = document.querySelector('#document_description');
+                    if (descInput && !descInput.value.trim()) {
+                        showFieldError(descInput, 'La description est requise');
+                        isValid = false;
+                    } else {
+                        clearFieldError(descInput);
+                    }
+                    
+                    if (!isValid) {
+                        event.preventDefault();
+                        MKBAAdmin.showNotification('Veuillez corriger les erreurs dans le formulaire', 'error');
+                    }
+                });
+            }
+            
+            function showFieldError(field, message) {
+                clearFieldError(field);
+                field.classList.add('is-invalid');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = message;
+                field.parentNode.appendChild(errorDiv);
+            }
+            
+            function clearFieldError(field) {
+                field.classList.remove('is-invalid');
+                const errorDiv = field.parentNode.querySelector('.invalid-feedback');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }
+        });
+    </script>
+{% endblock %}

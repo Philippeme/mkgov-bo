@@ -22,7 +22,7 @@ parameters:
     
     # Maximum file sizes
     max_avatar_size: '2M'
-    max_document_size: '5M'
+    max_document_size: '10M'
     max_image_size: '3M'
 
 services:
