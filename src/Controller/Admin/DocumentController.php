@@ -5,10 +5,8 @@ namespace App\Controller\Admin;
 use App\Entity\Document;
 use App\Form\DocumentType;
 use App\Repository\DocumentRepository;
-use App\Service\DataTableService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,7 +27,6 @@ class DocumentController extends AbstractController
     #[Route('/datatable', name: 'admin_document_datatable', methods: ['POST', 'GET'])]
     public function datatable(Request $request, DocumentRepository $documentRepository): JsonResponse
     {
-        // Récupérer les paramètres DataTables
         $draw = intval($request->get('draw', 1));
         $start = intval($request->get('start', 0));
         $length = intval($request->get('length', 10));
@@ -37,20 +34,15 @@ class DocumentController extends AbstractController
         $order = $request->get('order', []);
         $columns = $request->get('columns', []);
 
-        // Ajouter les colonnes au search pour la recherche par colonnes
         if (!empty($columns)) {
             $search['columns'] = $columns;
         }
 
         try {
-            // Obtenir les résultats paginés
             $documents = $documentRepository->getDataTablesResults($search, $order, $start, $length);
-            
-            // Compter les enregistrements
             $recordsTotal = $documentRepository->countTotal();
             $recordsFiltered = $documentRepository->countFiltered($search);
 
-            // Formatter les données pour DataTables
             $data = [];
             foreach ($documents as $document) {
                 $actions = $this->renderView('admin/document/_actions.html.twig', [
@@ -109,19 +101,48 @@ class DocumentController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
-                // Gestion de l'upload de fichier
                 $uploadedFile = $form->get('uploadedFile')->getData();
+                
                 if ($uploadedFile) {
+                    // Vérifications préliminaires
+                    if (!$uploadedFile->isValid()) {
+                        throw new \Exception('Le fichier uploadé n\'est pas valide.');
+                    }
+
+                    if ($uploadedFile->getSize() === false || $uploadedFile->getSize() === 0) {
+                        throw new \Exception('Le fichier est vide ou corrompu.');
+                    }
+
                     $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
                     $safeFilename = $slugger->slug($originalFilename);
                     $newFilename = $safeFilename.'-'.uniqid().'.'.$uploadedFile->guessExtension();
 
                     $uploadsDirectory = $this->getParameter('documents_directory');
+                    
+                    // Créer le répertoire s'il n'existe pas
                     if (!is_dir($uploadsDirectory)) {
-                        mkdir($uploadsDirectory, 0755, true);
+                        if (!mkdir($uploadsDirectory, 0755, true)) {
+                            throw new \Exception('Impossible de créer le répertoire de destination.');
+                        }
+                    }
+
+                    // Vérifier les permissions d'écriture
+                    if (!is_writable($uploadsDirectory)) {
+                        throw new \Exception('Le répertoire de destination n\'est pas accessible en écriture.');
                     }
                     
-                    $uploadedFile->move($uploadsDirectory, $newFilename);
+                    // Déplacer le fichier
+                    try {
+                        $uploadedFile->move($uploadsDirectory, $newFilename);
+                    } catch (\Exception $e) {
+                        throw new \Exception('Erreur lors du déplacement du fichier: ' . $e->getMessage());
+                    }
+                    
+                    // Vérifier que le fichier a été correctement déplacé
+                    $finalPath = $uploadsDirectory . '/' . $newFilename;
+                    if (!file_exists($finalPath)) {
+                        throw new \Exception('Le fichier n\'a pas été correctement sauvegardé.');
+                    }
                     
                     // Mettre à jour les propriétés du document
                     $document->setFile($newFilename);
@@ -163,7 +184,6 @@ class DocumentController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
-                // Gestion de la suppression du fichier existant
                 $removeFile = $form->get('removeFile')->getData();
                 if ($removeFile && $document->getFile()) {
                     $oldFilePath = $this->getParameter('documents_directory').'/'.$document->getFile();
@@ -176,10 +196,12 @@ class DocumentController extends AbstractController
                     $document->setFileSize(null);
                 }
 
-                // Gestion de l'upload du nouveau fichier
                 $uploadedFile = $form->get('uploadedFile')->getData();
                 if ($uploadedFile) {
-                    // Supprimer l'ancien fichier s'il existe
+                    if (!$uploadedFile->isValid()) {
+                        throw new \Exception('Le fichier uploadé n\'est pas valide.');
+                    }
+
                     if ($document->getFile()) {
                         $oldFilePath = $this->getParameter('documents_directory').'/'.$document->getFile();
                         if (file_exists($oldFilePath)) {
@@ -225,10 +247,8 @@ class DocumentController extends AbstractController
     {
         if ($this->isCsrfTokenValid('delete'.$document->getId(), $request->request->get('_token'))) {
             try {
-                // Soft delete - marquer comme inactif au lieu de supprimer
                 $document->setIsActive(false);
                 $entityManager->flush();
-
                 $this->addFlash('success', 'Le document a été supprimé avec succès.');
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Erreur lors de la suppression du document: ' . $e->getMessage());
@@ -293,14 +313,12 @@ class DocumentController extends AbstractController
             throw $this->createNotFoundException('Le fichier n\'existe pas.');
         }
 
-        // Pour les images, on peut les afficher directement
         if ($document->isImage()) {
             $response = new BinaryFileResponse($filePath);
             $response->headers->set('Content-Type', $document->getMimeType());
             return $response;
         }
 
-        // Pour les PDFs, on peut essayer de les afficher dans le navigateur
         if ($document->isPdf()) {
             $response = new BinaryFileResponse($filePath);
             $response->headers->set('Content-Type', 'application/pdf');
@@ -308,7 +326,6 @@ class DocumentController extends AbstractController
             return $response;
         }
 
-        // Pour les autres types, rediriger vers le téléchargement
         return $this->redirectToRoute('admin_document_download', ['id' => $document->getId()]);
     }
 
@@ -337,7 +354,7 @@ class DocumentController extends AbstractController
                         $count++;
                         break;
                     case 'delete':
-                        $document->setIsActive(false); // Soft delete
+                        $document->setIsActive(false);
                         $count++;
                         break;
                 }

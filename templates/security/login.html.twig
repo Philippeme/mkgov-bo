@@ -14,16 +14,14 @@
     
     <style>
         :root {
-            --mk-primary: #6d5192;
-            --mk-secondary: #8e32e9;
-            --mk-dark: #1c273c;
-            --mk-gray: #6c7293;
-            --mk-light: #f8f9fa;
-            --mk-gradient: linear-gradient(135deg, #6d5192 0%, #8e32e9 50%, #1c273c 100%);
+            --gray-light: #f5f5f5;
+            --gray-medium: #888888;
+            --gray-dark: #333333;
+            --gray-darker: #2a2a2a;
         }
         
         body {
-            background: var(--mk-gradient);
+            background: var(--gray-light);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -41,9 +39,9 @@
             right: 0;
             bottom: 0;
             background: 
-                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(200, 200, 200, 0.3) 0%, transparent 50%),
                 radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(142, 50, 233, 0.2) 0%, transparent 50%);
+                radial-gradient(circle at 40% 40%, rgba(150, 150, 150, 0.2) 0%, transparent 50%);
             z-index: -1;
         }
         
@@ -73,7 +71,7 @@
         }
         
         .login-header {
-            background: var(--mk-gradient);
+            background: var(--gray-dark);
             color: white;
             padding: 40px 30px;
             text-align: center;
@@ -160,7 +158,7 @@
         
         .form-label {
             font-weight: 600;
-            color: var(--mk-dark);
+            color: var(--gray-dark);
             margin-bottom: 8px;
             display: flex;
             align-items: center;
@@ -169,7 +167,7 @@
         }
         
         .form-label i {
-            color: var(--mk-primary);
+            color: var(--gray-medium);
             font-size: 16px;
         }
         
@@ -187,22 +185,22 @@
         }
         
         .form-control:focus {
-            border-color: var(--mk-primary);
-            box-shadow: 0 0 0 4px rgba(109, 81, 146, 0.1);
+            border-color: var(--gray-medium);
+            box-shadow: 0 0 0 4px rgba(136, 136, 136, 0.1);
             outline: none;
             background: white;
         }
         
         .form-control::placeholder {
-            color: var(--mk-gray);
+            color: var(--gray-medium);
             opacity: 0.7;
         }
         
         .btn-login {
-            background: var(--mk-gradient);
-            border: none;
+            background: var(--gray-light);
+            border: 2px solid var(--gray-medium);
             border-radius: 12px;
-            color: white;
+            color: var(--gray-dark);
             font-weight: 600;
             padding: 14px 30px;
             width: 100%;
@@ -228,9 +226,11 @@
         }
         
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(109, 81, 146, 0.3);
+            background: var(--gray-dark);
             color: white;
+            border-color: var(--gray-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(51, 51, 51, 0.3);
         }
         
         .btn-login:active {
@@ -254,11 +254,11 @@
             text-align: center;
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid rgba(108, 114, 147, 0.1);
+            border-top: 1px solid rgba(136, 136, 136, 0.1);
         }
         
         .back-to-site a {
-            color: var(--mk-primary);
+            color: var(--gray-medium);
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
@@ -269,25 +269,25 @@
         }
         
         .back-to-site a:hover {
-            color: var(--mk-secondary);
+            color: var(--gray-dark);
             transform: translateX(-3px);
         }
         
         .security-notice {
-            background: rgba(109, 81, 146, 0.05);
-            border: 1px solid rgba(109, 81, 146, 0.1);
+            background: rgba(136, 136, 136, 0.05);
+            border: 1px solid rgba(136, 136, 136, 0.1);
             border-radius: 8px;
             padding: 12px 16px;
             margin-top: 20px;
             font-size: 13px;
-            color: var(--mk-gray);
+            color: var(--gray-medium);
         }
         
         .version-info {
             position: absolute;
             bottom: 20px;
             left: 20px;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(136, 136, 136, 0.7);
             font-size: 12px;
         }
         
@@ -322,7 +322,7 @@
             width: 20px;
             height: 20px;
             border: 2px solid transparent;
-            border-top: 2px solid white;
+            border-top: 2px solid currentColor;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             right: 20px;
@@ -422,10 +422,8 @@
                 loginBtn.innerHTML = '<i class="bi-box-arrow-in-right me-2"></i>Connexion en cours...';
             });
             
-            // Auto-focus on username field
             document.getElementById('username').focus();
             
-            // Add smooth transitions for form inputs
             const inputs = document.querySelectorAll('.form-control');
             inputs.forEach(input => {
                 input.addEventListener('focus', function() {

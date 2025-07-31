@@ -79,7 +79,11 @@ class DocumentType extends AbstractType
                 'attr' => [
                     'class' => 'form-check-input'
                 ],
-                'help' => 'Cochez pour supprimer le fichier actuellement associé au document'
+                'help' => 'Cochez pour supprimer le fichier actuellement associé au document',
+                // Ne pas afficher ce champ lors de la création
+                'row_attr' => [
+                    'style' => $options['data']->getId() ? '' : 'display: none;'
+                ]
             ])
             ->add('displayOrder', IntegerType::class, [
                 'label' => 'Ordre d\'affichage',

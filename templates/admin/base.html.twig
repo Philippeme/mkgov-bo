@@ -14,7 +14,6 @@
     
     <!-- Custom Admin Styles -->
     <link rel="stylesheet" href="{{ asset('styles/admin.css') }}">
-
     <link rel="stylesheet" href="{{ asset('styles/document.css') }}">
 
     {% block stylesheets %}{% endblock %}
@@ -35,19 +34,276 @@
 
     <div class="admin-wrapper">
         <!-- Sidebar -->
-        {% include 'admin/partials/_sidebar.html.twig' %}
+        <div class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <div class="logo-frame">
+                    <img src="{{ asset('images/logo-mkba.png') }}" alt="MK BA Logo">
+                </div>
+                <!-- Switch Toggle -->
+                <div class="sidebar-switch">
+                    <button class="switch-button active" id="sidebarSwitchBtn">
+                        <span class="switch-slider">
+                            <span class="switch-knob"></span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+
+            <ul class="sidebar-nav">
+                <!-- ANALYTICS SECTION -->
+                <li class="nav-section">
+                    <div class="nav-section-title">Analytics</div>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ path('admin_dashboard') }}" class="nav-link {{ app.request.get('_route') starts with 'admin_dashboard' ? 'active' : '' }}">
+                        <i class="bi-speedometer2"></i>
+                        <span class="nav-text">Dashboard</span>
+                        <div class="tooltip">Dashboard</div>
+                    </a>
+                </li>
+
+                <!-- SERVICE MANAGEMENT SECTION -->
+                <li class="nav-section">
+                    <div class="nav-section-title">Gestion des Services</div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_request' ? 'active' : '' }}" data-dropdown="requests">
+                        <i class="bi-journal-text"></i>
+                        <span class="nav-text">Demandes</span>
+                        <span class="nav-badge">23</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Gestion des Demandes</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi-plus-circle me-2"></i>Nouvelle Demande</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-list-ul me-2"></i>Toutes les Demandes</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-clock me-2"></i>En Attente</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-check-circle me-2"></i>Terminées</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_procedure' ? 'active' : '' }}" data-dropdown="procedures">
+                        <i class="bi-file-earmark-text"></i>
+                        <span class="nav-text">Procédures</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Gestion des Procédures</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi-plus-circle me-2"></i>Nouvelle Procédure</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-list-ul me-2"></i>Toutes les Procédures</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_family' ? 'active' : '' }}" data-dropdown="families">
+                        <i class="bi-collection"></i>
+                        <span class="nav-text">Familles de Services</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Familles de Services</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi-plus-circle me-2"></i>Nouvelle Famille</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-list-ul me-2"></i>Toutes les Familles</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_document' ? 'active' : '' }}" data-dropdown="documents">
+                        <i class="bi-folder"></i>
+                        <span class="nav-text">Documents</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Gestion des Documents</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ path('admin_document_new') }}"><i class="bi-plus-circle me-2"></i>Nouveau Document</a></li>
+                        <li><a class="dropdown-item" href="{{ path('admin_document_index') }}"><i class="bi-list-ul me-2"></i>Tous les Documents</a></li>
+                    </ul>
+                </li>
+
+                <!-- USER & ENTITY MANAGEMENT SECTION -->
+                <li class="nav-section">
+                    <div class="nav-section-title">Gestion Utilisateurs & Entités</div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_user' ? 'active' : '' }}" data-dropdown="users">
+                        <i class="bi-people"></i>
+                        <span class="nav-text">Utilisateurs</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Gestion des Utilisateurs</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi-person-plus me-2"></i>Nouvel Utilisateur</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-people me-2"></i>Tous les Utilisateurs</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_role' ? 'active' : '' }}" data-dropdown="roles">
+                        <i class="bi-shield-check"></i>
+                        <span class="nav-text">Rôles & Permissions</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Rôles & Permissions</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi-plus-circle me-2"></i>Nouveau Rôle</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-shield-check me-2"></i>Tous les Rôles</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-key me-2"></i>Permissions</a></li>
+                    </ul>
+                </li>
+
+                <!-- SYSTEM SECTION -->
+                <li class="nav-section">
+                    <div class="nav-section-title">Système</div>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle-custom" data-dropdown="system">
+                        <i class="bi-gear"></i>
+                        <span class="nav-text">Configuration</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Configuration Système</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="bi-sliders2 me-2"></i>Paramètres</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-database me-2"></i>Données de Référence</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-clock-history me-2"></i>Journaux</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
 
         <!-- Contenu principal -->
-        {% include 'admin/partials/_main_content.html.twig' %}
+        <div class="admin-content" id="adminContent">
+            <div class="admin-header">
+                <div class="header-top-section">
+                    <button class="mobile-menu-toggle me-3 d-md-none" id="mobileMenuToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    
+                    <!-- Search Container -->
+                    <div class="search-container">
+                        <input type="text" class="search-input" placeholder="Rechercher procédures, institutions, demandes..." id="headerSearch">
+                        <button class="search-btn" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Fullscreen Button -->
+                    <button class="fullscreen-btn" id="fullscreenBtn" title="Mode plein écran">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    
+                    <div class="header-actions ms-auto">
+                        <!-- Language Selector -->
+                        <div class="language-selector dropdown">
+                            <button class="dropdown-toggle" type="button" id="languageDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-globe"></i>
+                                <span>FR</span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" data-lang="fr"><i class="fas fa-flag me-2"></i>Français</a></li>
+                                <li><a class="dropdown-item" href="#" data-lang="en"><i class="fas fa-flag-usa me-2"></i>English</a></li>
+                            </ul>
+                        </div>
+
+                        <!-- Notifications -->
+                        <div class="notifications-container">
+                            <button class="notification-btn" id="notificationBtn">
+                                <i class="fas fa-bell"></i>
+                                <span class="notification-badge">3</span>
+                            </button>
+                        </div>
+
+                        <!-- User Profile -->
+                        <div class="user-profile dropdown">
+                            <button class="profile-toggle" id="profileToggle" data-bs-toggle="dropdown">
+                                <div class="user-avatar">
+                                    {{ app.user ? (app.user.firstName|first ~ app.user.lastName|first) : 'AD' }}
+                                </div>
+                                <div class="user-info-header d-none d-md-block">
+                                    <div class="user-name">{{ app.user ? (app.user.firstName ~ ' ' ~ app.user.lastName) : 'Administrateur' }}</div>
+                                    <div class="user-role">Administrateur</div>
+                                </div>
+                                <i class="fas fa-chevron-down" style="font-size: 10px; color: var(--mk-gray);"></i>
+                            </button>
+                            <ul class="dropdown-menu user-dropdown dropdown-menu-end">
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi-person-circle me-2"></i>
+                                        Mon Profil
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi-gear me-2"></i>
+                                        Paramètres
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#">
+                                        <i class="bi-question-circle me-2"></i>
+                                        Aide
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ path('app_logout') }}">
+                                        <i class="bi-box-arrow-right text-danger me-2"></i>
+                                        Déconnexion
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Breadcrumb Navigation -->
+                <div class="breadcrumb-nav">
+                    <div class="breadcrumb-path">
+                        <a href="{{ path('admin_dashboard') }}" class="breadcrumb-item">Dashboard</a>
+                        {% if app.request.get('_route') != 'admin_dashboard' %}
+                        <span class="breadcrumb-separator">/</span>
+                        <span class="breadcrumb-item current">
+                            {% if app.request.get('_route') starts with 'admin_family' %}
+                                Familles
+                            {% elseif app.request.get('_route') starts with 'admin_user' %}
+                                Utilisateurs
+                            {% elseif app.request.get('_route') starts with 'admin_role' %}
+                                Rôles
+                            {% elseif app.request.get('_route') starts with 'admin_procedure' %}
+                                Procédures
+                            {% elseif app.request.get('_route') starts with 'admin_document' %}
+                                Documents
+                            {% elseif app.request.get('_route') starts with 'admin_request' %}
+                                Demandes
+                            {% else %}
+                                Administration
+                            {% endif %}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="admin-main">
+                {% block body %}
+                <p><
+                {% endblock %}
+            </div>
+        </div>
     </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery pour DataTables -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     
     <!-- Custom Admin JS -->
     <script src="{{ asset('js/admin.js') }}"></script>
-
-    <script src="{{ asset('controllers/document_controller.js') }}"></script>
 
     {% block javascripts %}{% endblock %}
 </body>

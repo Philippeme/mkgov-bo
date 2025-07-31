@@ -151,6 +151,11 @@
             {{ form_errors(form.uploadedFile) }}
             {{ form_help(form.uploadedFile) }}
             
+            {# Masquer le champ removeFile pour la création #}
+            <div style="display: none;">
+                {{ form_widget(form.removeFile) }}
+            </div>
+            
             <div class="file-preview" id="filePreview">
                 <div class="file-preview-placeholder">
                     <i class="bi-cloud-upload text-muted" style="font-size: 3rem;"></i>
