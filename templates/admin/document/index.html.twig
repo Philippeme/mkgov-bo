@@ -1,11 +1,9 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MK BA - DataTable Professionnel</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Gestion des Documents{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -15,11 +13,6 @@
             --warning-color: #f39c12;
             --light-bg: #f8f9fa;
             --border-color: #dee2e6;
-        }
-
-        body {
-            background-color: var(--light-bg);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .mkba-container {
@@ -95,6 +88,18 @@
         .mkba-btn-success {
             background: var(--success-color);
             color: white;
+        }
+
+        .btn-success {
+            background: white !important;
+            color: var(--success-color) !important;
+            border: 1px solid var(--success-color) !important;
+        }
+
+        .btn-success:hover {
+            background: var(--success-color) !important;
+            color: white !important;
+            border: 1px solid var(--success-color) !important;
         }
 
         .mkba-btn-warning {
@@ -247,6 +252,20 @@
             display: block;
         }
 
+        .mkba-bulk-actions-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .mkba-bulk-actions-dropdown .mkba-dropdown-content {
+            left: 0;
+            right: auto;
+        }
+
+        .mkba-bulk-actions-dropdown:hover .mkba-dropdown-content {
+            display: block;
+        }
+
         .mkba-loading {
             display: none;
             position: absolute;
@@ -297,127 +316,129 @@
             }
         }
     </style>
-</head>
-<body>
-    <div class="container-fluid">
-        <div class="mkba-container">
-            <!-- En-tête -->
-            <div class="mkba-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h2><i class="fas fa-table me-2"></i>Gestion des Données MK BA</h2>
-                    <div class="d-flex align-items-center">
-                        <span class="badge bg-light text-dark me-2">
-                            <span id="totalRecords">0</span> enregistrements
-                        </span>
-                        <span class="badge bg-warning text-dark">
-                            <span id="selectedCount">0</span> sélectionnés
-                        </span>
-                    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="mkba-container">
+        <!-- En-tête -->
+        <div class="mkba-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-table me-2"></i>Gestion des Documents MK BA</h2>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-light text-dark me-2">
+                        <span id="totalRecords">0</span> enregistrements
+                    </span>
+                    <span class="badge bg-warning text-dark">
+                        <span id="selectedCount">0</span> sélectionnés
+                    </span>
                 </div>
             </div>
+        </div>
 
-            <!-- Contrôles -->
-            <div class="mkba-controls">
-                <div class="row align-items-center">
-                    <div class="col-md-4">
-                        <div class="mkba-search-box">
-                            <i class="fas fa-search search-icon"></i>
-                            <input type="text" id="searchInput" class="form-control" placeholder="Rechercher dans tous les champs...">
-                        </div>
-                    </div>
-                    <div class="col-md-2">
-                        <select id="entriesSelect" class="form-select">
-                            <option value="10">10 par page</option>
-                            <option value="25" selected>25 par page</option>
-                            <option value="50">50 par page</option>
-                            <option value="100">100 par page</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select id="statusFilter" class="form-select">
-                            <option value="">Tous les statuts</option>
-                            <option value="actif">Actif</option>
-                            <option value="inactif">Inactif</option>
-                            <option value="en-attente">En attente</option>
-                        </select>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <button class="mkba-btn mkba-btn-primary me-2" onclick="addNewRecord()">
-                            <i class="fas fa-plus me-1"></i>Nouveau
-                        </button>
-                        <button class="mkba-btn mkba-btn-success me-2" onclick="bulkAction('activate')" id="bulkActivate" disabled>
-                            <i class="fas fa-check me-1"></i>Activer
-                        </button>
-                        <button class="mkba-btn mkba-btn-warning me-2" onclick="bulkAction('deactivate')" id="bulkDeactivate" disabled>
-                            <i class="fas fa-pause me-1"></i>Désactiver
-                        </button>
-                        <div class="mkba-export-dropdown d-inline-block">
-                            <button class="mkba-btn mkba-btn-primary">
-                                <i class="fas fa-download me-1"></i>Exporter <i class="fas fa-chevron-down ms-1"></i>
-                            </button>
-                            <div class="mkba-dropdown-content">
-                                <a href="#" onclick="exportData('csv')"><i class="fas fa-file-csv me-2"></i>CSV</a>
-                                <a href="#" onclick="exportData('excel')"><i class="fas fa-file-excel me-2"></i>Excel</a>
-                                <a href="#" onclick="exportData('pdf')"><i class="fas fa-file-pdf me-2"></i>PDF</a>
-                                <a href="#" onclick="exportData('print')"><i class="fas fa-print me-2"></i>Imprimer</a>
-                            </div>
-                        </div>
+        <!-- Contrôles -->
+        <div class="mkba-controls">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="mkba-search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher dans tous les champs...">
                     </div>
                 </div>
-            </div>
-
-            <!-- Table -->
-            <div class="mkba-table-container position-relative">
-                <div class="mkba-loading" id="loadingSpinner">
-                    <div class="mkba-spinner"></div>
+                <div class="col-md-2">
+                    <select id="entriesSelect" class="form-select">
+                        <option value="10">10 par page</option>
+                        <option value="25" selected>25 par page</option>
+                        <option value="50">50 par page</option>
+                        <option value="100">100 par page</option>
+                    </select>
                 </div>
-                <table class="table mkba-table">
-                    <thead>
-                        <tr>
-                            <th width="50">
-                                <input type="checkbox" class="form-check-input mkba-select-all" id="selectAll">
-                            </th>
-                            <th class="sortable" data-column="id">ID</th>
-                            <th class="sortable" data-column="nom">Nom</th>
-                            <th class="sortable" data-column="prenom">Prénom</th>
-                            <th class="sortable" data-column="email">Email</th>
-                            <th class="sortable" data-column="telephone">Téléphone</th>
-                            <th class="sortable" data-column="statut">Statut</th>
-                            <th class="sortable" data-column="date_creation">Date création</th>
-                            <th width="120">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody">
-                        <!-- Les données seront injectées ici par JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            <div class="mkba-pagination">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <div class="mkba-pagination-info">
-                            Affichage de <span id="showingFrom">1</span> à <span id="showingTo">25</span> 
-                            sur <span id="totalEntries">0</span> entrées
-                            <span id="filteredInfo" style="display:none">
-                                (filtrées à partir de <span id="totalUnfiltered">0</span> entrées au total)
-                            </span>
+                <div class="col-md-2">
+                    <select id="statusFilter" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="actif">Actif</option>
+                        <option value="inactif">Inactif</option>
+                        <option value="en-attente">En attente</option>
+                    </select>
+                </div>
+                <div class="col-md-4 text-end">
+                    <!-- Actions groupées -->
+                    <div class="mkba-bulk-actions-dropdown me-2" id="bulkActionsDropdown" style="display: none;">
+                        <button class="mkba-btn mkba-btn-warning">
+                            <i class="fas fa-list-check me-1"></i>Actions groupées <i class="fas fa-chevron-down ms-1"></i>
+                        </button>
+                        <div class="mkba-dropdown-content">
+                            <a href="#" onclick="bulkAction('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Exporter Excel</a>
+                            <a href="#" onclick="bulkAction('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>Exporter PDF</a>
+                            <a href="#" onclick="bulkAction('delete')" class="text-danger"><i class="fas fa-trash me-2"></i>Supprimer sélection</a>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <nav aria-label="Navigation des pages">
-                            <div class="mkba-pagination-controls d-flex justify-content-end" id="paginationControls">
-                                <!-- Les contrôles de pagination seront générés ici -->
-                            </div>
-                        </nav>
+                    <!-- Export -->
+                    <div class="mkba-export-dropdown d-inline-block">
+                        <button class="mkba-btn mkba-btn-primary">
+                            <i class="fas fa-download me-1"></i>Exporter <i class="fas fa-chevron-down ms-1"></i>
+                        </button>
+                        <div class="mkba-dropdown-content">
+                            <a href="#" onclick="exportData('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Excel</a>
+                            <a href="#" onclick="exportData('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>PDF</a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+        <!-- Table -->
+        <div class="mkba-table-container position-relative">
+            <div class="mkba-loading" id="loadingSpinner">
+                <div class="mkba-spinner"></div>
+            </div>
+            <table class="table mkba-table">
+                <thead>
+                    <tr>
+                        <th width="50">
+                            <input type="checkbox" class="form-check-input mkba-select-all" id="selectAll">
+                        </th>
+                        <th class="sortable" data-column="id">ID</th>
+                        <th class="sortable" data-column="nom">Nom</th>
+                        <th class="sortable" data-column="prenom">Prénom</th>
+                        <th class="sortable" data-column="email">Email</th>
+                        <th class="sortable" data-column="telephone">Téléphone</th>
+                        <th class="sortable" data-column="statut">Statut</th>
+                        <th class="sortable" data-column="date_creation">Date création</th>
+                        <th width="150">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Les données seront injectées ici par JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mkba-pagination">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="mkba-pagination-info">
+                        Affichage de <span id="showingFrom">1</span> à <span id="showingTo">25</span> 
+                        sur <span id="totalEntries">0</span> entrées
+                        <span id="filteredInfo" style="display:none">
+                            (filtrées à partir de <span id="totalUnfiltered">0</span> entrées au total)
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <nav aria-label="Navigation des pages">
+                        <div class="mkba-pagination-controls d-flex justify-content-end" id="paginationControls">
+                            <!-- Les contrôles de pagination seront générés ici -->
+                        </div>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
     <script>
         // Données d'exemple pour le datatable MK BA
         let sampleData = [
@@ -431,7 +452,7 @@
             {id: 8, nom: "Michel", prenom: "Paul", email: "paul.michel@email.com", telephone: "+33 1 33 44 55 66", statut: "en-attente", date_creation: "2024-03-05"},
             {id: 9, nom: "Leroy", prenom: "Emma", email: "emma.leroy@email.com", telephone: "+33 1 66 77 88 99", statut: "actif", date_creation: "2024-03-10"},
             {id: 10, nom: "Roux", prenom: "Thomas", email: "thomas.roux@email.com", telephone: "+33 1 99 00 11 22", statut: "actif", date_creation: "2024-03-15"},
-            // Ajout de plus de données pour tester la pagination
+
             {id: 11, nom: "Fournier", prenom: "Isabelle", email: "isabelle.fournier@email.com", telephone: "+33 1 12 34 56 78", statut: "actif", date_creation: "2024-03-20"},
             {id: 12, nom: "Girard", prenom: "Antoine", email: "antoine.girard@email.com", telephone: "+33 1 87 65 43 21", statut: "inactif", date_creation: "2024-03-25"},
             {id: 13, nom: "Bonnet", prenom: "Camille", email: "camille.bonnet@email.com", telephone: "+33 1 23 45 67 89", statut: "en-attente", date_creation: "2024-04-01"},
@@ -499,13 +520,6 @@
             document.getElementById('selectAll').addEventListener('change', function(e) {
                 toggleSelectAll(e.target.checked);
             });
-
-            // Tri des colonnes
-            document.querySelectorAll('.sortable').forEach(header => {
-                header.addEventListener('click', function() {
-                    sortData(this.dataset.column);
-                });
-            });
         }
 
         function searchData(searchTerm) {
@@ -537,47 +551,6 @@
             updateStats();
         }
 
-        function sortData(column) {
-            if (sortColumn === column) {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = column;
-                sortDirection = 'asc';
-            }
-
-            // Mise à jour des indicateurs visuels de tri
-            document.querySelectorAll('.sortable').forEach(th => {
-                th.classList.remove('sort-asc', 'sort-desc');
-            });
-            
-            const currentHeader = document.querySelector(`[data-column="${column}"]`);
-            currentHeader.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
-
-            // Tri des données
-            filteredData.sort((a, b) => {
-                let aVal = a[column];
-                let bVal = b[column];
-
-                // Traitement spécial pour les dates
-                if (column === 'date_creation') {
-                    aVal = new Date(aVal);
-                    bVal = new Date(bVal);
-                }
-
-                // Traitement spécial pour les nombres
-                if (column === 'id') {
-                    aVal = parseInt(aVal);
-                    bVal = parseInt(bVal);
-                }
-
-                if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-                if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-                return 0;
-            });
-
-            updateTable();
-        }
-
         function updateTable() {
             showLoading(true);
             
@@ -595,7 +568,8 @@
                 });
 
                 showLoading(false);
-            }, 200); // Simulation d'un délai de chargement
+                updateBulkActions();
+            }, 200);
         }
 
         function createTableRow(item) {
@@ -617,6 +591,9 @@
                 <td><span class="mkba-badge ${item.statut}">${item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}</span></td>
                 <td>${formatDate(item.date_creation)}</td>
                 <td>
+                    <button class="btn btn-sm btn-success me-1" onclick="addNewRecord()" title="Nouveau">
+                        <i class="fas fa-plus"></i>
+                    </button>
                     <button class="btn btn-sm btn-outline-primary me-1" onclick="editRecord(${item.id})" title="Modifier">
                         <i class="fas fa-edit"></i>
                     </button>
@@ -670,9 +647,12 @@
         }
 
         function updateBulkActions() {
-            const hasSelection = selectedRows.size > 0;
-            document.getElementById('bulkActivate').disabled = !hasSelection;
-            document.getElementById('bulkDeactivate').disabled = !hasSelection;
+            const bulkDropdown = document.getElementById('bulkActionsDropdown');
+            if (selectedRows.size > 0) {
+                bulkDropdown.style.display = 'inline-block';
+            } else {
+                bulkDropdown.style.display = 'none';
+            }
         }
 
         function updatePagination() {
@@ -763,16 +743,23 @@
 
         // Actions
         function addNewRecord() {
-            alert('Fonction d\'ajout - À implémenter avec Symfony');
+            if (window.MKBAAdmin) {
+                window.MKBAAdmin.showNotification('Redirection vers la création...', 'info');
+            } else {
+                alert('Fonction d\'ajout - À implémenter avec Symfony');
+            }
         }
 
         function editRecord(id) {
-            alert(`Modification de l'enregistrement ${id} - À implémenter avec Symfony`);
+            if (window.MKBAAdmin) {
+                window.MKBAAdmin.showNotification(`Modification de l'enregistrement ${id}`, 'info');
+            } else {
+                alert(`Modification de l'enregistrement ${id} - À implémenter avec Symfony`);
+            }
         }
 
         function deleteRecord(id) {
             if (confirm('Êtes-vous sûr de vouloir supprimer cet enregistrement ?')) {
-                // Suppression des données locales pour la démo
                 currentData = currentData.filter(item => item.id !== id);
                 filteredData = filteredData.filter(item => item.id !== id);
                 selectedRows.delete(id);
@@ -782,39 +769,61 @@
                 updateStats();
                 updateBulkActions();
                 
-                alert('Enregistrement supprimé avec succès');
+                if (window.MKBAAdmin) {
+                    window.MKBAAdmin.showNotification('Enregistrement supprimé avec succès', 'success');
+                } else {
+                    alert('Enregistrement supprimé avec succès');
+                }
             }
         }
 
         function bulkAction(action) {
             if (selectedRows.size === 0) {
-                alert('Veuillez sélectionner au moins un enregistrement');
+                const message = 'Veuillez sélectionner au moins un enregistrement';
+                if (window.MKBAAdmin) {
+                    window.MKBAAdmin.showNotification(message, 'warning');
+                } else {
+                    alert(message);
+                }
                 return;
             }
 
-            const actionText = action === 'activate' ? 'activer' : 'désactiver';
-            if (confirm(`Êtes-vous sûr de vouloir ${actionText} ${selectedRows.size} enregistrement(s) ?`)) {
-                const newStatus = action === 'activate' ? 'actif' : 'inactif';
-                
-                // Mise à jour des données pour la démo
-                currentData.forEach(item => {
-                    if (selectedRows.has(item.id)) {
-                        item.statut = newStatus;
+            switch (action) {
+                case 'excel':
+                    const excelMessage = `Export Excel de ${selectedRows.size} enregistrement(s)`;
+                    if (window.MKBAAdmin) {
+                        window.MKBAAdmin.showNotification(excelMessage, 'info');
+                    } else {
+                        alert(excelMessage);
                     }
-                });
-                
-                filteredData.forEach(item => {
-                    if (selectedRows.has(item.id)) {
-                        item.statut = newStatus;
+                    break;
+                case 'pdf':
+                    const pdfMessage = `Export PDF de ${selectedRows.size} enregistrement(s)`;
+                    if (window.MKBAAdmin) {
+                        window.MKBAAdmin.showNotification(pdfMessage, 'info');
+                    } else {
+                        alert(pdfMessage);
                     }
-                });
-
-                selectedRows.clear();
-                updateTable();
-                updateBulkActions();
-                updateStats();
-                
-                alert(`${selectedRows.size} enregistrement(s) ${actionText}(s) avec succès`);
+                    break;
+                case 'delete':
+                    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedRows.size} enregistrement(s) ?`)) {
+                        currentData = currentData.filter(item => !selectedRows.has(item.id));
+                        filteredData = filteredData.filter(item => !selectedRows.has(item.id));
+                        selectedRows.clear();
+                        
+                        updateTable();
+                        updatePagination();
+                        updateStats();
+                        updateBulkActions();
+                        
+                        const successMessage = 'Enregistrements supprimés avec succès';
+                        if (window.MKBAAdmin) {
+                            window.MKBAAdmin.showNotification(successMessage, 'success');
+                        } else {
+                            alert(successMessage);
+                        }
+                    }
+                    break;
             }
         }
 
@@ -823,103 +832,25 @@
             
             setTimeout(() => {
                 switch (format) {
-                    case 'csv':
-                        exportToCSV();
-                        break;
                     case 'excel':
-                        exportToExcel();
+                        const excelMessage = 'Export Excel - À implémenter';
+                        if (window.MKBAAdmin) {
+                            window.MKBAAdmin.showNotification(excelMessage, 'info');
+                        } else {
+                            alert(excelMessage);
+                        }
                         break;
                     case 'pdf':
-                        exportToPDF();
-                        break;
-                    case 'print':
-                        printData();
+                        const pdfMessage = 'Export PDF - À implémenter';
+                        if (window.MKBAAdmin) {
+                            window.MKBAAdmin.showNotification(pdfMessage, 'info');
+                        } else {
+                            alert(pdfMessage);
+                        }
                         break;
                 }
                 showLoading(false);
             }, 500);
         }
-
-        function exportToCSV() {
-            const headers = ['ID', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Statut', 'Date création'];
-            const csvContent = [
-                headers.join(','),
-                ...filteredData.map(row => [
-                    row.id,
-                    `"${row.nom}"`,
-                    `"${row.prenom}"`,
-                    `"${row.email}"`,
-                    `"${row.telephone}"`,
-                    `"${row.statut}"`,
-                    `"${row.date_creation}"`
-                ].join(','))
-            ].join('\n');
-
-            downloadFile(csvContent, 'mkba_data.csv', 'text/csv');
-        }
-
-        function exportToExcel() {
-            alert('Export Excel - À implémenter avec une bibliothèque comme SheetJS');
-        }
-
-        function exportToPDF() {
-            alert('Export PDF - À implémenter avec une bibliothèque comme jsPDF');
-        }
-
-        function printData() {
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>MK BA - Données</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; }
-                            table { width: 100%; border-collapse: collapse; }
-                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                            th { background-color: #f2f2f2; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>MK BA - Données exportées</h1>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th><th>Nom</th><th>Prénom</th><th>Email</th>
-                                    <th>Téléphone</th><th>Statut</th><th>Date création</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${filteredData.map(item => `
-                                    <tr>
-                                        <td>${item.id}</td>
-                                        <td>${item.nom}</td>
-                                        <td>${item.prenom}</td>
-                                        <td>${item.email}</td>
-                                        <td>${item.telephone}</td>
-                                        <td>${item.statut}</td>
-                                        <td>${formatDate(item.date_creation)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </body>
-                </html>
-            `);
-            printWindow.document.close();
-            printWindow.print();
-        }
-
-        function downloadFile(content, filename, contentType) {
-            const blob = new Blob([content], { type: contentType });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }
     </script>
-</body>
-</html>
+{% endblock %}
