@@ -28,18 +28,63 @@
             color: white;
             padding: 20px 25px;
             border-bottom: none;
+            position: relative;
+            z-index: 50; /* Sous le header principal admin */
+        }
+
+        .mkba-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mkba-header-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
         }
 
         .mkba-header h2 {
-            margin: 0;
+            margin: 0 0 15px 0;
             font-weight: 600;
             font-size: 1.5rem;
+        }
+
+        .mkba-stats-badges {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .mkba-add-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mkba-add-button:hover {
+            background: #800080;
+            border-color: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            transform: translateY(-2px);
         }
 
         .mkba-controls {
             padding: 20px 25px;
             background: #fafbfc;
             border-bottom: 1px solid var(--border-color);
+            position: relative;
+            z-index: 40; /* Sous le header principal admin */
         }
 
         .mkba-search-box {
@@ -114,11 +159,14 @@
 
         .mkba-table-container {
             overflow-x: auto;
+            position: relative;
+            z-index: 1; /* Base level pour le contenu de la table */
         }
 
         .mkba-table {
             margin: 0;
             border: none;
+            position: relative;
         }
 
         .mkba-table thead th {
@@ -127,9 +175,11 @@
             border: none;
             font-weight: 600;
             padding: 15px 12px;
-            position: relative;
+            position: sticky;
+            top: 0;
             cursor: pointer;
             user-select: none;
+            z-index: 10; /* Header de table au-dessus du contenu */
         }
 
         .mkba-table thead th:hover {
@@ -148,15 +198,18 @@
         .mkba-table thead th.sort-asc::after {
             content: '\f0de';
             opacity: 1;
+            color: #ffc107;
         }
 
         .mkba-table thead th.sort-desc::after {
             content: '\f0dd';
             opacity: 1;
+            color: #ffc107;
         }
 
         .mkba-table tbody tr {
             transition: all 0.2s ease;
+            position: relative;
         }
 
         .mkba-table tbody tr:hover {
@@ -173,6 +226,7 @@
             padding: 12px;
             vertical-align: middle;
             border-top: 1px solid #f1f3f4;
+            position: relative;
         }
 
         .mkba-badge {
@@ -197,10 +251,218 @@
             color: var(--warning-color);
         }
 
+        /* ========== ACTIONS AMÉLIORÉES - MENU DROPDOWN ========== */
+        .mkba-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-details {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-details:hover {
+            background: #2980b9;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* Container des actions avec positionnement relatif */
+        .dropdown-actions {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Styles pour l'animation de la modale des filtres avancés */
+        .modal.fade .modal-dialog {
+            transform: translateX(100%);
+            transition: transform 0.8s ease-in-out;
+            margin-left: auto;
+            margin-right: 0;
+            max-width: 600px;
+        }
+
+        .modal.show .modal-dialog {
+            transform: translateX(0);
+        }
+
+        .modal.fade.hide .modal-dialog {
+            transform: translateX(100%);
+            transition: transform 0.8s ease-in-out;
+        }
+
+        /* Positionnement fixe à droite */
+        #advancedFiltersModal .modal-dialog {
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+            margin: 0;
+            max-width: 600px;
+            width: 600px;
+        }
+
+        #advancedFiltersModal .modal-content {
+            height: 100vh;
+            border-radius: 0;
+            border: none;
+        }
+
+        /* ========== BOUTON TROIS POINTS STYLISÉ ========== */
+        .btn-three-dots {
+            background: transparent;
+            color: var(--primary-color);
+            border: 1px solid rgba(44, 62, 80, 0.2);
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+            z-index: 5;
+            min-width: 36px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-three-dots:hover {
+            background: rgba(44, 62, 80, 0.1);
+            border-color: rgba(44, 62, 80, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-three-dots.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* ========== MENU DROPDOWN AVEC POSITIONNEMENT FIXE ========== */
+        .dropdown-menu-actions {
+            display: none;
+            position: fixed;
+            background: white;
+            min-width: 140px;
+            box-shadow: 
+                0 10px 25px rgba(0,0,0,0.15),
+                0 4px 10px rgba(0,0,0,0.1),
+                0 0 0 1px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            z-index: 9999;
+            padding: 6px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-menu-actions.show {
+            display: block;
+            animation: fadeInScale 0.2s ease-out;
+        }
+
+        .dropdown-menu-actions.show-above {
+            transform-origin: bottom center;
+        }
+
+        .dropdown-menu-actions.show-below {
+            transform-origin: top center;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* ========== ITEMS DU MENU COMME LIENS NORMAUX ========== */
+        .dropdown-menu-actions a {
+            display: block;
+            padding: 10px 16px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            margin: 2px 6px;
+            cursor: pointer;
+        }
+
+        .dropdown-menu-actions a:hover {
+            background-color: rgba(44, 62, 80, 0.08);
+            color: var(--primary-color);
+            transform: translateX(3px);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .dropdown-menu-actions a i {
+            width: 16px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        /* Séparateur entre les actions */
+        .dropdown-menu-actions .dropdown-divider {
+            height: 1px;
+            background: rgba(0,0,0,0.1);
+            margin: 6px 0;
+            border: none;
+        }
+
+        /* ========== ACTIONS SPÉCIFIQUES AVEC COULEURS ========== */
+        .dropdown-menu-actions a.action-view:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .dropdown-menu-actions a.action-edit:hover {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning-color);
+        }
+
+        .dropdown-menu-actions a.action-delete:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent-color);
+        }
+
+        /* Overlay pour fermer le menu en cliquant ailleurs */
+        .dropdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9998;
+            display: none;
+        }
+
+        .dropdown-overlay.show {
+            display: block;
+        }
+
         .mkba-pagination {
             padding: 20px 25px;
             background: #fafbfc;
             border-top: 1px solid var(--border-color);
+            position: relative;
+            z-index: 1;
         }
 
         .mkba-pagination-info {
@@ -229,7 +491,7 @@
             background-color: white;
             min-width: 180px;
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
+            z-index: 1000;
             border-radius: 6px;
             border: 1px solid var(--border-color);
             top: 100%;
@@ -298,6 +560,11 @@
         }
 
         @media (max-width: 768px) {
+            .mkba-header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
             .mkba-controls {
                 padding: 15px;
             }
@@ -314,23 +581,105 @@
             .mkba-table tbody td {
                 padding: 8px;
             }
+
+            .mkba-actions-group {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            /* Menu actions sur mobile */
+            .dropdown-menu-actions {
+                min-width: 130px;
+                font-size: 0.85rem;
+            }
+
+            .dropdown-menu-actions a,
+            .dropdown-menu-actions button {
+                padding: 9px 12px !important;
+            }
         }
     </style>
 {% endblock %}
 
 {% block body %}
+    <!-- Overlay pour fermer les menus dropdown -->
+    <div class="dropdown-overlay" id="dropdownOverlay"></div>
+
+    <!-- Modale Filtres Avancés -->
+    <div class="modal fade" id="advancedFiltersModal" tabindex="-1" aria-labelledby="advancedFiltersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="advancedFiltersModalLabel">
+                        <i class="fas fa-filter me-2"></i>Filtres Avancés
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom</label>
+                                <input type="text" class="form-control" id="filterNom" placeholder="Filtrer par nom">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Prénom</label>
+                                <input type="text" class="form-control" id="filterPrenom" placeholder="Filtrer par prénom">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" id="filterEmail" placeholder="Filtrer par email">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Téléphone</label>
+                                <input type="text" class="form-control" id="filterTelephone" placeholder="Filtrer par téléphone">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">ID Min</label>
+                                <input type="number" class="form-control" id="filterIdMin" placeholder="ID minimum">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">ID Max</label>
+                                <input type="number" class="form-control" id="filterIdMax" placeholder="ID maximum">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAdvancedFiltersModal()">
+                        <i class="fas fa-times me-2"></i>Fermer
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="applyAdvancedFilters()">
+                        <i class="fas fa-check me-2"></i>Appliquer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="mkba-container">
-        <!-- En-tête -->
+        <!-- En-tête modifié -->
         <div class="mkba-header">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="fas fa-table me-2"></i>Gestion des Documents MK BA</h2>
-                <div class="d-flex align-items-center">
-                    <span class="badge bg-light text-dark me-2">
-                        <span id="totalRecords">0</span> enregistrements
-                    </span>
-                    <span class="badge bg-warning text-dark">
-                        <span id="selectedCount">0</span> sélectionnés
-                    </span>
+            <div class="mkba-header-content">
+                <div style="width: 200px;"></div> <!-- Spacer gauche -->
+                <div class="mkba-header-center">
+                    <h2><i class="fas fa-table me-2"></i>Gestion des Documents MK BA</h2>
+                    <div class="mkba-stats-badges">
+                        <span class="badge bg-light text-dark">
+                            <span id="totalRecords">0</span> enregistrements
+                        </span>
+                        <span class="badge bg-warning text-dark">
+                            <span id="selectedCount">0</span> sélectionnés
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <a href="{{ path('admin_document_new') }}" class="mkba-add-button">
+                        <i class="fas fa-plus"></i>
+                        Ajouter une nouvelle entrée
+                    </a>
                 </div>
             </div>
         </div>
@@ -338,19 +687,11 @@
         <!-- Contrôles -->
         <div class="mkba-controls">
             <div class="row align-items-center">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="mkba-search-box">
                         <i class="fas fa-search search-icon"></i>
                         <input type="text" id="searchInput" class="form-control" placeholder="Rechercher dans tous les champs...">
                     </div>
-                </div>
-                <div class="col-md-2">
-                    <select id="entriesSelect" class="form-select">
-                        <option value="10">10 par page</option>
-                        <option value="25" selected>25 par page</option>
-                        <option value="50">50 par page</option>
-                        <option value="100">100 par page</option>
-                    </select>
                 </div>
                 <div class="col-md-2">
                     <select id="statusFilter" class="form-select">
@@ -360,26 +701,39 @@
                         <option value="en-attente">En attente</option>
                     </select>
                 </div>
-                <div class="col-md-4 text-end">
-                    <!-- Actions groupées -->
-                    <div class="mkba-bulk-actions-dropdown me-2" id="bulkActionsDropdown" style="display: none;">
-                        <button class="mkba-btn mkba-btn-warning">
-                            <i class="fas fa-list-check me-1"></i>Actions groupées <i class="fas fa-chevron-down ms-1"></i>
+                <div class="col-md-2">
+                    <input type="date" id="dateStart" class="form-control" placeholder="Date début" title="Date de début">
+                </div>
+                <div class="col-md-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="date" id="dateEnd" class="form-control" placeholder="Date fin" title="Date de fin">
+                        <button class="btn btn-outline-secondary" id="advancedFiltersBtn" title="Filtres avancés" style="min-width: 40px; padding: 8px;">
+                            <i class="fas fa-filter"></i>
                         </button>
-                        <div class="mkba-dropdown-content">
-                            <a href="#" onclick="bulkAction('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Exporter Excel</a>
-                            <a href="#" onclick="bulkAction('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>Exporter PDF</a>
-                            <a href="#" onclick="bulkAction('delete')" class="text-danger"><i class="fas fa-trash me-2"></i>Supprimer sélection</a>
-                        </div>
                     </div>
-                    <!-- Export -->
-                    <div class="mkba-export-dropdown d-inline-block">
-                        <button class="mkba-btn mkba-btn-primary">
-                            <i class="fas fa-download me-1"></i>Exporter <i class="fas fa-chevron-down ms-1"></i>
-                        </button>
-                        <div class="mkba-dropdown-content">
-                            <a href="#" onclick="exportData('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Excel</a>
-                            <a href="#" onclick="exportData('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>PDF</a>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-end gap-2">
+                        <!-- Actions groupées -->
+                        <div class="mkba-bulk-actions-dropdown" id="bulkActionsDropdown" style="display: none;">
+                            <button class="mkba-btn mkba-btn-warning">
+                                <i class="fas fa-list-check me-1"></i>Actions <i class="fas fa-chevron-down ms-1"></i>
+                            </button>
+                            <div class="mkba-dropdown-content">
+                                <a href="#" onclick="bulkAction('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Exporter Excel</a>
+                                <a href="#" onclick="bulkAction('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>Exporter PDF</a>
+                                <a href="#" onclick="bulkAction('delete')" class="text-danger"><i class="fas fa-trash me-2"></i>Supprimer sélection</a>
+                            </div>
+                        </div>
+                        <!-- Export -->
+                        <div class="mkba-export-dropdown">
+                            <button class="mkba-btn mkba-btn-primary">
+                                <i class="fas fa-download me-1"></i>Exporter <i class="fas fa-chevron-down ms-1"></i>
+                            </button>
+                            <div class="mkba-dropdown-content">
+                                <a href="#" onclick="exportData('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Excel</a>
+                                <a href="#" onclick="exportData('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>PDF</a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -404,7 +758,7 @@
                         <th class="sortable" data-column="telephone">Téléphone</th>
                         <th class="sortable" data-column="statut">Statut</th>
                         <th class="sortable" data-column="date_creation">Date création</th>
-                        <th width="150">Actions</th>
+                        <th width="100">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
@@ -416,7 +770,15 @@
         <!-- Pagination -->
         <div class="mkba-pagination">
             <div class="row align-items-center">
-                <div class="col-md-6">
+                <div class="col-md-3">
+                    <select id="entriesSelect" class="form-select" style="max-width: 135px;">
+                        <option value="10">10 par page</option>
+                        <option value="25" selected>25 par page</option>
+                        <option value="50">50 par page</option>
+                        <option value="100">100 par page</option>
+                    </select>
+                </div>
+                <div class="col-md-6 text-center">
                     <div class="mkba-pagination-info">
                         Affichage de <span id="showingFrom">1</span> à <span id="showingTo">25</span> 
                         sur <span id="totalEntries">0</span> entrées
@@ -425,7 +787,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
                     <nav aria-label="Navigation des pages">
                         <div class="mkba-pagination-controls d-flex justify-content-end" id="paginationControls">
                             <!-- Les contrôles de pagination seront générés ici -->
@@ -483,11 +845,14 @@
         let sortColumn = null;
         let sortDirection = 'asc';
         let selectedRows = new Set();
+        let currentOpenDropdown = null;
 
         // Initialisation du datatable
         document.addEventListener('DOMContentLoaded', function() {
             initializeDataTable();
             setupEventListeners();
+            setupSortingEventListeners();
+            setupDropdownHandlers();
         });
 
         function initializeDataTable() {
@@ -516,10 +881,221 @@
                 filterByStatus(e.target.value);
             });
 
+            // Filtres par date
+            document.getElementById('dateStart').addEventListener('change', function(e) {
+                filterByDateRange();
+            });
+
+            document.getElementById('dateEnd').addEventListener('change', function(e) {
+                filterByDateRange();
+            });
+
             // Sélection globale
             document.getElementById('selectAll').addEventListener('change', function(e) {
                 toggleSelectAll(e.target.checked);
             });
+
+            // Bouton filtres avancés
+            document.getElementById('advancedFiltersBtn').addEventListener('click', function() {
+                const modal = document.getElementById('advancedFiltersModal');
+                const bootstrapModal = new bootstrap.Modal(modal);
+                
+                // Animation d'ouverture lente depuis la droite
+                modal.addEventListener('show.bs.modal', function() {
+                    const dialog = modal.querySelector('.modal-dialog');
+                    dialog.style.transform = 'translateX(100%)';
+                    dialog.style.transition = 'transform 0.8s ease-in-out';
+                });
+                
+                modal.addEventListener('shown.bs.modal', function() {
+                    setTimeout(() => {
+                        modal.querySelector('.modal-dialog').style.transform = 'translateX(0)';
+                    }, 50);
+                });
+                
+                bootstrapModal.show();
+            });
+        }
+
+        function setupSortingEventListeners() {
+            // Tri sur les colonnes
+            document.querySelectorAll('.sortable').forEach(header => {
+                header.addEventListener('click', function() {
+                    const column = this.dataset.column;
+                    sortData(column);
+                });
+            });
+        }
+
+        // ========== GESTION DES DROPDOWNS D'ACTIONS ========== 
+        function setupDropdownHandlers() {
+            const overlay = document.getElementById('dropdownOverlay');
+            
+            // Fermer le dropdown en cliquant sur l'overlay
+            if (overlay) {
+                overlay.addEventListener('click', closeAllDropdowns);
+            }
+            
+            // Fermer avec la touche Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAllDropdowns();
+                }
+            });
+
+            // Fermer lors du scroll
+            window.addEventListener('scroll', closeAllDropdowns);
+            document.querySelector('.mkba-table-container').addEventListener('scroll', closeAllDropdowns);
+        }
+
+        function toggleActionMenu(event, itemId) {
+            event.stopPropagation();
+            event.preventDefault();
+            
+            const button = event.target.closest('.btn-three-dots');
+            const menu = document.getElementById(`actionMenu${itemId}`);
+            const overlay = document.getElementById('dropdownOverlay');
+            
+            // Fermer tous les autres menus d'abord
+            closeAllDropdowns();
+            
+            if (menu && !menu.classList.contains('show')) {
+                // Ouvrir le menu avec positionnement intelligent
+                openDropdownMenu(button, menu, itemId);
+                if (overlay) {
+                    overlay.classList.add('show');
+                }
+                currentOpenDropdown = itemId;
+            }
+        }
+
+        function openDropdownMenu(button, menu, itemId) {
+            // Récupérer les dimensions et positions
+            const buttonRect = button.getBoundingClientRect();
+            const menuHeight = 120;
+            const menuWidth = 140;
+            
+            // Récupérer les dimensions de la pagination
+            const paginationElement = document.querySelector('.mkba-pagination');
+            const paginationRect = paginationElement ? paginationElement.getBoundingClientRect() : null;
+            
+            // Calculer la position initiale
+            let top = buttonRect.bottom + 5;
+            let left = buttonRect.right - menuWidth;
+            
+            // Vérification pour éviter le chevauchement avec la pagination
+            const spaceBelow = paginationRect ? paginationRect.top - buttonRect.bottom : window.innerHeight - buttonRect.bottom;
+            const spaceAbove = buttonRect.top;
+            
+            // Si pas assez d'espace en bas
+            if (spaceBelow < 130) {
+                if (spaceAbove >= menuHeight + 20) {
+                    top = buttonRect.top - menuHeight - 5;
+                    menu.classList.add('show-above');
+                    menu.classList.remove('show-below');
+                } else {
+                    if (paginationRect) {
+                        top = paginationRect.top - menuHeight - 10;
+                    } else {
+                        top = buttonRect.top - menuHeight - 5;
+                    }
+                    menu.classList.add('show-above');
+                    menu.classList.remove('show-below');
+                }
+            } else {
+                menu.classList.add('show-below');
+                menu.classList.remove('show-above');
+            }
+            
+            // Vérifier les bords
+            if (left < 10) {
+                left = buttonRect.left;
+            }
+            if (left + menuWidth > window.innerWidth - 10) {
+                left = window.innerWidth - menuWidth - 10;
+            }
+            if (top < 10) {
+                top = 10;
+            }
+            
+            // Appliquer la position
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
+            
+            // Afficher le menu
+            menu.classList.add('show');
+            button.classList.add('active');
+        }
+
+        function closeAllDropdowns() {
+            const dropdowns = document.querySelectorAll('.dropdown-menu-actions.show');
+            const buttons = document.querySelectorAll('.btn-three-dots.active');
+            const overlay = document.getElementById('dropdownOverlay');
+            
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.remove('show', 'show-above', 'show-below');
+            });
+            
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+            currentOpenDropdown = null;
+        }
+
+        function sortData(column) {
+            if (sortColumn === column) {
+                // Inverser la direction si même colonne
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                // Nouvelle colonne, tri ascendant
+                sortColumn = column;
+                sortDirection = 'asc';
+            }
+
+            // Supprimer les classes de tri précédentes
+            document.querySelectorAll('.sortable').forEach(header => {
+                header.classList.remove('sort-asc', 'sort-desc');
+            });
+
+            // Ajouter la classe de tri actuelle
+            const currentHeader = document.querySelector(`[data-column="${column}"]`);
+            currentHeader.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+
+            // Trier les données
+            filteredData.sort((a, b) => {
+                let valueA = a[column];
+                let valueB = b[column];
+
+                // Conversion pour les nombres
+                if (column === 'id') {
+                    valueA = parseInt(valueA);
+                    valueB = parseInt(valueB);
+                } else if (column === 'date_creation') {
+                    valueA = new Date(valueA);
+                    valueB = new Date(valueB);
+                } else if (typeof valueA === 'string') {
+                    valueA = valueA.toLowerCase();
+                    valueB = valueB.toLowerCase();
+                }
+
+                if (valueA < valueB) {
+                    return sortDirection === 'asc' ? -1 : 1;
+                }
+                if (valueA > valueB) {
+                    return sortDirection === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+
+            // Remettre à la première page et actualiser
+            currentPage = 1;
+            updateTable();
+            updatePagination();
+            updateStats();
         }
 
         function searchData(searchTerm) {
@@ -549,6 +1125,98 @@
             updateTable();
             updatePagination();
             updateStats();
+        }
+
+        function filterByDateRange() {
+            const startDate = document.getElementById('dateStart').value;
+            const endDate = document.getElementById('dateEnd').value;
+            
+            filteredData = currentData.filter(item => {
+                const itemDate = new Date(item.date_creation);
+                
+                // Si aucune date n'est sélectionnée, inclure tous les éléments
+                if (!startDate && !endDate) {
+                    return true;
+                }
+                
+                // Si seule la date de début est sélectionnée
+                if (startDate && !endDate) {
+                    return itemDate >= new Date(startDate);
+                }
+                
+                // Si seule la date de fin est sélectionnée
+                if (!startDate && endDate) {
+                    return itemDate <= new Date(endDate);
+                }
+                
+                // Si les deux dates sont sélectionnées
+                return itemDate >= new Date(startDate) && itemDate <= new Date(endDate);
+            });
+            
+            currentPage = 1;
+            updateTable();
+            updatePagination();
+            updateStats();
+        }
+
+        function applyAdvancedFilters() {
+            const filters = {
+                nom: document.getElementById('filterNom').value.toLowerCase(),
+                prenom: document.getElementById('filterPrenom').value.toLowerCase(),
+                email: document.getElementById('filterEmail').value.toLowerCase(),
+                telephone: document.getElementById('filterTelephone').value.toLowerCase(),
+                idMin: parseInt(document.getElementById('filterIdMin').value) || 0,
+                idMax: parseInt(document.getElementById('filterIdMax').value) || 999999
+            };
+
+            filteredData = currentData.filter(item => {
+                return (!filters.nom || item.nom.toLowerCase().includes(filters.nom)) &&
+                       (!filters.prenom || item.prenom.toLowerCase().includes(filters.prenom)) &&
+                       (!filters.email || item.email.toLowerCase().includes(filters.email)) &&
+                       (!filters.telephone || item.telephone.includes(filters.telephone)) &&
+                       (item.id >= filters.idMin && item.id <= filters.idMax);
+            });
+
+            currentPage = 1;
+            updateTable();
+            updatePagination();
+            updateStats();
+
+            // Fermer la modale
+            const modal = bootstrap.Modal.getInstance(document.getElementById('advancedFiltersModal'));
+            modal.hide();
+        }
+
+        function clearAdvancedFilters() {
+            document.getElementById('filterNom').value = '';
+            document.getElementById('filterPrenom').value = '';
+            document.getElementById('filterEmail').value = '';
+            document.getElementById('filterTelephone').value = '';
+            document.getElementById('filterIdMin').value = '';
+            document.getElementById('filterIdMax').value = '';
+            
+            filteredData = [...currentData];
+            currentPage = 1;
+            updateTable();
+            updatePagination();
+            updateStats();
+        }
+
+        function closeAdvancedFiltersModal() {
+            const modal = document.getElementById('advancedFiltersModal');
+            const bootstrapModal = bootstrap.Modal.getInstance(modal);
+            const dialog = modal.querySelector('.modal-dialog');
+            
+            // Animation de fermeture lente vers la droite
+            dialog.style.transition = 'transform 0.8s ease-in-out';
+            dialog.style.transform = 'translateX(100%)';
+            
+            // Fermer la modale après l'animation
+            setTimeout(() => {
+                if (bootstrapModal) {
+                    bootstrapModal.hide();
+                }
+            }, 800);
         }
 
         function updateTable() {
@@ -581,7 +1249,7 @@
             row.innerHTML = `
                 <td>
                     <input type="checkbox" class="form-check-input mkba-row-select" 
-                           value="${item.id}" ${selectedRows.has(item.id) ? 'checked' : ''}>
+                        value="${item.id}" ${selectedRows.has(item.id) ? 'checked' : ''}>
                 </td>
                 <td>${item.id}</td>
                 <td>${item.nom}</td>
@@ -591,15 +1259,25 @@
                 <td><span class="mkba-badge ${item.statut}">${item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}</span></td>
                 <td>${formatDate(item.date_creation)}</td>
                 <td>
-                    <button class="btn btn-sm btn-success me-1" onclick="addNewRecord()" title="Nouveau">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editRecord(${item.id})" title="Modifier">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteRecord(${item.id})" title="Supprimer">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="mkba-actions-group">
+                        <div class="dropdown-actions">
+                            <button class="btn-three-dots" onclick="toggleActionMenu(event, ${item.id})" title="Actions">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                            <div class="dropdown-menu-actions" id="actionMenu${item.id}">
+                                <a href="javascript:void(0)" class="action-view" onclick="viewDetails(${item.id})">
+                                    <i class="fas fa-eye text-info"></i>Détails
+                                </a>
+                                <a href="javascript:void(0)" class="action-edit" onclick="editRecord(${item.id})">
+                                    <i class="fas fa-edit text-warning"></i>Modifier
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a href="javascript:void(0)" class="action-delete" onclick="deleteRecord(${item.id})">
+                                    <i class="fas fa-trash text-danger"></i>Supprimer
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </td>
             `;
 
@@ -611,6 +1289,15 @@
             });
 
             return row;
+        }
+
+        function viewDetails(id) {
+            closeAllDropdowns();
+            if (window.MKBAAdmin) {
+                window.MKBAAdmin.showNotification(`Affichage des détails pour l'enregistrement ${id}`, 'info');
+            } else {
+                alert(`Affichage des détails pour l'enregistrement ${id} - À implémenter avec Symfony`);
+            }
         }
 
         function formatDate(dateString) {
@@ -712,6 +1399,7 @@
                 updateTable();
                 updatePagination();
                 updateStats();
+                closeAllDropdowns(); // Fermer les menus lors du changement de page
             }
         }
 
@@ -751,6 +1439,7 @@
         }
 
         function editRecord(id) {
+            closeAllDropdowns();
             if (window.MKBAAdmin) {
                 window.MKBAAdmin.showNotification(`Modification de l'enregistrement ${id}`, 'info');
             } else {
@@ -759,6 +1448,7 @@
         }
 
         function deleteRecord(id) {
+            closeAllDropdowns();
             if (confirm('Êtes-vous sûr de vouloir supprimer cet enregistrement ?')) {
                 currentData = currentData.filter(item => item.id !== id);
                 filteredData = filteredData.filter(item => item.id !== id);

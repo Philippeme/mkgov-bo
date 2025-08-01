@@ -1,23 +1,136 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Nouveau Document{% endblock %}
+{% block title %}Nouveau Document - Formulaire CRUD Complet{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
     <style>
+        :root {
+            --mk-primary: #6d5192;
+            --mk-secondary: #8e32e9;
+            --mk-accent: #a855f7;
+            --mk-orange: #f18221;
+            --mk-dark: #1c273c;
+            --mk-success: #10b981;
+            --mk-warning: #f59e0b;
+            --mk-danger: #ef4444;
+            --mk-info: #3b82f6;
+            --mk-light: #f8f9fa;
+            --mk-lighter: #ffffff;
+            --mk-gradient-primary: linear-gradient(135deg, #6d5192 0%, #f18221 100%);
+        }
+
         .document-form-header {
-            background: linear-gradient(135deg, #6d5192 0%, #f18221 100%);
+            background: var(--mk-gradient-primary);
             color: white;
             padding: 2rem 0;
             margin: -2rem -2rem 2rem -2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .document-form-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="50" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+            opacity: 0.3;
         }
         
         .form-section {
             background: white;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             margin-bottom: 20px;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .form-section:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            transform: translateY(-2px);
+        }
+        
+        .section-title {
+            color: var(--mk-primary);
+            font-weight: 600;
+            border-bottom: 2px solid rgba(109, 81, 146, 0.1);
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--mk-dark);
+            margin-bottom: 8px;
+        }
+        
+        .form-control, .form-select {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--mk-primary);
+            box-shadow: 0 0 0 0.2rem rgba(109, 81, 146, 0.15);
+            outline: none;
+        }
+        
+        .form-control:hover, .form-select:hover {
+            border-color: var(--mk-secondary);
+        }
+        
+        .form-check-input {
+            border: 2px solid #e5e7eb;
+            margin-top: 0.25em;
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--mk-primary);
+            border-color: var(--mk-primary);
+        }
+        
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.2rem rgba(109, 81, 146, 0.15);
+        }
+        
+        .btn-add-item {
+            background: var(--mk-success);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-add-item:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            color: white;
+        }
+        
+        .btn-remove-item {
+            background: var(--mk-danger);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-remove-item:hover {
+            background: #dc2626;
+            color: white;
         }
         
         .file-preview {
@@ -27,11 +140,19 @@
             text-align: center;
             margin-top: 10px;
             transition: all 0.3s ease;
+            cursor: pointer;
+            background: #fafbfc;
+        }
+        
+        .file-preview:hover {
+            border-color: var(--mk-primary);
+            background-color: rgba(109, 81, 146, 0.02);
         }
         
         .file-preview.dragover {
-            border-color: #6d5192;
+            border-color: var(--mk-primary);
             background-color: rgba(109, 81, 146, 0.05);
+            transform: scale(1.02);
         }
         
         .file-preview-content {
@@ -42,45 +163,229 @@
         .file-info {
             background: #f8f9fa;
             border-radius: 6px;
-            padding: 10px;
+            padding: 15px;
             margin-top: 10px;
+            border: 1px solid #e9ecef;
         }
         
         .preview-image {
             max-width: 200px;
             max-height: 150px;
             border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .color-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        
+        .range-output {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: 600;
+            color: var(--mk-primary);
+            min-width: 50px;
+        }
+        
+        .collection-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .collection-item .btn-remove-item {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            min-height: 45px;
+            cursor: text;
+        }
+        
+        .tag-item {
+            background: var(--mk-primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .tag-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 100px;
         }
         
         .btn-submit {
-            background: linear-gradient(135deg, #6d5192 0%, #f18221 100%);
+            background: var(--mk-gradient-primary);
             border: none;
             color: white;
-            padding: 12px 30px;
+            padding: 15px 40px;
             border-radius: 8px;
             font-weight: 600;
+            font-size: 16px;
             transition: all 0.3s ease;
         }
         
         .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(109, 81, 146, 0.3);
+            box-shadow: 0 8px 25px rgba(109, 81, 146, 0.3);
             color: white;
+        }
+        
+        .form-group-inline {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .form-group-inline .form-control {
+            flex: 1;
+        }
+        
+        .help-text {
+            font-size: 13px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .required-indicator {
+            color: var(--mk-danger);
+            font-weight: bold;
+        }
+        
+        .input-group-text {
+            background: #f8f9fa;
+            border: 2px solid #e5e7eb;
+            border-right: none;
+        }
+        
+        .input-group .form-control {
+            border-left: none;
+        }
+        
+        .input-group:focus-within .input-group-text {
+            border-color: var(--mk-primary);
+        }
+        
+        .radio-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .radio-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .radio-card:hover {
+            border-color: var(--mk-primary);
+            background: rgba(109, 81, 146, 0.02);
+        }
+        
+        .radio-card input[type="radio"]:checked + .radio-card-content {
+            color: var(--mk-primary);
+        }
+        
+        .radio-card input[type="radio"]:checked ~ .radio-card {
+            border-color: var(--mk-primary);
+            background: rgba(109, 81, 146, 0.05);
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .checkbox-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .error-message {
+            color: var(--mk-danger);
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        .success-message {
+            color: var(--mk-success);
+            font-size: 13px;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-section {
+                padding: 20px;
+                margin: 0 -10px 20px -10px;
+            }
+            
+            .document-form-header {
+                margin: -2rem -10px 2rem -10px;
+                padding: 1.5rem 0;
+            }
+            
+            .radio-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 {% endblock %}
 
 {% block body %}
 <div class="document-form-header">
-    <div class="container-fluid">
+    <div class="container-fluid position-relative">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="mb-2">
                     <i class="bi-plus-circle me-3"></i>
-                    Nouveau Document
+                    Formulaire CRUD Complet MK BA
                 </h1>
-                <p class="mb-0">Ajoutez un nouveau document à la bibliothèque</p>
+                <p class="mb-0">Démonstration de tous les types de champs pour le backoffice</p>
             </div>
             <div class="col-md-4 text-end">
                 <a href="{{ path('admin_document_index') }}" class="btn btn-outline-light">
@@ -93,173 +398,734 @@
 </div>
 
 <div class="container-fluid">
-    {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
-    
-    <!-- Informations générales -->
-    <div class="form-section">
-        <h3 class="section-title mb-4">
-            <i class="bi-info-circle text-primary me-2"></i>
-            Informations générales
-        </h3>
+    <form method="post" enctype="multipart/form-data" novalidate id="mkbaCompleteForm">
         
-        <div class="row">
-            <div class="col-md-6">
-                <div class="mb-3">
-                    {{ form_label(form.nom) }}
-                    {{ form_widget(form.nom) }}
-                    {{ form_errors(form.nom) }}
-                    {{ form_help(form.nom) }}
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="mb-3">
-                    {{ form_label(form.displayOrder) }}
-                    {{ form_widget(form.displayOrder) }}
-                    {{ form_errors(form.displayOrder) }}
-                    {{ form_help(form.displayOrder) }}
-                </div>
-            </div>
-        </div>
-        
-        <div class="mb-3">
-            {{ form_label(form.description) }}
-            {{ form_widget(form.description) }}
-            {{ form_errors(form.description) }}
-            {{ form_help(form.description) }}
-        </div>
-        
-        <div class="mb-3">
-            <div class="form-check">
-                {{ form_widget(form.isActive) }}
-                {{ form_label(form.isActive) }}
-            </div>
-            {{ form_errors(form.isActive) }}
-            {{ form_help(form.isActive) }}
-        </div>
-    </div>
-    
-    <!-- Upload de fichier -->
-    <div class="form-section">
-        <h3 class="section-title mb-4">
-            <i class="bi-cloud-upload text-primary me-2"></i>
-            Fichier
-        </h3>
-        
-        <div class="mb-3">
-            {{ form_label(form.uploadedFile) }}
-            {{ form_widget(form.uploadedFile) }}
-            {{ form_errors(form.uploadedFile) }}
-            {{ form_help(form.uploadedFile) }}
+        <!-- SECTION 1: Champs texte de base -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-fonts text-primary me-2"></i>
+                Champs Texte & Contenu
+            </h3>
             
-            {# Masquer le champ removeFile pour la création #}
-            <div style="display: none;">
-                {{ form_widget(form.removeFile) }}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Titre <span class="required-indicator">*</span>
+                        </label>
+                        <input type="text" class="form-control" name="titre" required 
+                               placeholder="Saisissez le titre du document">
+                        <div class="help-text">Titre principal du document (max. 255 caractères)</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Sous-titre</label>
+                        <input type="text" class="form-control" name="sous_titre" 
+                               placeholder="Sous-titre optionnel">
+                    </div>
+                </div>
             </div>
             
-            <div class="file-preview" id="filePreview">
-                <div class="file-preview-placeholder">
-                    <i class="bi-cloud-upload text-muted" style="font-size: 3rem;"></i>
-                    <p class="text-muted mt-2">Glissez-déposez un fichier ici ou cliquez pour sélectionner</p>
-                    <small class="text-muted">Formats acceptés: PDF, Office, Images, Archives (max. 10MB)</small>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Email de contact</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi-envelope"></i>
+                            </span>
+                            <input type="email" class="form-control" name="email" 
+                                   placeholder="contact@mkba.com">
+                        </div>
+                    </div>
                 </div>
-                <div class="file-preview-content" id="filePreviewContent">
-                    <div id="previewImage"></div>
-                    <div class="file-info" id="fileInfo"></div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Téléphone</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi-telephone"></i>
+                            </span>
+                            <input type="tel" class="form-control" name="telephone" 
+                                   placeholder="+33 1 23 45 67 89">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Site web</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi-globe"></i>
+                            </span>
+                            <input type="url" class="form-control" name="site_web" 
+                                   placeholder="https://www.mkba.com">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Recherche globale</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi-search"></i>
+                            </span>
+                            <input type="search" class="form-control" name="recherche" 
+                                   placeholder="Rechercher dans tous les champs...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">
+                    Description complète <span class="required-indicator">*</span>
+                </label>
+                <textarea class="form-control" name="description" rows="4" required
+                          placeholder="Décrivez le contenu et l'objectif du document..."></textarea>
+                <div class="help-text">Description détaillée visible par les utilisateurs</div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Notes internes</label>
+                <textarea class="form-control" name="notes_internes" rows="3"
+                          placeholder="Notes visibles uniquement par les administrateurs..."></textarea>
+                <div class="help-text">Notes privées pour l'équipe d'administration</div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Mots-clés (Tags)</label>
+                <div class="tags-input" id="tagsInput">
+                    <input type="text" class="tag-input" placeholder="Tapez un mot-clé et appuyez sur Entrée...">
+                </div>
+                <input type="hidden" name="tags" id="tagsHidden">
+                <div class="help-text">Mots-clés pour faciliter la recherche et la catégorisation</div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: Champs numériques et mesures -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-calculator text-primary me-2"></i>
+                Champs Numériques & Mesures
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Ordre d'affichage</label>
+                        <input type="number" class="form-control" name="ordre" min="0" step="1" value="0">
+                        <div class="help-text">Position dans la liste (0 = premier)</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de vues</label>
+                        <input type="number" class="form-control" name="vues" min="0" readonly value="0">
+                        <div class="help-text">Compteur automatique</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Prix (€)</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="prix" step="0.01" min="0" 
+                                   placeholder="0.00">
+                            <span class="input-group-text">€</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Pourcentage</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" name="pourcentage" step="0.1" 
+                                   min="0" max="100" placeholder="0.0">
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Priorité</label>
+                        <input type="range" class="form-range" name="priorite" min="1" max="10" value="5" 
+                               oninput="document.getElementById('prioriteOutput').textContent = this.value">
+                        <div class="d-flex justify-content-between">
+                            <small>Faible (1)</small>
+                            <span class="range-output" id="prioriteOutput">5</span>
+                            <small>Élevée (10)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Couleur du thème</label>
+                        <div class="form-group-inline">
+                            <input type="color" class="form-control form-control-color" name="couleur" value="#6d5192">
+                            <span class="color-preview" id="colorPreview" style="background: #6d5192;"></span>
+                        </div>
+                        <div class="help-text">Couleur associée au document</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Actions -->
-    <div class="form-section">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <button type="submit" class="btn btn-submit">
-                    <i class="bi-check-circle me-2"></i>
-                    Créer le document
-                </button>
-                <a href="{{ path('admin_document_index') }}" class="btn btn-outline-secondary ms-2">
-                    <i class="bi-x-circle me-2"></i>
-                    Annuler
-                </a>
+
+        <!-- SECTION 3: Dates et temps -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-calendar-event text-primary me-2"></i>
+                Dates & Planification
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Date de publication</label>
+                        <input type="date" class="form-control" name="date_publication">
+                        <div class="help-text">Date de mise en ligne</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Date d'expiration</label>
+                        <input type="date" class="form-control" name="date_expiration">
+                        <div class="help-text">Date de fin de validité</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Heure de publication</label>
+                        <input type="time" class="form-control" name="heure_publication" value="09:00">
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6 text-end">
-                <small class="text-muted">
-                    <i class="bi-info-circle me-1"></i>
-                    Les champs marqués d'un * sont obligatoires
-                </small>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Date et heure complètes</label>
+                        <input type="datetime-local" class="form-control" name="datetime_complet">
+                        <div class="help-text">Date et heure précises</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Mois de référence</label>
+                        <input type="month" class="form-control" name="mois_reference">
+                        <div class="help-text">Période de référence</div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    
-    {{ form_end(form) }}
+
+        <!-- SECTION 4: Sélections et choix -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-list-check text-primary me-2"></i>
+                Sélections & Choix Multiples
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Catégorie <span class="required-indicator">*</span>
+                        </label>
+                        <select class="form-select" name="categorie" required>
+                            <option value="">Sélectionnez une catégorie</option>
+                            <option value="documentation">Documentation</option>
+                            <option value="procedure">Procédure</option>
+                            <option value="formulaire">Formulaire</option>
+                            <option value="guide">Guide</option>
+                            <option value="rapport">Rapport</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Département</label>
+                        <select class="form-select" name="departement">
+                            <option value="">Tous les départements</option>
+                            <option value="administration">Administration</option>
+                            <option value="finances">Finances</option>
+                            <option value="juridique">Juridique</option>
+                            <option value="technique">Technique</option>
+                            <option value="communication">Communication</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="form-label">Type de document</label>
+                <div class="radio-cards">
+                    <label class="radio-card">
+                        <input type="radio" name="type_document" value="interne" style="display: none;">
+                        <div class="radio-card-content">
+                            <i class="bi-building text-primary mb-2" style="font-size: 2rem;"></i>
+                            <h6>Document Interne</h6>
+                            <small class="text-muted">Usage interne uniquement</small>
+                        </div>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="type_document" value="public" style="display: none;">
+                        <div class="radio-card-content">
+                            <i class="bi-globe text-primary mb-2" style="font-size: 2rem;"></i>
+                            <h6>Document Public</h6>
+                            <small class="text-muted">Accessible à tous</small>
+                        </div>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="type_document" value="confidentiel" style="display: none;">
+                        <div class="radio-card-content">
+                            <i class="bi-shield-lock text-primary mb-2" style="font-size: 2rem;"></i>
+                            <h6>Confidentiel</h6>
+                            <small class="text-muted">Accès restreint</small>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Langues disponibles</label>
+                <div class="checkbox-grid">
+                    <div class="checkbox-item">
+                        <input type="checkbox" class="form-check-input me-2" name="langues[]" value="fr" id="lang_fr" checked>
+                        <label for="lang_fr">🇫🇷 Français</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" class="form-check-input me-2" name="langues[]" value="en" id="lang_en">
+                        <label for="lang_en">🇬🇧 Anglais</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" class="form-check-input me-2" name="langues[]" value="es" id="lang_es">
+                        <label for="lang_es">🇪🇸 Espagnol</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" class="form-check-input me-2" name="langues[]" value="de" id="lang_de">
+                        <label for="lang_de">🇩🇪 Allemand</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Statut de publication</label>
+                        <select class="form-select" name="statut">
+                            <option value="brouillon">📝 Brouillon</option>
+                            <option value="en_revision">👁️ En révision</option>
+                            <option value="publie" selected>✅ Publié</option>
+                            <option value="archive">📦 Archivé</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Niveau d'accès</label>
+                        <select class="form-select" name="niveau_acces">
+                            <option value="1">Niveau 1 - Public</option>
+                            <option value="2">Niveau 2 - Utilisateurs enregistrés</option>
+                            <option value="3" selected>Niveau 3 - Administrateurs</option>
+                            <option value="4">Niveau 4 - Super administrateurs</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5: Upload de fichiers -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-cloud-upload text-primary me-2"></i>
+                Gestion des Fichiers
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Fichier principal</label>
+                        <input type="file" class="form-control" name="fichier_principal" id="fichierPrincipal"
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.svg">
+                        <div class="file-preview" id="previewPrincipal">
+                            <div class="file-preview-placeholder">
+                                <i class="bi-cloud-upload text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">Glissez-déposez un fichier ici ou cliquez pour sélectionner</p>
+                                <small class="text-muted">PDF, Office, Images (max. 10MB)</small>
+                            </div>
+                            <div class="file-preview-content" id="contentPrincipal"></div>
+                        </div>
+                        <div class="help-text">Document principal associé à cette entrée</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Image de couverture</label>
+                        <input type="file" class="form-control" name="image_couverture" id="imageCouverture"
+                               accept="image/*">
+                        <div class="file-preview" id="previewImage">
+                            <div class="file-preview-placeholder">
+                                <i class="bi-image text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">Image de couverture</p>
+                                <small class="text-muted">JPG, PNG, WebP (max. 5MB)</small>
+                            </div>
+                            <div class="file-preview-content" id="contentImage"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Fichiers annexes</label>
+                <input type="file" class="form-control" name="fichiers_annexes[]" multiple
+                       accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar">
+                <div class="help-text">Plusieurs fichiers peuvent être sélectionnés (Ctrl+clic)</div>
+            </div>
+        </div>
+
+        <!-- SECTION 6: Collection dynamique -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-collection text-primary me-2"></i>
+                Collections Dynamiques
+            </h3>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <label class="form-label mb-0">Contacts associés</label>
+                    <button type="button" class="btn btn-add-item" onclick="addContact()">
+                        <i class="bi-plus-circle me-1"></i>Ajouter un contact
+                    </button>
+                </div>
+                <div id="contactsCollection">
+                    <div class="collection-item">
+                        <button type="button" class="btn btn-remove-item" onclick="removeContact(this)">
+                            <i class="bi-trash"></i>
+                        </button>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Nom</label>
+                                <input type="text" class="form-control" name="contacts[0][nom]" placeholder="Nom du contact">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="contacts[0][email]" placeholder="Email du contact">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Fonction</label>
+                                <input type="text" class="form-control" name="contacts[0][fonction]" placeholder="Fonction">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <label class="form-label mb-0">Liens utiles</label>
+                    <button type="button" class="btn btn-add-item" onclick="addLink()">
+                        <i class="bi-plus-circle me-1"></i>Ajouter un lien
+                    </button>
+                </div>
+                <div id="linksCollection">
+                    <div class="collection-item">
+                        <button type="button" class="btn btn-remove-item" onclick="removeLink(this)">
+                            <i class="bi-trash"></i>
+                        </button>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Titre du lien</label>
+                                <input type="text" class="form-control" name="liens[0][titre]" placeholder="Titre du lien">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">URL</label>
+                                <input type="url" class="form-control" name="liens[0][url]" placeholder="https://...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 7: Paramètres et options -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-gear text-primary me-2"></i>
+                Paramètres & Options
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="est_actif" id="estActif" checked>
+                            <label class="form-check-label" for="estActif">
+                                <strong>Document actif</strong>
+                            </label>
+                        </div>
+                        <div class="help-text">Un document inactif n'est pas visible publiquement</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="commentaires_autorises" id="commentairesAutorises">
+                            <label class="form-check-label" for="commentairesAutorises">
+                                Autoriser les commentaires
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="telechargement_autorise" id="telechargementAutorise" checked>
+                            <label class="form-check-label" for="telechargementAutorise">
+                                Autoriser le téléchargement
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="epingle" id="epingle">
+                            <label class="form-check-label" for="epingle">
+                                Épingler en haut de liste
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="featured" id="featured">
+                            <label class="form-check-label" for="featured">
+                                Mettre en avant (Featured)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="notifications_actives" id="notificationsActives">
+                            <label class="form-check-label" for="notificationsActives">
+                                Notifications actives
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 8: Champs cachés et système -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-shield-lock text-primary me-2"></i>
+                Informations Système
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe (pour sections protégées)</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" name="mot_de_passe" id="motDePasse">
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                <i class="bi-eye" id="passwordToggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">UUID (généré automatiquement)</label>
+                        <input type="text" class="form-control" name="uuid" readonly 
+                               value="<?= uniqid('mkba_', true) ?>" 
+                               style="background: #f8f9fa;">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Version du document</label>
+                        <input type="text" class="form-control" name="version" value="1.0" readonly 
+                               style="background: #f8f9fa;">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Champs cachés pour les métadonnées -->
+            <input type="hidden" name="created_by" value="{{ app.user ? app.user.id : 1 }}">
+            <input type="hidden" name="ip_creation" value="<?= $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1' ?>">
+            <input type="hidden" name="user_agent" value="<?= $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown' ?>">
+            
+            <div class="alert alert-info">
+                <i class="bi-info-circle me-2"></i>
+                <strong>Information:</strong> Les champs système sont gérés automatiquement par l'application.
+            </div>
+        </div>
+
+        <!-- Actions finales -->
+        <div class="form-section">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <button type="submit" class="btn btn-submit me-3">
+                        <i class="bi-check-circle me-2"></i>
+                        Créer le document complet
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary me-2" onclick="saveDraft()">
+                        <i class="bi-save me-2"></i>
+                        Enregistrer comme brouillon
+                    </button>
+                    <a href="{{ path('admin_document_index') }}" class="btn btn-outline-danger">
+                        <i class="bi-x-circle me-2"></i>
+                        Annuler
+                    </a>
+                </div>
+                <div class="col-md-4 text-end">
+                    <small class="text-muted">
+                        <i class="bi-info-circle me-1"></i>
+                        Les champs marqués d'un <span class="required-indicator">*</span> sont obligatoires
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+    </form>
 </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
     <script>
+        // Variables globales
+        let contactIndex = 1;
+        let linkIndex = 1;
+        let tagsArray = [];
+
         document.addEventListener('DOMContentLoaded', function() {
-            const fileInput = document.querySelector('#document_uploadedFile');
-            const filePreview = document.getElementById('filePreview');
-            const filePreviewContent = document.getElementById('filePreviewContent');
-            const previewImage = document.getElementById('previewImage');
-            const fileInfo = document.getElementById('fileInfo');
+            initializeForm();
+            setupFileHandlers();
+            setupTagsInput();
+            setupColorPicker();
+            setupFormValidation();
+        });
+
+        function initializeForm() {
+            // Initialiser les tooltips et autres composants Bootstrap
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Gestion des cartes radio
+            setupRadioCards();
+        }
+
+        function setupRadioCards() {
+            const radioCards = document.querySelectorAll('.radio-card');
+            radioCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    const radio = this.querySelector('input[type="radio"]');
+                    if (radio) {
+                        radio.checked = true;
+                        
+                        // Retirer la sélection des autres cartes du même groupe
+                        const groupName = radio.name;
+                        const otherCards = document.querySelectorAll(`input[name="${groupName}"]`);
+                        otherCards.forEach(otherRadio => {
+                            if (otherRadio !== radio) {
+                                const otherCard = otherRadio.closest('.radio-card');
+                                if (otherCard) {
+                                    otherCard.style.borderColor = '#e5e7eb';
+                                    otherCard.style.background = '';
+                                }
+                            }
+                        });
+                        
+                        // Appliquer le style à la carte sélectionnée
+                        this.style.borderColor = 'var(--mk-primary)';
+                        this.style.background = 'rgba(109, 81, 146, 0.05)';
+                    }
+                });
+            });
+        }
+
+        function setupFileHandlers() {
+            // Gestionnaire pour le fichier principal
+            setupSingleFileHandler('fichierPrincipal', 'previewPrincipal', 'contentPrincipal');
             
-            if (fileInput) {
-                fileInput.addEventListener('change', handleFileSelect);
+            // Gestionnaire pour l'image de couverture
+            setupSingleFileHandler('imageCouverture', 'previewImage', 'contentImage');
+        }
+
+        function setupSingleFileHandler(inputId, previewId, contentId) {
+            const fileInput = document.getElementById(inputId);
+            const filePreview = document.getElementById(previewId);
+            const fileContent = document.getElementById(contentId);
+            
+            if (fileInput && filePreview) {
+                fileInput.addEventListener('change', function(e) {
+                    handleFileSelect(e.target.files[0], fileContent);
+                });
                 
                 // Drag & Drop
                 filePreview.addEventListener('dragover', handleDragOver);
                 filePreview.addEventListener('dragleave', handleDragLeave);
-                filePreview.addEventListener('drop', handleFileDrop);
+                filePreview.addEventListener('drop', function(e) {
+                    handleFileDrop(e, fileInput, fileContent);
+                });
                 
-                // Click sur la zone de preview
+                // Click pour ouvrir le sélecteur
                 filePreview.addEventListener('click', function() {
                     fileInput.click();
                 });
             }
-            
-            function handleFileSelect(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    displayFilePreview(file);
-                }
+        }
+
+        function handleFileSelect(file, contentElement) {
+            if (file && contentElement) {
+                displayFilePreview(file, contentElement);
             }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleFileDrop(event, inputElement, contentElement) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
             
-            function handleDragOver(event) {
-                event.preventDefault();
-                filePreview.classList.add('dragover');
-            }
-            
-            function handleDragLeave(event) {
-                event.preventDefault();
-                filePreview.classList.remove('dragover');
-            }
-            
-            function handleFileDrop(event) {
-                event.preventDefault();
-                filePreview.classList.remove('dragover');
+            const files = event.dataTransfer.files;
+            if (files.length > 0 && inputElement && contentElement) {
+                const file = files[0];
                 
-                const files = event.dataTransfer.files;
-                if (files.length > 0) {
-                    const file = files[0];
-                    
-                    // Mettre à jour l'input file
-                    const dt = new DataTransfer();
-                    dt.items.add(file);
-                    fileInput.files = dt.files;
-                    
-                    displayFilePreview(file);
-                }
-            }
-            
-            function displayFilePreview(file) {
-                // Afficher les informations du fichier
-                const fileSize = formatBytes(file.size);
-                const fileType = file.type || 'Type inconnu';
+                // Mettre à jour l'input file
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                inputElement.files = dt.files;
                 
-                fileInfo.innerHTML = `
+                displayFilePreview(file, contentElement);
+            }
+        }
+
+        function displayFilePreview(file, contentElement) {
+            const fileSize = formatBytes(file.size);
+            const fileType = file.type || 'Type inconnu';
+            
+            let previewHTML = `
+                <div class="file-info">
                     <div class="d-flex align-items-center">
                         <i class="bi-file-earmark text-primary me-2" style="font-size: 1.5rem;"></i>
                         <div>
@@ -267,91 +1133,334 @@
                             <small class="text-muted">${fileSize} • ${fileType}</small>
                         </div>
                     </div>
+                </div>
+            `;
+            
+            // Prévisualisation pour les images
+            if (file.type && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewHTML = `
+                        <img src="${e.target.result}" class="preview-image mb-2" alt="Prévisualisation">
+                        ${previewHTML}
+                    `;
+                    contentElement.innerHTML = previewHTML;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Icône par type de fichier
+                let iconClass = getFileIcon(file.type);
+                previewHTML = `
+                    <i class="${iconClass} text-primary mb-2" style="font-size: 4rem;"></i>
+                    ${previewHTML}
                 `;
-                
-                previewImage.innerHTML = '';
-                
-                // Prévisualisation pour les images
-                if (file.type && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        previewImage.innerHTML = `<img src="${e.target.result}" class="preview-image" alt="Prévisualisation">`;
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    // Icône par type de fichier
-                    let iconClass = 'bi-file-earmark';
-                    if (file.type === 'application/pdf') {
-                        iconClass = 'bi-file-earmark-pdf';
-                    } else if (file.type.includes('word') || file.type.includes('document')) {
-                        iconClass = 'bi-file-earmark-word';
-                    } else if (file.type.includes('excel') || file.type.includes('spreadsheet')) {
-                        iconClass = 'bi-file-earmark-excel';
-                    } else if (file.type.includes('powerpoint') || file.type.includes('presentation')) {
-                        iconClass = 'bi-file-earmark-ppt';
+            }
+            
+            contentElement.innerHTML = previewHTML;
+            contentElement.style.display = 'block';
+        }
+
+        function getFileIcon(mimeType) {
+            if (mimeType === 'application/pdf') return 'bi-file-earmark-pdf';
+            if (mimeType.includes('word') || mimeType.includes('document')) return 'bi-file-earmark-word';
+            if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'bi-file-earmark-excel';
+            if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'bi-file-earmark-ppt';
+            if (mimeType.includes('zip') || mimeType.includes('rar')) return 'bi-file-earmark-zip';
+            return 'bi-file-earmark';
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function setupTagsInput() {
+            const tagsInput = document.getElementById('tagsInput');
+            const tagInput = tagsInput.querySelector('.tag-input');
+            const hiddenInput = document.getElementById('tagsHidden');
+            
+            tagInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const tagValue = this.value.trim();
+                    if (tagValue && !tagsArray.includes(tagValue)) {
+                        addTag(tagValue);
+                        this.value = '';
                     }
-                    
-                    previewImage.innerHTML = `<i class="${iconClass} text-primary" style="font-size: 4rem;"></i>`;
                 }
-                
-                filePreviewContent.style.display = 'block';
-            }
+            });
             
-            function formatBytes(bytes) {
-                if (bytes === 0) return '0 B';
-                const k = 1024;
-                const sizes = ['B', 'KB', 'MB', 'GB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            tagInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && this.value === '' && tagsArray.length > 0) {
+                    removeTag(tagsArray[tagsArray.length - 1]);
+                }
+            });
+        }
+
+        function addTag(tagValue) {
+            tagsArray.push(tagValue);
+            updateTagsDisplay();
+            updateHiddenTagsInput();
+        }
+
+        function removeTag(tagValue) {
+            const index = tagsArray.indexOf(tagValue);
+            if (index > -1) {
+                tagsArray.splice(index, 1);
+                updateTagsDisplay();
+                updateHiddenTagsInput();
             }
+        }
+
+        function updateTagsDisplay() {
+            const tagsInput = document.getElementById('tagsInput');
+            const tagInput = tagsInput.querySelector('.tag-input');
             
-            // Validation côté client
-            const form = document.querySelector('form');
-            if (form) {
-                form.addEventListener('submit', function(event) {
-                    let isValid = true;
-                    
-                    // Validation du nom
-                    const nomInput = document.querySelector('#document_nom');
-                    if (nomInput && !nomInput.value.trim()) {
-                        showFieldError(nomInput, 'Le nom du document est requis');
-                        isValid = false;
-                    } else {
-                        clearFieldError(nomInput);
-                    }
-                    
-                    // Validation de la description
-                    const descInput = document.querySelector('#document_description');
-                    if (descInput && !descInput.value.trim()) {
-                        showFieldError(descInput, 'La description est requise');
-                        isValid = false;
-                    } else {
-                        clearFieldError(descInput);
-                    }
-                    
-                    if (!isValid) {
-                        event.preventDefault();
-                        MKBAAdmin.showNotification('Veuillez corriger les erreurs dans le formulaire', 'error');
-                    }
+            // Supprimer les anciens tags
+            const existingTags = tagsInput.querySelectorAll('.tag-item');
+            existingTags.forEach(tag => tag.remove());
+            
+            // Ajouter les nouveaux tags
+            tagsArray.forEach(tagValue => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag-item';
+                tagElement.innerHTML = `
+                    ${tagValue}
+                    <span class="tag-remove" onclick="removeTag('${tagValue}')">&times;</span>
+                `;
+                tagsInput.insertBefore(tagElement, tagInput);
+            });
+        }
+
+        function updateHiddenTagsInput() {
+            document.getElementById('tagsHidden').value = JSON.stringify(tagsArray);
+        }
+
+        function setupColorPicker() {
+            const colorInput = document.querySelector('input[name="couleur"]');
+            const colorPreview = document.getElementById('colorPreview');
+            
+            if (colorInput && colorPreview) {
+                colorInput.addEventListener('input', function() {
+                    colorPreview.style.background = this.value;
                 });
             }
+        }
+
+        // Gestion des collections dynamiques
+        function addContact() {
+            const collection = document.getElementById('contactsCollection');
+            const newItem = document.createElement('div');
+            newItem.className = 'collection-item';
+            newItem.innerHTML = `
+                <button type="button" class="btn btn-remove-item" onclick="removeContact(this)">
+                    <i class="bi-trash"></i>
+                </button>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-control" name="contacts[${contactIndex}][nom]" placeholder="Nom du contact">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" name="contacts[${contactIndex}][email]" placeholder="Email du contact">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fonction</label>
+                        <input type="text" class="form-control" name="contacts[${contactIndex}][fonction]" placeholder="Fonction">
+                    </div>
+                </div>
+            `;
+            collection.appendChild(newItem);
+            contactIndex++;
+        }
+
+        function removeContact(button) {
+            button.closest('.collection-item').remove();
+        }
+
+        function addLink() {
+            const collection = document.getElementById('linksCollection');
+            const newItem = document.createElement('div');
+            newItem.className = 'collection-item';
+            newItem.innerHTML = `
+                <button type="button" class="btn btn-remove-item" onclick="removeLink(this)">
+                    <i class="bi-trash"></i>
+                </button>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Titre du lien</label>
+                        <input type="text" class="form-control" name="liens[${linkIndex}][titre]" placeholder="Titre du lien">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">URL</label>
+                        <input type="url" class="form-control" name="liens[${linkIndex}][url]" placeholder="https://...">
+                    </div>
+                </div>
+            `;
+            collection.appendChild(newItem);
+            linkIndex++;
+        }
+
+        function removeLink(button) {
+            button.closest('.collection-item').remove();
+        }
+
+        // Utilitaires
+        function togglePassword() {
+            const passwordInput = document.getElementById('motDePasse');
+            const toggleIcon = document.getElementById('passwordToggleIcon');
             
-            function showFieldError(field, message) {
-                clearFieldError(field);
-                field.classList.add('is-invalid');
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'invalid-feedback';
-                errorDiv.textContent = message;
-                field.parentNode.appendChild(errorDiv);
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.className = 'bi-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.className = 'bi-eye';
             }
+        }
+
+        function saveDraft() {
+            // Logique pour sauvegarder comme brouillon
+            if (window.MKBAAdmin) {
+                window.MKBAAdmin.showNotification('Brouillon sauvegardé avec succès', 'success');
+            } else {
+                alert('Brouillon sauvegardé - À implémenter avec Symfony');
+            }
+        }
+
+        function setupFormValidation() {
+            const form = document.getElementById('mkbaCompleteForm');
             
-            function clearFieldError(field) {
-                field.classList.remove('is-invalid');
-                const errorDiv = field.parentNode.querySelector('.invalid-feedback');
-                if (errorDiv) {
-                    errorDiv.remove();
+            form.addEventListener('submit', function(event) {
+                let isValid = true;
+                const errors = [];
+
+                // Validation du titre
+                const titre = form.querySelector('[name="titre"]');
+                if (!titre.value.trim()) {
+                    showFieldError(titre, 'Le titre est requis');
+                    errors.push('Titre manquant');
+                    isValid = false;
+                } else {
+                    clearFieldError(titre);
                 }
+
+                // Validation de la description
+                const description = form.querySelector('[name="description"]');
+                if (!description.value.trim()) {
+                    showFieldError(description, 'La description est requise');
+                    errors.push('Description manquante');
+                    isValid = false;
+                } else {
+                    clearFieldError(description);
+                }
+
+                // Validation de la catégorie
+                const categorie = form.querySelector('[name="categorie"]');
+                if (!categorie.value) {
+                    showFieldError(categorie, 'Veuillez sélectionner une catégorie');
+                    errors.push('Catégorie non sélectionnée');
+                    isValid = false;
+                } else {
+                    clearFieldError(categorie);
+                }
+
+                // Validation de l'email si renseigné
+                const email = form.querySelector('[name="email"]');
+                if (email.value && !isValidEmail(email.value)) {
+                    showFieldError(email, 'Format d\'email invalide');
+                    errors.push('Email invalide');
+                    isValid = false;
+                } else {
+                    clearFieldError(email);
+                }
+
+                if (!isValid) {
+                    event.preventDefault();
+                    
+                    // Scroll vers le premier champ en erreur
+                    const firstError = form.querySelector('.is-invalid');
+                    if (firstError) {
+                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstError.focus();
+                    }
+                    
+                    // Afficher notification d'erreur
+                    if (window.MKBAAdmin) {
+                        window.MKBAAdmin.showNotification(`Erreurs de validation détectées: ${errors.join(', ')}`, 'error');
+                    } else {
+                        alert('Veuillez corriger les erreurs dans le formulaire');
+                    }
+                } else {
+                    // Afficher notification de succès
+                    if (window.MKBAAdmin) {
+                        window.MKBAAdmin.showNotification('Formulaire validé, envoi en cours...', 'success');
+                    }
+                }
+            });
+        }
+
+        function showFieldError(field, message) {
+            clearFieldError(field);
+            field.classList.add('is-invalid');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            
+            field.parentNode.appendChild(errorDiv);
+        }
+
+        function clearFieldError(field) {
+            field.classList.remove('is-invalid');
+            const errorDiv = field.parentNode.querySelector('.error-message');
+            if (errorDiv) {
+                errorDiv.remove();
             }
-        });
+        }
+
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Gestion des notifications de succès pour les champs
+        function showFieldSuccess(field, message) {
+            clearFieldError(field);
+            field.classList.add('is-valid');
+            
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            
+            field.parentNode.appendChild(successDiv);
+            
+            // Supprimer après 3 secondes
+            setTimeout(() => {
+                successDiv.remove();
+                field.classList.remove('is-valid');
+            }, 3000);
+        }
+
+        // Validation en temps réel optionnelle
+        function setupRealtimeValidation() {
+            const requiredFields = document.querySelectorAll('[required]');
+            
+            requiredFields.forEach(field => {
+                field.addEventListener('blur', function() {
+                    if (this.value.trim()) {
+                        clearFieldError(this);
+                        showFieldSuccess(this, 'Valide ✓');
+                    }
+                });
+            });
+        }
+
+        // Initialiser la validation en temps réel si souhaité
+        // setupRealtimeValidation();
     </script>
 {% endblock %}

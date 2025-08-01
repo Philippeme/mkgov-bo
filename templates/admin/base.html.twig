@@ -16,6 +16,8 @@
     <link rel="stylesheet" href="{{ asset('styles/admin.css') }}">
     <link rel="stylesheet" href="{{ asset('styles/document.css') }}">
 
+
+
     {% block stylesheets %}{% endblock %}
 </head>
 <body>
@@ -68,7 +70,7 @@
                     <div class="nav-section-title">Gestion des Services</div>
                 </li>
 
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_request' ? 'has-active-child' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_request' ? 'active' : '' }}" data-dropdown="requests">
                         <i class="bi-journal-text"></i>
                         <span class="nav-text">Demandes</span>
@@ -84,7 +86,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_procedure' ? 'has-active-child' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_procedure' ? 'active' : '' }}" data-dropdown="procedures">
                         <i class="bi-file-earmark-text"></i>
                         <span class="nav-text">Procédures</span>
@@ -97,7 +99,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_family' ? 'has-active-child' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_family' ? 'active' : '' }}" data-dropdown="families">
                         <i class="bi-collection"></i>
                         <span class="nav-text">Familles de Services</span>
@@ -110,7 +112,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_document' ? 'has-active-child' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_document' ? 'active' : '' }}" data-dropdown="documents">
                         <i class="bi-folder"></i>
                         <span class="nav-text">Documents</span>
@@ -128,7 +130,7 @@
                     <div class="nav-section-title">Gestion Utilisateurs & Entités</div>
                 </li>
 
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_user' ? 'has-active-child' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_user' ? 'active' : '' }}" data-dropdown="users">
                         <i class="bi-people"></i>
                         <span class="nav-text">Utilisateurs</span>
@@ -141,7 +143,7 @@
                     </ul>
                 </li>
 
-                <li class="nav-item dropdown">
+                <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_role' ? 'has-active-child' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_role' ? 'active' : '' }}" data-dropdown="roles">
                         <i class="bi-shield-check"></i>
                         <span class="nav-text">Rôles & Permissions</span>
@@ -304,6 +306,88 @@
     
     <!-- Custom Admin JS -->
     <script src="{{ asset('js/admin.js') }}"></script>
+
+    <script>
+        // Amélioration de la gestion des menus actifs avec propagation des bordures
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fonction pour gérer l'état actif des menus parents
+            function updateActiveMenus() {
+                const currentRoute = '{{ app.request.get('_route') }}';
+                
+                // Supprimer toutes les classes has-active-child existantes
+                document.querySelectorAll('.nav-item.dropdown.has-active-child').forEach(item => {
+                    item.classList.remove('has-active-child');
+                });
+                
+                // Ajouter has-active-child selon la route actuelle
+                if (currentRoute.startsWith('admin_document')) {
+                    const documentDropdown = document.querySelector('[data-dropdown="documents"]').closest('.nav-item.dropdown');
+                    if (documentDropdown) {
+                        documentDropdown.classList.add('has-active-child');
+                        // Auto-ouvrir le menu
+                        const dropdownMenu = documentDropdown.querySelector('.dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.classList.add('show');
+                            documentDropdown.classList.add('open');
+                        }
+                    }
+                } else if (currentRoute.startsWith('admin_request')) {
+                    const requestDropdown = document.querySelector('[data-dropdown="requests"]').closest('.nav-item.dropdown');
+                    if (requestDropdown) {
+                        requestDropdown.classList.add('has-active-child');
+                        const dropdownMenu = requestDropdown.querySelector('.dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.classList.add('show');
+                            requestDropdown.classList.add('open');
+                        }
+                    }
+                } else if (currentRoute.startsWith('admin_procedure')) {
+                    const procedureDropdown = document.querySelector('[data-dropdown="procedures"]').closest('.nav-item.dropdown');
+                    if (procedureDropdown) {
+                        procedureDropdown.classList.add('has-active-child');
+                        const dropdownMenu = procedureDropdown.querySelector('.dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.classList.add('show');
+                            procedureDropdown.classList.add('open');
+                        }
+                    }
+                } else if (currentRoute.startsWith('admin_family')) {
+                    const familyDropdown = document.querySelector('[data-dropdown="families"]').closest('.nav-item.dropdown');
+                    if (familyDropdown) {
+                        familyDropdown.classList.add('has-active-child');
+                        const dropdownMenu = familyDropdown.querySelector('.dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.classList.add('show');
+                            familyDropdown.classList.add('open');
+                        }
+                    }
+                } else if (currentRoute.startsWith('admin_user')) {
+                    const userDropdown = document.querySelector('[data-dropdown="users"]').closest('.nav-item.dropdown');
+                    if (userDropdown) {
+                        userDropdown.classList.add('has-active-child');
+                        const dropdownMenu = userDropdown.querySelector('.dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.classList.add('show');
+                            userDropdown.classList.add('open');
+                        }
+                    }
+                } else if (currentRoute.startsWith('admin_role')) {
+                    const roleDropdown = document.querySelector('[data-dropdown="roles"]').closest('.nav-item.dropdown');
+                    if (roleDropdown) {
+                        roleDropdown.classList.add('has-active-child');
+                        const dropdownMenu = roleDropdown.querySelector('.dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.classList.add('show');
+                            roleDropdown.classList.add('open');
+                        }
+                    }
+                }
+            }
+
+            // Exécuter au chargement
+            updateActiveMenus();
+        });
+    </script>
 
     {% block javascripts %}{% endblock %}
 </body>
