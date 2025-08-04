@@ -4,6 +4,11 @@
 
 {% block stylesheets %}
     {{ parent() }}
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Quill.js CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    
     <style>
         :root {
             --mk-primary: #6d5192;
@@ -353,7 +358,293 @@
             font-size: 13px;
             margin-top: 5px;
         }
-        
+
+        /* ===== CUSTOM SELECT WITH SEARCH ===== */
+        .select2-container--default .select2-selection--single {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            height: 48px;
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: var(--mk-primary);
+            box-shadow: 0 0 0 0.2rem rgba(109, 81, 146, 0.15);
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            padding-left: 0;
+            padding-right: 20px;
+            line-height: 32px;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 46px;
+            right: 10px;
+        }
+
+        .select2-dropdown {
+            border: 2px solid var(--mk-primary);
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: var(--mk-primary);
+        }
+
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 8px 12px;
+        }
+
+        .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+            border-color: var(--mk-primary);
+            outline: none;
+        }
+
+        /* ===== SELECT WITH IMAGES ===== */
+        .select2-container--default .select2-results__option {
+            padding: 8px 12px;
+        }
+
+        .select2-option-with-image {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .select2-option-image {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            object-fit: cover;
+            border: 1px solid #e5e7eb;
+        }
+
+        .select2-option-content {
+            flex: 1;
+        }
+
+        .select2-option-title {
+            font-weight: 500;
+            color: var(--mk-dark);
+        }
+
+        .select2-option-subtitle {
+            font-size: 12px;
+            color: var(--mk-gray);
+        }
+
+        /* ===== FILE MANAGEMENT ===== */
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .file-item:hover {
+            background: #e9ecef;
+            border-color: var(--mk-primary);
+        }
+
+        .file-item-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .file-item-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .file-item-details {
+            flex: 1;
+        }
+
+        .file-item-name {
+            font-weight: 500;
+            color: var(--mk-dark);
+            font-size: 14px;
+        }
+
+        .file-item-meta {
+            font-size: 12px;
+            color: var(--mk-gray);
+        }
+
+        .file-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-file-remove {
+            background: var(--mk-danger);
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-file-remove:hover {
+            background: #dc2626;
+            transform: translateY(-1px);
+        }
+
+        .files-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+
+        .files-list:empty::before {
+            content: "Aucun fichier sélectionné";
+            color: var(--mk-gray);
+            font-style: italic;
+            display: block;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .single-file-container {
+            position: relative;
+        }
+
+        .file-remove-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .single-file-container:hover .file-remove-overlay {
+            opacity: 1;
+        }
+
+        .file-remove-overlay:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+        }
+
+        /* ===== WYSIWYG EDITOR ===== */
+        .wysiwyg-container {
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .wysiwyg-container.focused {
+            border-color: var(--mk-primary);
+            box-shadow: 0 0 0 0.2rem rgba(109, 81, 146, 0.15);
+        }
+
+        .ql-toolbar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .ql-container {
+            min-height: 200px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .ql-editor {
+            min-height: 180px;
+            padding: 16px;
+        }
+
+        .ql-toolbar .ql-stroke {
+            stroke: var(--mk-dark);
+        }
+
+        .ql-toolbar .ql-fill {
+            fill: var(--mk-dark);
+        }
+
+        .ql-toolbar button:hover .ql-stroke {
+            stroke: var(--mk-primary);
+        }
+
+        .ql-toolbar button:hover .ql-fill {
+            fill: var(--mk-primary);
+        }
+
+        .ql-toolbar button.ql-active .ql-stroke {
+            stroke: var(--mk-primary);
+        }
+
+        .ql-toolbar button.ql-active .ql-fill {
+            fill: var(--mk-primary);
+        }
+
+        .wysiwyg-toolbar-custom {
+            padding: 10px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .wysiwyg-btn {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            color: var(--mk-dark);
+        }
+
+        .wysiwyg-btn:hover {
+            background: var(--mk-primary);
+            color: white;
+            border-color: var(--mk-primary);
+        }
+
+        .wysiwyg-btn.active {
+            background: var(--mk-primary);
+            color: white;
+            border-color: var(--mk-primary);
+        }
+
         @media (max-width: 768px) {
             .form-section {
                 padding: 20px;
@@ -504,6 +795,227 @@
                 </div>
                 <input type="hidden" name="tags" id="tagsHidden">
                 <div class="help-text">Mots-clés pour faciliter la recherche et la catégorisation</div>
+            </div>
+        </div>
+
+        <!-- SECTION WYSIWYG EDITOR -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-file-richtext text-primary me-2"></i>
+                Éditeur de Contenu Riche (WYSIWYG)
+            </h3>
+            
+            <div class="mb-3">
+                <label class="form-label">
+                    Contenu Principal <span class="required-indicator">*</span>
+                </label>
+                <div class="wysiwyg-container" id="wysiwygContainer">
+                    <div id="editor">
+                        <p>Commencez à taper votre contenu ici...</p>
+                        <p><br></p>
+                        <p>Vous pouvez utiliser toutes les fonctionnalités de mise en forme :</p>
+                        <ul>
+                            <li><strong>Texte en gras</strong></li>
+                            <li><em>Texte en italique</em></li>
+                            <li><u>Texte souligné</u></li>
+                            <li><a href="#">Liens hypertexte</a></li>
+                        </ul>
+                        <p>Et bien plus encore !</p>
+                    </div>
+                </div>
+                <input type="hidden" name="contenu_wysiwyg" id="contenuWysiwyg">
+                <div class="help-text">Utilisez l'éditeur pour créer du contenu riche avec mise en forme, images, liens, etc.</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Template/Mise en page</label>
+                        <select class="form-select" name="template_layout">
+                            <option value="">Sélectionner un template</option>
+                            <option value="standard">Standard</option>
+                            <option value="article">Article de blog</option>
+                            <option value="page">Page statique</option>
+                            <option value="landing">Landing page</option>
+                            <option value="documentation">Documentation</option>
+                        </select>
+                        <div class="help-text">Template de mise en page pour l'affichage</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="allow_comments" id="allowComments">
+                            <label class="form-check-label" for="allowComments">
+                                Autoriser les commentaires sur ce contenu
+                            </label>
+                        </div>
+                        <div class="help-text">Les utilisateurs pourront commenter ce contenu</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION SELECT AVEC RECHERCHE -->
+        <div class="form-section">
+            <h3 class="section-title">
+                <i class="bi-search text-primary me-2"></i>
+                Sélections Avancées avec Recherche
+            </h3>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">
+                            Auteur Principal <span class="required-indicator">*</span>
+                        </label>
+                        <select class="form-select searchable-select" name="auteur_principal" id="auteurPrincipal" required>
+                            <option value="">Rechercher et sélectionner un auteur...</option>
+                            <optgroup label="Administrateurs">
+                                <option value="1">Marie Dupont - marie.dupont@mkba.com</option>
+                                <option value="2">Pierre Martin - pierre.martin@mkba.com</option>
+                                <option value="3">Sophie Bernard - sophie.bernard@mkba.com</option>
+                                <option value="4">Jean Petit - jean.petit@mkba.com</option>
+                            </optgroup>
+                            <optgroup label="Éditeurs">
+                                <option value="5">Claire Durand - claire.durand@mkba.com</option>
+                                <option value="6">Luc Moreau - luc.moreau@mkba.com</option>
+                                <option value="7">Julie Simon - julie.simon@mkba.com</option>
+                                <option value="8">Paul Michel - paul.michel@mkba.com</option>
+                            </optgroup>
+                            <optgroup label="Contributeurs">
+                                <option value="9">Emma Leroy - emma.leroy@mkba.com</option>
+                                <option value="10">Thomas Roux - thomas.roux@mkba.com</option>
+                                <option value="11">Isabelle Fournier - isabelle.fournier@mkba.com</option>
+                                <option value="12">Antoine Girard - antoine.girard@mkba.com</option>
+                                <option value="13">Camille Bonnet - camille.bonnet@mkba.com</option>
+                                <option value="14">Nicolas Dupuis - nicolas.dupuis@mkba.com</option>
+                                <option value="15">Sylvie Lambert - sylvie.lambert@mkba.com</option>
+                            </optgroup>
+                        </select>
+                        <div class="help-text">Recherchez et sélectionnez l'auteur principal du document</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Collaborateurs</label>
+                        <select class="form-select searchable-select" name="collaborateurs[]" id="collaborateurs" multiple>
+                            <option value="1">Marie Dupont - Administrateur</option>
+                            <option value="2">Pierre Martin - Administrateur</option>
+                            <option value="3">Sophie Bernard - Éditeur</option>
+                            <option value="4">Jean Petit - Éditeur</option>
+                            <option value="5">Claire Durand - Contributeur</option>
+                            <option value="6">Luc Moreau - Contributeur</option>
+                            <option value="7">Julie Simon - Relecteur</option>
+                            <option value="8">Paul Michel - Relecteur</option>
+                            <option value="9">Emma Leroy - Designer</option>
+                            <option value="10">Thomas Roux - Developer</option>
+                        </select>
+                        <div class="help-text">Sélectionnez plusieurs collaborateurs (utilisez Ctrl+clic)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Catégorie avec filtrage</label>
+                        <select class="form-select searchable-select" name="categorie_filterable" id="categorieFilterable">
+                            <option value="">Tapez pour filtrer les catégories...</option>
+                            <optgroup label="Documentation">
+                                <option value="doc-guide">Guide utilisateur</option>
+                                <option value="doc-manual">Manuel technique</option>
+                                <option value="doc-tutorial">Tutoriel</option>
+                                <option value="doc-faq">FAQ</option>
+                            </optgroup>
+                            <optgroup label="Administration">
+                                <option value="admin-procedure">Procédure administrative</option>
+                                <option value="admin-formulaire">Formulaire officiel</option>
+                                <option value="admin-regulation">Réglementation</option>
+                                <option value="admin-policy">Politique interne</option>
+                            </optgroup>
+                            <optgroup label="Communication">
+                                <option value="comm-newsletter">Newsletter</option>
+                                <option value="comm-announce">Annonce</option>
+                                <option value="comm-press">Communiqué de presse</option>
+                                <option value="comm-report">Rapport d'activité</option>
+                            </optgroup>
+                            <optgroup label="Technique">
+                                <option value="tech-spec">Spécification technique</option>
+                                <option value="tech-api">Documentation API</option>
+                                <option value="tech-architecture">Architecture système</option>
+                                <option value="tech-security">Sécurité</option>
+                            </optgroup>
+                        </select>
+                        <div class="help-text">Filtrez en tapant directement dans le champ</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Tags prédéfinis</label>
+                        <select class="form-select searchable-select" name="tags_predefinis[]" id="tagsPredefinis" multiple>
+                            <option value="urgent">🔥 Urgent</option>
+                            <option value="important">⭐ Important</option>
+                            <option value="public">🌐 Public</option>
+                            <option value="interne">🏢 Interne</option>
+                            <option value="confidentiel">🔒 Confidentiel</option>
+                            <option value="brouillon">📝 Brouillon</option>
+                            <option value="archive">📦 Archive</option>
+                            <option value="en-cours">⏳ En cours</option>
+                            <option value="valide">✅ Validé</option>
+                            <option value="obsolete">❌ Obsolète</option>
+                            <option value="formation">🎓 Formation</option>
+                            <option value="procedure">📋 Procédure</option>
+                            <option value="template">📄 Template</option>
+                            <option value="exemple">💡 Exemple</option>
+                        </select>
+                        <div class="help-text">Sélectionnez plusieurs tags prédéfinis</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label class="form-label">Références et documents liés</label>
+                        <select class="form-select searchable-select" name="documents_lies[]" id="documentsLies" multiple>
+                            <option value="doc1">Document #001 - Procédure d'authentification</option>
+                            <option value="doc2">Document #002 - Guide d'installation</option>
+                            <option value="doc3">Document #003 - Manuel utilisateur v2.1</option>
+                            <option value="doc4">Document #004 - Spécifications techniques</option>
+                            <option value="doc5">Document #005 - Charte graphique officielle</option>
+                            <option value="doc6">Document #006 - Procédure de sauvegarde</option>
+                            <option value="doc7">Document #007 - Guide de démarrage rapide</option>
+                            <option value="doc8">Document #008 - Documentation API REST</option>
+                            <option value="doc9">Document #009 - Politique de sécurité</option>
+                            <option value="doc10">Document #010 - Règlement intérieur</option>
+                            <option value="doc11">Document #011 - Guide de contribution</option>
+                            <option value="doc12">Document #012 - Architecture système</option>
+                            <option value="doc13">Document #013 - Plan de formation</option>
+                            <option value="doc14">Document #014 - Procédure d'urgence</option>
+                            <option value="doc15">Document #015 - Modèles de documents</option>
+                        </select>
+                        <div class="help-text">Liez ce document à d'autres documents existants pour créer des références croisées</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label class="form-label">Template avec aperçu visuel</label>
+                        <select class="form-select" name="template_visuel" id="templateVisuel">
+                            <option value="">Sélectionner un template avec aperçu...</option>
+                            <option value="modern" data-image="https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=64&h=64&fit=crop&crop=center" data-description="Design moderne et épuré">Template Moderne</option>
+                            <option value="classic" data-image="https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?w=64&h=64&fit=crop&crop=center" data-description="Style classique et professionnel">Template Classique</option>
+                            <option value="creative" data-image="https://images.unsplash.com/photo-1558655146-d09347e92766?w=64&h=64&fit=crop&crop=center" data-description="Design créatif et coloré">Template Créatif</option>
+                            <option value="minimal" data-image="https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=64&h=64&fit=crop&crop=center" data-description="Minimaliste et élégant">Template Minimal</option>
+                            <option value="corporate" data-image="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=64&h=64&fit=crop&crop=center" data-description="Style corporate et sérieux">Template Corporate</option>
+                            <option value="blog" data-image="https://images.unsplash.com/photo-1486312338219-ce68e2c6b696?w=64&h=64&fit=crop&crop=center" data-description="Optimisé pour les articles de blog">Template Blog</option>
+                        </select>
+                        <div class="help-text">Choisissez un template avec aperçu visuel pour la mise en page</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -754,13 +1266,17 @@
                         <label class="form-label">Fichier principal</label>
                         <input type="file" class="form-control" name="fichier_principal" id="fichierPrincipal"
                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.svg">
-                        <div class="file-preview" id="previewPrincipal">
+                        <div class="file-preview single-file-container" id="previewPrincipal">
                             <div class="file-preview-placeholder">
                                 <i class="bi-cloud-upload text-muted" style="font-size: 3rem;"></i>
                                 <p class="text-muted mt-2">Glissez-déposez un fichier ici ou cliquez pour sélectionner</p>
                                 <small class="text-muted">PDF, Office, Images (max. 10MB)</small>
                             </div>
-                            <div class="file-preview-content" id="contentPrincipal"></div>
+                            <div class="file-preview-content" id="contentPrincipal">
+                                <button type="button" class="file-remove-overlay" onclick="removeMainFile()" title="Supprimer le fichier">
+                                    <i class="bi-x-lg"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="help-text">Document principal associé à cette entrée</div>
                     </div>
@@ -770,13 +1286,17 @@
                         <label class="form-label">Image de couverture</label>
                         <input type="file" class="form-control" name="image_couverture" id="imageCouverture"
                                accept="image/*">
-                        <div class="file-preview" id="previewImage">
+                        <div class="file-preview single-file-container" id="previewImage">
                             <div class="file-preview-placeholder">
                                 <i class="bi-image text-muted" style="font-size: 3rem;"></i>
                                 <p class="text-muted mt-2">Image de couverture</p>
                                 <small class="text-muted">JPG, PNG, WebP (max. 5MB)</small>
                             </div>
-                            <div class="file-preview-content" id="contentImage"></div>
+                            <div class="file-preview-content" id="contentImage">
+                                <button type="button" class="file-remove-overlay" onclick="removeCoverImage()" title="Supprimer l'image">
+                                    <i class="bi-x-lg"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -784,9 +1304,13 @@
             
             <div class="mb-3">
                 <label class="form-label">Fichiers annexes</label>
-                <input type="file" class="form-control" name="fichiers_annexes[]" multiple
+                <input type="file" class="form-control" name="fichiers_annexes[]" multiple id="fichiersAnnexes"
                        accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar">
-                <div class="help-text">Plusieurs fichiers peuvent être sélectionnés (Ctrl+clic)</div>
+                <div class="help-text mb-2">Plusieurs fichiers peuvent être sélectionnés (Ctrl+clic)</div>
+                
+                <div class="files-list" id="annexesList">
+                    <!-- Les fichiers annexes seront affichés ici -->
+                </div>
             </div>
         </div>
 
@@ -945,7 +1469,7 @@
                     <div class="mb-3">
                         <label class="form-label">UUID (généré automatiquement)</label>
                         <input type="text" class="form-control" name="uuid" readonly 
-                               value="<?= uniqid('mkba_', true) ?>" 
+                               value="mkba_{{ 'now'|date('YmdHis') }}_{{ random(10000, 99999) }}" 
                                style="background: #f8f9fa;">
                     </div>
                 </div>
@@ -960,8 +1484,8 @@
             
             <!-- Champs cachés pour les métadonnées -->
             <input type="hidden" name="created_by" value="{{ app.user ? app.user.id : 1 }}">
-            <input type="hidden" name="ip_creation" value="<?= $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1' ?>">
-            <input type="hidden" name="user_agent" value="<?= $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown' ?>">
+            <input type="hidden" name="ip_creation" value="127.0.0.1">
+            <input type="hidden" name="user_agent" value="MK BA Admin">
             
             <div class="alert alert-info">
                 <i class="bi-info-circle me-2"></i>
@@ -1001,14 +1525,24 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <!-- jQuery (requis pour Select2) -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Quill.js -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    
     <script>
         // Variables globales
         let contactIndex = 1;
         let linkIndex = 1;
         let tagsArray = [];
+        let quillEditor;
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeForm();
+            initializeSearchableSelects();
+            initializeWysiwyg();
             setupFileHandlers();
             setupTagsInput();
             setupColorPicker();
@@ -1024,6 +1558,242 @@
 
             // Gestion des cartes radio
             setupRadioCards();
+        }
+
+        function initializeSearchableSelects() {
+            // Configuration Select2 pour tous les selects avec classe searchable-select
+            $('.searchable-select').select2({
+                placeholder: function() {
+                    return $(this).attr('placeholder') || 'Rechercher et sélectionner...';
+                },
+                allowClear: true,
+                width: '100%',
+                language: {
+                    noResults: function() {
+                        return "Aucun résultat trouvé";
+                    },
+                    inputTooShort: function() {
+                        return "Tapez au moins 1 caractère pour rechercher";
+                    },
+                    searching: function() {
+                        return "Recherche en cours...";
+                    },
+                    loadingMore: function() {
+                        return "Chargement d'autres résultats...";
+                    }
+                }
+            });
+
+            // Configuration spéciale pour les selects multiples
+            $('#collaborateurs, #tagsPredefinis, #documentsLies').select2({
+                placeholder: 'Sélectionnez un ou plusieurs éléments...',
+                allowClear: true,
+                width: '100%',
+                closeOnSelect: false,
+                language: {
+                    noResults: function() {
+                        return "Aucun résultat trouvé";
+                    }
+                }
+            });
+
+            // Configuration pour le select avec images (template visuel)
+            $('#templateVisuel').select2({
+                placeholder: 'Sélectionnez un template...',
+                allowClear: true,
+                width: '100%',
+                templateResult: formatTemplateOption,
+                templateSelection: formatTemplateSelection,
+                escapeMarkup: function(markup) {
+                    return markup;
+                }
+            });
+
+            // Événement de changement pour l'auteur principal
+            $('#auteurPrincipal').on('change', function() {
+                const selectedValue = $(this).val();
+                const selectedText = $(this).find('option:selected').text();
+                
+                if (selectedValue) {
+                    console.log('Auteur sélectionné:', selectedValue, selectedText);
+                    // Vous pouvez ajouter ici une logique pour précharger d'autres champs
+                    // ou faire des appels AJAX pour récupérer des informations supplémentaires
+                }
+            });
+
+            // Événement pour les collaborateurs
+            $('#collaborateurs').on('change', function() {
+                const selectedValues = $(this).val();
+                console.log('Collaborateurs sélectionnés:', selectedValues);
+                updateCollaboratorsDisplay(selectedValues);
+            });
+        }
+
+        // Formatage des options pour le select avec images
+        function formatTemplateOption(option) {
+            if (!option.id) {
+                return option.text;
+            }
+
+            const $option = $(option.element);
+            const imageUrl = $option.data('image');
+            const description = $option.data('description');
+
+            if (!imageUrl) {
+                return option.text;
+            }
+
+            return $(`
+                <div class="select2-option-with-image">
+                    <img src="${imageUrl}" class="select2-option-image" alt="${option.text}">
+                    <div class="select2-option-content">
+                        <div class="select2-option-title">${option.text}</div>
+                        <div class="select2-option-subtitle">${description || ''}</div>
+                    </div>
+                </div>
+            `);
+        }
+
+        function formatTemplateSelection(option) {
+            if (!option.id) {
+                return option.text;
+            }
+
+            const $option = $(option.element);
+            const imageUrl = $option.data('image');
+
+            if (!imageUrl) {
+                return option.text;
+            }
+
+            return $(`
+                <div class="select2-option-with-image">
+                    <img src="${imageUrl}" class="select2-option-image" alt="${option.text}">
+                    <span class="select2-option-title">${option.text}</span>
+                </div>
+            `);
+        }
+
+        function updateCollaboratorsDisplay(selectedValues) {
+            // Optionnel: Afficher les collaborateurs sélectionnés quelque part
+            if (selectedValues && selectedValues.length > 0) {
+                console.log('Nombre de collaborateurs sélectionnés:', selectedValues.length);
+            }
+        }
+
+        function initializeWysiwyg() {
+            // Configuration complète de Quill.js
+            var toolbarOptions = [
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                [{ 'font': [] }],
+                [{ 'size': ['small', false, 'large', 'huge'] }],
+                
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'script': 'sub'}, { 'script': 'super' }],
+                
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'indent': '-1'}, { 'indent': '+1' }],
+                [{ 'align': [] }],
+                
+                ['blockquote', 'code-block'],
+                ['link', 'image', 'video'],
+                
+                ['clean']
+            ];
+
+            quillEditor = new Quill('#editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: toolbarOptions,
+                    history: {
+                        delay: 1000,
+                        maxStack: 50,
+                        userOnly: true
+                    }
+                },
+                formats: [
+                    'header', 'font', 'size',
+                    'bold', 'italic', 'underline', 'strike',
+                    'color', 'background', 'script',
+                    'list', 'bullet', 'indent', 'align',
+                    'blockquote', 'code-block',
+                    'link', 'image', 'video'
+                ],
+                placeholder: 'Commencez à taper votre contenu ici...'
+            });
+
+            // Événements de l'éditeur
+            quillEditor.on('text-change', function(delta, oldDelta, source) {
+                // Mettre à jour le champ caché avec le contenu HTML
+                document.getElementById('contenuWysiwyg').value = quillEditor.root.innerHTML;
+                
+                // Optionnel: sauvegarder automatiquement le brouillon
+                // autosaveDraft();
+            });
+
+            quillEditor.on('selection-change', function(range, oldRange, source) {
+                if (range) {
+                    document.getElementById('wysiwygContainer').classList.add('focused');
+                } else {
+                    document.getElementById('wysiwygContainer').classList.remove('focused');
+                }
+            });
+
+            // Gérer l'upload d'images
+            quillEditor.getModule('toolbar').addHandler('image', function() {
+                selectLocalImage();
+            });
+        }
+
+        function selectLocalImage() {
+            const input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'image/*');
+            input.click();
+
+            input.onchange = function() {
+                const file = input.files[0];
+                if (file) {
+                    // Dans un vrai projet, vous uploaderiez l'image sur le serveur
+                    // Ici, nous créons juste une URL temporaire
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const range = quillEditor.getSelection();
+                        quillEditor.insertEmbed(range.index, 'image', e.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+
+        function insertWysiwygContent(type) {
+            const range = quillEditor.getSelection();
+            if (!range) return;
+
+            switch(type) {
+                case 'table':
+                    // Insérer un tableau simple
+                    const tableHtml = `
+                        <table border="1" style="border-collapse: collapse; width: 100%;">
+                            <tr><th>Colonne 1</th><th>Colonne 2</th><th>Colonne 3</th></tr>
+                            <tr><td>Cellule 1</td><td>Cellule 2</td><td>Cellule 3</td></tr>
+                            <tr><td>Cellule 4</td><td>Cellule 5</td><td>Cellule 6</td></tr>
+                        </table><p><br></p>
+                    `;
+                    quillEditor.clipboard.dangerouslyPasteHTML(range.index, tableHtml);
+                    break;
+                    
+                case 'hr':
+                    quillEditor.insertText(range.index, '\n');
+                    quillEditor.insertEmbed(range.index + 1, 'image', 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIyIiB2aWV3Qm94PSIwIDAgMTAwIDIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGxpbmUgeDE9IjAiIHkxPSIxIiB4Mj0iMTAwIiB5Mj0iMSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=');
+                    quillEditor.insertText(range.index + 2, '\n');
+                    break;
+                    
+                case 'code':
+                    quillEditor.format('code-block', true);
+                    break;
+            }
         }
 
         function setupRadioCards() {
@@ -1061,6 +1831,132 @@
             
             // Gestionnaire pour l'image de couverture
             setupSingleFileHandler('imageCouverture', 'previewImage', 'contentImage');
+
+            // Gestionnaire pour les fichiers annexes
+            setupMultipleFileHandler('fichiersAnnexes', 'annexesList');
+        }
+
+        function setupMultipleFileHandler(inputId, listId) {
+            const fileInput = document.getElementById(inputId);
+            const filesList = document.getElementById(listId);
+            
+            if (fileInput && filesList) {
+                fileInput.addEventListener('change', function(e) {
+                    handleMultipleFiles(e.target.files, filesList);
+                });
+            }
+        }
+
+        function handleMultipleFiles(files, listElement) {
+            listElement.innerHTML = ''; // Vider la liste existante
+            
+            Array.from(files).forEach((file, index) => {
+                const fileItem = createFileItem(file, index);
+                listElement.appendChild(fileItem);
+            });
+        }
+
+        function createFileItem(file, index) {
+            const fileSize = formatBytes(file.size);
+            const fileType = file.type || 'Type inconnu';
+            const iconClass = getFileIcon(file.type);
+            
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.dataset.index = index;
+            
+            fileItem.innerHTML = `
+                <div class="file-item-info">
+                    <div class="file-item-icon">
+                        <i class="${iconClass} text-primary"></i>
+                    </div>
+                    <div class="file-item-details">
+                        <div class="file-item-name">${file.name}</div>
+                        <div class="file-item-meta">${fileSize} • ${fileType}</div>
+                    </div>
+                </div>
+                <div class="file-item-actions">
+                    <button type="button" class="btn-file-remove" onclick="removeAnnexeFile(${index})" title="Supprimer ce fichier">
+                        <i class="bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            return fileItem;
+        }
+
+        function removeAnnexeFile(index) {
+            const fileInput = document.getElementById('fichiersAnnexes');
+            const filesList = document.getElementById('annexesList');
+            const fileItem = filesList.querySelector(`[data-index="${index}"]`);
+            
+            if (fileItem) {
+                fileItem.remove();
+                
+                // Recréer la liste des fichiers sans celui supprimé
+                const dt = new DataTransfer();
+                const files = Array.from(fileInput.files);
+                
+                files.forEach((file, i) => {
+                    if (i !== index) {
+                        dt.items.add(file);
+                    }
+                });
+                
+                fileInput.files = dt.files;
+                
+                // Réafficher la liste mise à jour
+                handleMultipleFiles(fileInput.files, filesList);
+                
+            }
+        }
+
+        function removeMainFile() {
+            const fileInput = document.getElementById('fichierPrincipal');
+            const previewElement = document.getElementById('previewPrincipal');
+            const contentElement = document.getElementById('contentPrincipal');
+            
+            // Vider l'input file
+            fileInput.value = '';
+            
+            // Masquer le contenu et réafficher le placeholder
+            contentElement.style.display = 'none';
+            contentElement.innerHTML = `
+                <button type="button" class="file-remove-overlay" onclick="removeMainFile()" title="Supprimer le fichier">
+                    <i class="bi-x-lg"></i>
+                </button>
+            `;
+            
+            const placeholder = previewElement.querySelector('.file-preview-placeholder');
+            if (placeholder) {
+                placeholder.style.display = 'block';
+            }
+            
+            showNotification('Fichier principal supprimé', 'success');
+        }
+
+        function removeCoverImage() {
+            const fileInput = document.getElementById('imageCouverture');
+            const previewElement = document.getElementById('previewImage');
+            const contentElement = document.getElementById('contentImage');
+            
+            // Vider l'input file
+            fileInput.value = '';
+            
+            // Masquer le contenu et réafficher le placeholder
+            contentElement.style.display = 'none';
+            contentElement.innerHTML = `
+                <button type="button" class="file-remove-overlay" onclick="removeCoverImage()" title="Supprimer l'image">
+                    <i class="bi-x-lg"></i>
+                </button>
+            `;
+            
+            const placeholder = previewElement.querySelector('.file-preview-placeholder');
+            if (placeholder) {
+                placeholder.style.display = 'block';
+            }
+            
+            showNotification('Image de couverture supprimée', 'success');
         }
 
         function setupSingleFileHandler(inputId, previewId, contentId) {
@@ -1145,6 +2041,12 @@
                         ${previewHTML}
                     `;
                     contentElement.innerHTML = previewHTML;
+                    
+                    // Masquer le placeholder
+                    const placeholder = contentElement.closest('.file-preview').querySelector('.file-preview-placeholder');
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                    }
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -1154,10 +2056,45 @@
                     <i class="${iconClass} text-primary mb-2" style="font-size: 4rem;"></i>
                     ${previewHTML}
                 `;
+                contentElement.innerHTML = previewHTML;
+                
+                // Masquer le placeholder
+                const placeholder = contentElement.closest('.file-preview').querySelector('.file-preview-placeholder');
+                if (placeholder) {
+                    placeholder.style.display = 'none';
+                }
             }
             
-            contentElement.innerHTML = previewHTML;
             contentElement.style.display = 'block';
+        }
+
+        // Fonction utilitaire pour afficher les notifications
+        function showNotification(message, type = 'info') {
+            if (window.MKBAAdmin && window.MKBAAdmin.showNotification) {
+                window.MKBAAdmin.showNotification(message, type);
+            } else {
+                // Fallback simple si MKBAAdmin n'est pas disponible
+                const alertClass = type === 'error' ? 'danger' : type;
+                const alertHtml = `
+                    <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" 
+                         style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+                        <i class="fas fa-${type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-triangle' : 'info-circle')} me-2"></i>
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', alertHtml);
+                
+                // Auto-supprimer après 3 secondes
+                setTimeout(() => {
+                    const alert = document.querySelector('.alert:last-of-type');
+                    if (alert) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 3000);
+            }
         }
 
         function getFileIcon(mimeType) {
@@ -1324,6 +2261,11 @@
         }
 
         function saveDraft() {
+            // Sauvegarder le contenu de l'éditeur
+            if (quillEditor) {
+                document.getElementById('contenuWysiwyg').value = quillEditor.root.innerHTML;
+            }
+            
             // Logique pour sauvegarder comme brouillon
             if (window.MKBAAdmin) {
                 window.MKBAAdmin.showNotification('Brouillon sauvegardé avec succès', 'success');
@@ -1338,6 +2280,11 @@
             form.addEventListener('submit', function(event) {
                 let isValid = true;
                 const errors = [];
+
+                // Sauvegarder le contenu WYSIWYG
+                if (quillEditor) {
+                    document.getElementById('contenuWysiwyg').value = quillEditor.root.innerHTML;
+                }
 
                 // Validation du titre
                 const titre = form.querySelector('[name="titre"]');
@@ -1367,6 +2314,16 @@
                     isValid = false;
                 } else {
                     clearFieldError(categorie);
+                }
+
+                // Validation de l'auteur principal
+                const auteurPrincipal = form.querySelector('[name="auteur_principal"]');
+                if (!auteurPrincipal.value) {
+                    showFieldError(auteurPrincipal.parentElement, 'Veuillez sélectionner un auteur principal');
+                    errors.push('Auteur principal non sélectionné');
+                    isValid = false;
+                } else {
+                    clearFieldError(auteurPrincipal.parentElement);
                 }
 
                 // Validation de l'email si renseigné
@@ -1446,21 +2403,45 @@
             }, 3000);
         }
 
-        // Validation en temps réel optionnelle
-        function setupRealtimeValidation() {
-            const requiredFields = document.querySelectorAll('[required]');
-            
-            requiredFields.forEach(field => {
-                field.addEventListener('blur', function() {
-                    if (this.value.trim()) {
-                        clearFieldError(this);
-                        showFieldSuccess(this, 'Valide ✓');
-                    }
-                });
-            });
+        // Auto-sauvegarde du brouillon (optionnel)
+        function autosaveDraft() {
+            // Débouncing pour éviter trop d'appels
+            clearTimeout(window.autosaveTimeout);
+            window.autosaveTimeout = setTimeout(() => {
+                console.log('Auto-sauvegarde du brouillon...');
+                // Ici vous pouvez implémenter un appel AJAX pour sauvegarder
+            }, 3000);
         }
 
-        // Initialiser la validation en temps réel si souhaité
-        // setupRealtimeValidation();
+        // Raccourcis clavier pour l'éditeur WYSIWYG
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveDraft();
+                        break;
+                    case 'b':
+                        if (quillEditor && quillEditor.hasFocus()) {
+                            e.preventDefault();
+                            quillEditor.format('bold', !quillEditor.getFormat().bold);
+                        }
+                        break;
+                    case 'i':
+                        if (quillEditor && quillEditor.hasFocus()) {
+                            e.preventDefault();
+                            quillEditor.format('italic', !quillEditor.getFormat().italic);
+                        }
+                        break;
+                }
+            }
+        });
+
+        console.log('%c🚀 Formulaire MK BA initialisé avec succès!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Select2 pour les champs de recherche');
+        console.log('✅ Éditeur WYSIWYG Quill.js');
+        console.log('✅ Upload de fichiers avec drag & drop');
+        console.log('✅ Validation de formulaire');
+        console.log('✅ Collections dynamiques');
     </script>
 {% endblock %}

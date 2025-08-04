@@ -187,8 +187,8 @@ body {
 }
 
 .switch-button.active .switch-slider {
-    background-color: #9932CC;
-    border-color: #9932CC;
+    background-color: #6D5192;
+    border-color: #6D5192;
 }
 
 .switch-button.active .switch-knob {
@@ -200,7 +200,7 @@ body {
 }
 
 .switch-button.active:hover .switch-slider {
-    background-color: #9932CC;
+    background-color: #6D5192;
 }
 
 /* Dropdown Menus */
