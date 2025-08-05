@@ -170,7 +170,7 @@
                         <div class="tooltip">Configuration Système</div>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#"><i class="bi-sliders2 me-2"></i>Paramètres</a></li>
+                        <li><a class="dropdown-item {{ app.request.get('_route') == 'admin_settings_index' ? 'active' : '' }}" href="{{ path('admin_settings_index') }}"><i class="bi-sliders2 me-2"></i>Paramètres</a></li>
                         <li><a class="dropdown-item" href="#"><i class="bi-database me-2"></i>Données de Référence</a></li>
                         <li><a class="dropdown-item" href="#"><i class="bi-clock-history me-2"></i>Journaux</a></li>
                     </ul>
@@ -391,4 +391,5 @@
 
     {% block javascripts %}{% endblock %}
 </body>
+
 </html>

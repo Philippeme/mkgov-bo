@@ -18,12 +18,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 isAutoMode = false;
                 sidebar.classList.remove('collapsed');
                 content.classList.remove('collapsed');
+                
+                // Réafficher les chevrons
+                document.querySelectorAll('.nav-arrow, .bi-chevron-down').forEach(chevron => {
+                    chevron.style.opacity = '1';
+                });
             } else {
-        
                 // Mode auto avec souris
                 isAutoMode = true;
                 sidebar.classList.add('collapsed');
                 content.classList.add('collapsed');
+                
+                // Masquer les chevrons
+                document.querySelectorAll('.nav-arrow, .bi-chevron-down').forEach(chevron => {
+                    chevron.style.opacity = '0';
+                });
+                
+                // Fermer tous les menus déroulants en mode collapsed
+                document.querySelectorAll('.nav-item.dropdown.open').forEach(function(openItem) {
+                    const openMenu = openItem.querySelector('.dropdown-menu');
+                    const openChevron = openItem.querySelector('.bi-chevron-down, .nav-arrow');
+                    
+                    openItem.classList.remove('open');
+                    openMenu.classList.remove('show');
+                    
+                    if (openChevron) {
+                        openChevron.style.transform = 'rotate(-90deg)';
+                    }
+                });
             }
         });
     }
@@ -35,6 +57,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 clearTimeout(hoverTimeout);
                 this.classList.remove('collapsed');
                 content.classList.remove('collapsed');
+                
+                // Réafficher les chevrons temporairement
+                document.querySelectorAll('.nav-arrow, .bi-chevron-down').forEach(chevron => {
+                    chevron.style.opacity = '1';
+                });
             }
         });
 
@@ -43,6 +70,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 hoverTimeout = setTimeout(() => {
                     this.classList.add('collapsed');
                     content.classList.add('collapsed');
+                    
+                    // Masquer les chevrons
+                    document.querySelectorAll('.nav-arrow, .bi-chevron-down').forEach(chevron => {
+                        chevron.style.opacity = '0';
+                    });
                 }, 300); // Délai de 300ms
             }
         });
@@ -84,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Gestion des sous-menus
+    // ========== GESTION AMÉLIORÉE DES SOUS-MENUS AVEC CHEVRONS HORIZONTAUX ==========
     const dropdownToggles = document.querySelectorAll('.dropdown-toggle-custom');
     
     dropdownToggles.forEach(function(toggle) {
@@ -93,23 +125,46 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const parentLi = this.closest('.nav-item.dropdown');
             const dropdownMenu = parentLi.querySelector('.dropdown-menu');
+            const chevron = this.querySelector('.bi-chevron-down, .nav-arrow');
             const isCurrentlyOpen = parentLi.classList.contains('open');
             
             // Fermer tous les autres accordéons
             document.querySelectorAll('.nav-item.dropdown.open').forEach(function(openItem) {
                 if (openItem !== parentLi) {
+                    const openMenu = openItem.querySelector('.dropdown-menu');
+                    const openChevron = openItem.querySelector('.bi-chevron-down, .nav-arrow');
+                    
                     openItem.classList.remove('open');
-                    openItem.querySelector('.dropdown-menu').classList.remove('show');
+                    openMenu.classList.remove('show');
+                    
+                    // Réinitialiser l'animation du chevron
+                    if (openChevron) {
+                        openChevron.style.transform = 'rotate(-90deg)';
+                    }
                 }
             });
             
-            // Toggle l'accordéon actuel
+            // Toggle l'accordéon actuel avec animation
             if (isCurrentlyOpen) {
+                // Fermer
                 parentLi.classList.remove('open');
                 dropdownMenu.classList.remove('show');
+                
+                if (chevron) {
+                    chevron.style.transform = 'rotate(-90deg)';
+                }
             } else {
+                // Ouvrir
                 parentLi.classList.add('open');
-                dropdownMenu.classList.add('show');
+                
+                // Animation d'ouverture
+                setTimeout(() => {
+                    dropdownMenu.classList.add('show');
+                }, 50);
+                
+                if (chevron) {
+                    chevron.style.transform = 'rotate(0deg)';
+                }
             }
         });
     });
@@ -265,15 +320,72 @@ document.addEventListener('DOMContentLoaded', function() {
     const theme = localStorage.getItem('mkba-theme') || 'light';
     document.body.setAttribute('data-theme', theme);
 
+    // ========== FONCTION POUR METTRE À JOUR LES MENUS ACTIFS AVEC CHEVRONS ==========
+    function updateActiveMenusWithHorizontalChevrons() {
+        const currentRoute = typeof window !== 'undefined' && window.location 
+            ? window.location.pathname 
+            : '';
+        
+        // Supprimer toutes les classes has-active-child existantes
+        document.querySelectorAll('.nav-item.dropdown.has-active-child').forEach(item => {
+            item.classList.remove('has-active-child');
+        });
+        
+        // Logique de détection de menu actif basée sur l'URL
+        const routeMenuMap = {
+            '/admin/document': 'documents',
+            '/admin/request': 'requests', 
+            '/admin/procedure': 'procedures',
+            '/admin/family': 'families',
+            '/admin/user': 'users',
+            '/admin/role': 'roles',
+            '/admin/config': 'system',
+            '/admin/settings': 'system'
+        };
+        
+        let activeMenuFound = false;
+        
+        for (const [routePattern, menuDataAttribute] of Object.entries(routeMenuMap)) {
+            if (currentRoute.includes(routePattern)) {
+                const menuDropdown = document.querySelector(`[data-dropdown="${menuDataAttribute}"]`);
+                if (menuDropdown) {
+                    const parentDropdown = menuDropdown.closest('.nav-item.dropdown');
+                    if (parentDropdown) {
+                        parentDropdown.classList.add('has-active-child');
+                        
+                        // Auto-ouvrir le menu et ajuster le chevron
+                        const dropdownMenu = parentDropdown.querySelector('.dropdown-menu');
+                        const chevron = menuDropdown.querySelector('.bi-chevron-down, .nav-arrow');
+                        
+                        if (dropdownMenu) {
+                            parentDropdown.classList.add('open');
+                            dropdownMenu.classList.add('show');
+                            
+                            if (chevron) {
+                                chevron.style.transform = 'rotate(0deg)';
+                            }
+                        }
+                        activeMenuFound = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Exécuter au chargement
+    updateActiveMenusWithHorizontalChevrons();
+
     console.log('%c🚀 MK BA Admin Dashboard', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+    console.log('✅ Chevrons horizontaux initialisés');
 });
 
-// Utility functions
+// ========== UTILITY FUNCTIONS ==========
 window.MKBAAdmin = {
     // Show notification
     showNotification: function(message, type = 'info') {
         const alertHtml = `
-            <div class="alert alert-${type} alert-dismissible fade show flash-message" role="alert">
+            <div class="alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show flash-message" role="alert">
                 <i class="fas fa-${type === 'success' ? 'check-circle' : (type === 'error' ? 'exclamation-triangle' : 'info-circle')}"></i>
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -291,6 +403,17 @@ window.MKBAAdmin = {
                     const bsAlert = new bootstrap.Alert(newAlert);
                     bsAlert.close();
                 }
+            }, 5000);
+        } else {
+            // Fallback: créer le container s'il n'existe pas
+            const fallbackContainer = document.createElement('div');
+            fallbackContainer.className = 'flash-messages';
+            fallbackContainer.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            fallbackContainer.innerHTML = alertHtml;
+            document.body.appendChild(fallbackContainer);
+            
+            setTimeout(() => {
+                fallbackContainer.remove();
             }, 5000);
         }
     },
@@ -327,5 +450,77 @@ window.MKBAAdmin = {
                 console.error('Request failed:', error);
                 throw error;
             });
+    },
+
+    // Fonction pour basculer les chevrons
+    toggleChevron: function(element, isOpen) {
+        const chevron = element.querySelector('.bi-chevron-down, .nav-arrow');
+        if (chevron) {
+            chevron.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(-90deg)';
+        }
     }
 };
+
+// ========== EVENT LISTENERS GLOBAUX ==========
+// Gestionnaire global pour les touches de raccourci
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K pour ouvrir la recherche
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('headerSearch');
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }
+    
+    // Escape pour fermer les dropdowns
+    if (e.key === 'Escape') {
+        // Fermer les dropdowns ouverts
+        const openDropdowns = document.querySelectorAll('.dropdown-menu.show');
+        openDropdowns.forEach(dropdown => {
+            dropdown.classList.remove('show');
+            const parentItem = dropdown.closest('.nav-item.dropdown');
+            if (parentItem) {
+                parentItem.classList.remove('open');
+                const chevron = parentItem.querySelector('.bi-chevron-down, .nav-arrow');
+                if (chevron) {
+                    chevron.style.transform = 'rotate(-90deg)';
+                }
+            }
+        });
+        
+        // Vider les champs de recherche
+        const searchInput = document.getElementById('headerSearch');
+        if (searchInput && searchInput === document.activeElement) {
+            searchInput.blur();
+        }
+    }
+});
+
+// Gestionnaire pour les liens de navigation avec animation
+document.addEventListener('click', function(e) {
+    const link = e.target.closest('a[href]');
+    if (link && link.href && !link.href.startsWith('#') && !link.target) {
+        // Ajouter une classe de chargement au lien cliqué
+        link.style.opacity = '0.7';
+        link.style.transform = 'scale(0.98)';
+        
+        // Restaurer l'état après un court délai
+        setTimeout(() => {
+            link.style.opacity = '';
+            link.style.transform = '';
+        }, 200);
+    }
+});
+
+// Performance monitoring (optionnel)
+if (typeof performance !== 'undefined' && performance.mark) {
+    performance.mark('mkba-admin-script-end');
+    
+    // Mesurer le temps de chargement du script
+    if (performance.getEntriesByName('mkba-admin-script-start').length > 0) {
+        performance.measure('mkba-admin-script-load', 'mkba-admin-script-start', 'mkba-admin-script-end');
+        const measure = performance.getEntriesByName('mkba-admin-script-load')[0];
+        console.log(`⚡ MK BA Admin script loaded in ${measure.duration.toFixed(2)}ms`);
+    }
+}
