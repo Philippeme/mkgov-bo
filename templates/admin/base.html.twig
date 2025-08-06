@@ -16,8 +16,6 @@
     <link rel="stylesheet" href="{{ asset('styles/admin.css') }}">
     <link rel="stylesheet" href="{{ asset('styles/document.css') }}">
 
-
-
     {% block stylesheets %}{% endblock %}
 </head>
 <body>
@@ -70,6 +68,23 @@
                     <div class="nav-section-title">Gestion des Services</div>
                 </li>
 
+                <!-- NOUVEAU: PROJETS -->
+                <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_project' ? 'has-active-child' : '' }}">
+                    <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_project' ? 'active' : '' }}" data-dropdown="projects">
+                        <i class="bi-folder"></i>
+                        <span class="nav-text">Projets</span>
+                        <span class="nav-badge">5</span>
+                        <i class="bi-chevron-down nav-arrow"></i>
+                        <div class="tooltip">Gestion des Projets</div>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ path('admin_project_new') }}"><i class="bi-plus-circle me-2"></i>Nouveau Projet</a></li>
+                        <li><a class="dropdown-item" href="{{ path('admin_project_index') }}"><i class="bi-list-ul me-2"></i>Tous les Projets</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-clock me-2"></i>Projets actifs</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi-archive me-2"></i>Projets archivés</a></li>
+                    </ul>
+                </li>
+
                 <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_request' ? 'has-active-child' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_request' ? 'active' : '' }}" data-dropdown="requests">
                         <i class="bi-journal-text"></i>
@@ -114,7 +129,7 @@
 
                 <li class="nav-item dropdown {{ app.request.get('_route') starts with 'admin_document' ? 'has-active-child' : '' }}">
                     <a href="#" class="nav-link dropdown-toggle-custom {{ app.request.get('_route') starts with 'admin_document' ? 'active' : '' }}" data-dropdown="documents">
-                        <i class="bi-folder"></i>
+                        <i class="bi-file-earmark"></i>
                         <span class="nav-text">Documents</span>
                         <i class="bi-chevron-down nav-arrow"></i>
                         <div class="tooltip">Gestion des Documents</div>
@@ -270,7 +285,9 @@
                         {% if app.request.get('_route') != 'admin_dashboard' %}
                         <span class="breadcrumb-separator">/</span>
                         <span class="breadcrumb-item current">
-                            {% if app.request.get('_route') starts with 'admin_family' %}
+                            {% if app.request.get('_route') starts with 'admin_project' %}
+                                Projets
+                            {% elseif app.request.get('_route') starts with 'admin_family' %}
                                 Familles
                             {% elseif app.request.get('_route') starts with 'admin_user' %}
                                 Utilisateurs
@@ -292,9 +309,7 @@
             </div>
 
             <div class="admin-main">
-                {% block body %}
-                <p><
-                {% endblock %}
+                {% block body %}{% endblock %}
             </div>
         </div>
     </div>
@@ -320,7 +335,18 @@
                 });
                 
                 // Ajouter has-active-child selon la route actuelle
-                if (currentRoute.startsWith('admin_document')) {
+                if (currentRoute.startsWith('admin_project')) {
+                    const projectDropdown = document.querySelector('[data-dropdown="projects"]').closest('.nav-item.dropdown');
+                    if (projectDropdown) {
+                        projectDropdown.classList.add('has-active-child');
+                        // Auto-ouvrir le menu
+                        const dropdownMenu = projectDropdown.querySelector('.dropdown-menu');
+                        if (dropdownMenu) {
+                            dropdownMenu.classList.add('show');
+                            projectDropdown.classList.add('open');
+                        }
+                    }
+                } else if (currentRoute.startsWith('admin_document')) {
                     const documentDropdown = document.querySelector('[data-dropdown="documents"]').closest('.nav-item.dropdown');
                     if (documentDropdown) {
                         documentDropdown.classList.add('has-active-child');
@@ -391,5 +417,4 @@
 
     {% block javascripts %}{% endblock %}
 </body>
-
 </html>
