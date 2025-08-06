@@ -138,6 +138,7 @@
             color: white;
         }
         
+        /* ========== AMÉLIORATION DES FICHIERS ========== */
         .file-preview {
             border: 2px dashed #e0e0e0;
             border-radius: 8px;
@@ -147,6 +148,12 @@
             transition: all 0.3s ease;
             cursor: pointer;
             background: #fafbfc;
+            position: relative;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
         }
         
         .file-preview:hover {
@@ -160,16 +167,39 @@
             transform: scale(1.02);
         }
         
+        .file-preview.has-file {
+            border-style: solid;
+            border-color: var(--mk-primary);
+            background: rgba(109, 81, 146, 0.05);
+        }
+        
+        .file-preview-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .file-preview.has-file .file-preview-placeholder {
+            display: none;
+        }
+        
         .file-preview-content {
             display: none;
-            margin-top: 15px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .file-preview.has-file .file-preview-content {
+            display: block;
         }
         
         .file-info {
             background: #f8f9fa;
             border-radius: 6px;
             padding: 15px;
-            margin-top: 10px;
+            margin-top: 15px;
             border: 1px solid #e9ecef;
         }
         
@@ -359,6 +389,41 @@
             margin-top: 5px;
         }
 
+        /* ===== BOUTONS DE SUPPRESSION PERMANENTS ===== */
+        .file-remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--mk-danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .file-remove-btn:hover {
+            background: #dc2626;
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .file-remove-btn:active {
+            transform: scale(0.95);
+        }
+
+        .file-remove-btn.hidden {
+            display: none;
+        }
+
         /* ===== CUSTOM SELECT WITH SEARCH ===== */
         .select2-container--default .select2-selection--single {
             border: 2px solid #e5e7eb;
@@ -532,34 +597,6 @@
             position: relative;
         }
 
-        .file-remove-overlay {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(239, 68, 68, 0.9);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 10;
-        }
-
-        .single-file-container:hover .file-remove-overlay {
-            opacity: 1;
-        }
-
-        .file-remove-overlay:hover {
-            background: #dc2626;
-            transform: scale(1.1);
-        }
-
         /* ===== WYSIWYG EDITOR ===== */
         .wysiwyg-container {
             border: 2px solid #e5e7eb;
@@ -613,36 +650,71 @@
             fill: var(--mk-primary);
         }
 
-        .wysiwyg-toolbar-custom {
-            padding: 10px;
-            background: #f8f9fa;
-            border-bottom: 1px solid #e5e7eb;
+        /* ===== MODAL STYLES ===== */
+        .mkba-modal .modal-content {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .mkba-modal .modal-header {
+            background: linear-gradient(135deg, #0071BC 0%, #FF821C 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+            padding: 20px 30px;
+            border-bottom: none;
+        }
+
+        .mkba-modal .modal-title {
+            font-weight: 600;
             display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
+            align-items: center;
+            gap: 10px;
         }
 
-        .wysiwyg-btn {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 4px;
-            padding: 8px 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            color: var(--mk-dark);
+        .mkba-modal .modal-body {
+            padding: 30px;
         }
 
-        .wysiwyg-btn:hover {
-            background: var(--mk-primary);
-            color: white;
-            border-color: var(--mk-primary);
+        .mkba-modal .modal-footer {
+            border-top: 1px solid #e9ecef;
+            padding: 20px 30px;
+            gap: 12px;
         }
 
-        .wysiwyg-btn.active {
-            background: var(--mk-primary);
-            color: white;
-            border-color: var(--mk-primary);
+        .mkba-modal .btn-close:hover {
+            border-radius: 6px;
+        }
+
+        .modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 24px;
+        }
+
+        .modal-icon.danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--mk-danger);
+        }
+
+        .modal-icon.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--mk-warning);
+        }
+
+        .modal-icon.info {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--mk-info);
+        }
+
+        .modal-icon.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--mk-success);
         }
 
         @media (max-width: 768px) {
@@ -662,6 +734,15 @@
             
             .checkbox-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .mkba-modal .modal-body {
+                padding: 20px;
+            }
+
+            .mkba-modal .modal-header,
+            .mkba-modal .modal-footer {
+                padding: 20px;
             }
         }
     </style>
@@ -683,6 +764,40 @@
                     <i class="bi-arrow-left me-2"></i>
                     Retour à la liste
                 </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL GÉNÉRIQUE RÉUTILISABLE -->
+<div class="modal fade mkba-modal" id="genericModal" tabindex="-1" aria-labelledby="genericModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="genericModalLabel">
+                    <i class="bi-exclamation-triangle" id="modalIcon"></i>
+                    <span id="modalTitle">Confirmation</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="text-center">
+                    <div class="modal-icon danger" id="modalIconContainer">
+                        <i class="bi-exclamation-triangle" id="modalBodyIcon"></i>
+                    </div>
+                    <h5 id="modalBodyTitle">Êtes-vous sûr ?</h5>
+                    <p id="modalBodyText" class="text-muted">Cette action ne peut pas être annulée.</p>
+                </div>
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="modalCancelBtn">
+                    <i class="bi-x-circle me-2"></i>
+                    Annuler
+                </button>
+                <button type="button" class="btn btn-danger" id="modalConfirmBtn">
+                    <i class="bi-trash me-2"></i>
+                    Supprimer
+                </button>
             </div>
         </div>
     </div>
@@ -1253,7 +1368,7 @@
             </div>
         </div>
 
-        <!-- SECTION 5: Upload de fichiers -->
+        <!-- SECTION 5: Upload de fichiers AMÉLIORÉE -->
         <div class="form-section">
             <h3 class="section-title">
                 <i class="bi-cloud-upload text-primary me-2"></i>
@@ -1265,18 +1380,18 @@
                     <div class="mb-3">
                         <label class="form-label">Fichier principal</label>
                         <input type="file" class="form-control" name="fichier_principal" id="fichierPrincipal"
-                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.svg">
-                        <div class="file-preview single-file-container" id="previewPrincipal">
+                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.webp,.svg" style="display: none;">
+                        <div class="file-preview single-file-container" id="previewPrincipal" onclick="document.getElementById('fichierPrincipal').click()">
                             <div class="file-preview-placeholder">
                                 <i class="bi-cloud-upload text-muted" style="font-size: 3rem;"></i>
                                 <p class="text-muted mt-2">Glissez-déposez un fichier ici ou cliquez pour sélectionner</p>
                                 <small class="text-muted">PDF, Office, Images (max. 10MB)</small>
                             </div>
-                            <div class="file-preview-content" id="contentPrincipal">
-                                <button type="button" class="file-remove-overlay" onclick="removeMainFile()" title="Supprimer le fichier">
-                                    <i class="bi-x-lg"></i>
-                                </button>
-                            </div>
+                            <div class="file-preview-content" id="contentPrincipal"></div>
+                            <button type="button" class="file-remove-btn hidden" id="removePrincipalBtn" 
+                                    onclick="event.stopPropagation(); removeMainFile()" title="Supprimer le fichier">
+                                <i class="bi-x-lg"></i>
+                            </button>
                         </div>
                         <div class="help-text">Document principal associé à cette entrée</div>
                     </div>
@@ -1285,18 +1400,18 @@
                     <div class="mb-3">
                         <label class="form-label">Image de couverture</label>
                         <input type="file" class="form-control" name="image_couverture" id="imageCouverture"
-                               accept="image/*">
-                        <div class="file-preview single-file-container" id="previewImage">
+                               accept="image/*" style="display: none;">
+                        <div class="file-preview single-file-container" id="previewImage" onclick="document.getElementById('imageCouverture').click()">
                             <div class="file-preview-placeholder">
                                 <i class="bi-image text-muted" style="font-size: 3rem;"></i>
                                 <p class="text-muted mt-2">Image de couverture</p>
                                 <small class="text-muted">JPG, PNG, WebP (max. 5MB)</small>
                             </div>
-                            <div class="file-preview-content" id="contentImage">
-                                <button type="button" class="file-remove-overlay" onclick="removeCoverImage()" title="Supprimer l'image">
-                                    <i class="bi-x-lg"></i>
-                                </button>
-                            </div>
+                            <div class="file-preview-content" id="contentImage"></div>
+                            <button type="button" class="file-remove-btn hidden" id="removeImageBtn" 
+                                    onclick="event.stopPropagation(); removeCoverImage()" title="Supprimer l'image">
+                                <i class="bi-x-lg"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1330,7 +1445,7 @@
                 </div>
                 <div id="contactsCollection">
                     <div class="collection-item">
-                        <button type="button" class="btn btn-remove-item" onclick="removeContact(this)">
+                        <button type="button" class="btn btn-remove-item" onclick="confirmRemoveContact(this)">
                             <i class="bi-trash"></i>
                         </button>
                         <div class="row">
@@ -1360,7 +1475,7 @@
                 </div>
                 <div id="linksCollection">
                     <div class="collection-item">
-                        <button type="button" class="btn btn-remove-item" onclick="removeLink(this)">
+                        <button type="button" class="btn btn-remove-item" onclick="confirmRemoveLink(this)">
                             <i class="bi-trash"></i>
                         </button>
                         <div class="row">
@@ -1505,7 +1620,7 @@
                         <i class="bi-save me-2"></i>
                         Enregistrer comme brouillon
                     </button>
-                    <a href="{{ path('admin_document_index') }}" class="btn btn-outline-danger">
+                    <a href="{{ path('admin_document_index') }}" class="btn btn-outline-danger" onclick="return confirmLeave()">
                         <i class="bi-x-circle me-2"></i>
                         Annuler
                     </a>
@@ -1538,6 +1653,7 @@
         let linkIndex = 1;
         let tagsArray = [];
         let quillEditor;
+        let formHasChanges = false;
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeForm();
@@ -1547,6 +1663,7 @@
             setupTagsInput();
             setupColorPicker();
             setupFormValidation();
+            setupChangeTracking();
         });
 
         function initializeForm() {
@@ -1616,8 +1733,7 @@
                 
                 if (selectedValue) {
                     console.log('Auteur sélectionné:', selectedValue, selectedText);
-                    // Vous pouvez ajouter ici une logique pour précharger d'autres champs
-                    // ou faire des appels AJAX pour récupérer des informations supplémentaires
+                    formHasChanges = true;
                 }
             });
 
@@ -1626,6 +1742,7 @@
                 const selectedValues = $(this).val();
                 console.log('Collaborateurs sélectionnés:', selectedValues);
                 updateCollaboratorsDisplay(selectedValues);
+                formHasChanges = true;
             });
         }
 
@@ -1727,9 +1844,7 @@
             quillEditor.on('text-change', function(delta, oldDelta, source) {
                 // Mettre à jour le champ caché avec le contenu HTML
                 document.getElementById('contenuWysiwyg').value = quillEditor.root.innerHTML;
-                
-                // Optionnel: sauvegarder automatiquement le brouillon
-                // autosaveDraft();
+                formHasChanges = true;
             });
 
             quillEditor.on('selection-change', function(range, oldRange, source) {
@@ -1767,35 +1882,6 @@
             };
         }
 
-        function insertWysiwygContent(type) {
-            const range = quillEditor.getSelection();
-            if (!range) return;
-
-            switch(type) {
-                case 'table':
-                    // Insérer un tableau simple
-                    const tableHtml = `
-                        <table border="1" style="border-collapse: collapse; width: 100%;">
-                            <tr><th>Colonne 1</th><th>Colonne 2</th><th>Colonne 3</th></tr>
-                            <tr><td>Cellule 1</td><td>Cellule 2</td><td>Cellule 3</td></tr>
-                            <tr><td>Cellule 4</td><td>Cellule 5</td><td>Cellule 6</td></tr>
-                        </table><p><br></p>
-                    `;
-                    quillEditor.clipboard.dangerouslyPasteHTML(range.index, tableHtml);
-                    break;
-                    
-                case 'hr':
-                    quillEditor.insertText(range.index, '\n');
-                    quillEditor.insertEmbed(range.index + 1, 'image', 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIyIiB2aWV3Qm94PSIwIDAgMTAwIDIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGxpbmUgeDE9IjAiIHkxPSIxIiB4Mj0iMTAwIiB5Mj0iMSIgc3Ryb2tlPSIjY2NjIiBzdHJva2Utd2lkdGg9IjIiLz48L3N2Zz4=');
-                    quillEditor.insertText(range.index + 2, '\n');
-                    break;
-                    
-                case 'code':
-                    quillEditor.format('code-block', true);
-                    break;
-            }
-        }
-
         function setupRadioCards() {
             const radioCards = document.querySelectorAll('.radio-card');
             radioCards.forEach(card => {
@@ -1803,6 +1889,7 @@
                     const radio = this.querySelector('input[type="radio"]');
                     if (radio) {
                         radio.checked = true;
+                        formHasChanges = true;
                         
                         // Retirer la sélection des autres cartes du même groupe
                         const groupName = radio.name;
@@ -1827,13 +1914,36 @@
 
         function setupFileHandlers() {
             // Gestionnaire pour le fichier principal
-            setupSingleFileHandler('fichierPrincipal', 'previewPrincipal', 'contentPrincipal');
+            setupSingleFileHandler('fichierPrincipal', 'previewPrincipal', 'contentPrincipal', 'removePrincipalBtn');
             
             // Gestionnaire pour l'image de couverture
-            setupSingleFileHandler('imageCouverture', 'previewImage', 'contentImage');
+            setupSingleFileHandler('imageCouverture', 'previewImage', 'contentImage', 'removeImageBtn');
 
             // Gestionnaire pour les fichiers annexes
             setupMultipleFileHandler('fichiersAnnexes', 'annexesList');
+        }
+
+        function setupSingleFileHandler(inputId, previewId, contentId, removeBtnId) {
+            const fileInput = document.getElementById(inputId);
+            const filePreview = document.getElementById(previewId);
+            const fileContent = document.getElementById(contentId);
+            const removeBtn = document.getElementById(removeBtnId);
+            
+            if (fileInput && filePreview) {
+                fileInput.addEventListener('change', function(e) {
+                    if (e.target.files[0]) {
+                        handleFileSelect(e.target.files[0], fileContent, filePreview, removeBtn);
+                        formHasChanges = true;
+                    }
+                });
+                
+                // Drag & Drop
+                filePreview.addEventListener('dragover', handleDragOver);
+                filePreview.addEventListener('dragleave', handleDragLeave);
+                filePreview.addEventListener('drop', function(e) {
+                    handleFileDrop(e, fileInput, fileContent, filePreview, removeBtn);
+                });
+            }
         }
 
         function setupMultipleFileHandler(inputId, listId) {
@@ -1843,6 +1953,7 @@
             if (fileInput && filesList) {
                 fileInput.addEventListener('change', function(e) {
                     handleMultipleFiles(e.target.files, filesList);
+                    if (e.target.files.length > 0) formHasChanges = true;
                 });
             }
         }
@@ -1876,7 +1987,7 @@
                     </div>
                 </div>
                 <div class="file-item-actions">
-                    <button type="button" class="btn-file-remove" onclick="removeAnnexeFile(${index})" title="Supprimer ce fichier">
+                    <button type="button" class="btn-file-remove" onclick="confirmRemoveAnnexeFile(${index})" title="Supprimer ce fichier">
                         <i class="bi-trash"></i>
                     </button>
                 </div>
@@ -1885,107 +1996,9 @@
             return fileItem;
         }
 
-        function removeAnnexeFile(index) {
-            const fileInput = document.getElementById('fichiersAnnexes');
-            const filesList = document.getElementById('annexesList');
-            const fileItem = filesList.querySelector(`[data-index="${index}"]`);
-            
-            if (fileItem) {
-                fileItem.remove();
-                
-                // Recréer la liste des fichiers sans celui supprimé
-                const dt = new DataTransfer();
-                const files = Array.from(fileInput.files);
-                
-                files.forEach((file, i) => {
-                    if (i !== index) {
-                        dt.items.add(file);
-                    }
-                });
-                
-                fileInput.files = dt.files;
-                
-                // Réafficher la liste mise à jour
-                handleMultipleFiles(fileInput.files, filesList);
-                
-            }
-        }
-
-        function removeMainFile() {
-            const fileInput = document.getElementById('fichierPrincipal');
-            const previewElement = document.getElementById('previewPrincipal');
-            const contentElement = document.getElementById('contentPrincipal');
-            
-            // Vider l'input file
-            fileInput.value = '';
-            
-            // Masquer le contenu et réafficher le placeholder
-            contentElement.style.display = 'none';
-            contentElement.innerHTML = `
-                <button type="button" class="file-remove-overlay" onclick="removeMainFile()" title="Supprimer le fichier">
-                    <i class="bi-x-lg"></i>
-                </button>
-            `;
-            
-            const placeholder = previewElement.querySelector('.file-preview-placeholder');
-            if (placeholder) {
-                placeholder.style.display = 'block';
-            }
-            
-            showNotification('Fichier principal supprimé', 'success');
-        }
-
-        function removeCoverImage() {
-            const fileInput = document.getElementById('imageCouverture');
-            const previewElement = document.getElementById('previewImage');
-            const contentElement = document.getElementById('contentImage');
-            
-            // Vider l'input file
-            fileInput.value = '';
-            
-            // Masquer le contenu et réafficher le placeholder
-            contentElement.style.display = 'none';
-            contentElement.innerHTML = `
-                <button type="button" class="file-remove-overlay" onclick="removeCoverImage()" title="Supprimer l'image">
-                    <i class="bi-x-lg"></i>
-                </button>
-            `;
-            
-            const placeholder = previewElement.querySelector('.file-preview-placeholder');
-            if (placeholder) {
-                placeholder.style.display = 'block';
-            }
-            
-            showNotification('Image de couverture supprimée', 'success');
-        }
-
-        function setupSingleFileHandler(inputId, previewId, contentId) {
-            const fileInput = document.getElementById(inputId);
-            const filePreview = document.getElementById(previewId);
-            const fileContent = document.getElementById(contentId);
-            
-            if (fileInput && filePreview) {
-                fileInput.addEventListener('change', function(e) {
-                    handleFileSelect(e.target.files[0], fileContent);
-                });
-                
-                // Drag & Drop
-                filePreview.addEventListener('dragover', handleDragOver);
-                filePreview.addEventListener('dragleave', handleDragLeave);
-                filePreview.addEventListener('drop', function(e) {
-                    handleFileDrop(e, fileInput, fileContent);
-                });
-                
-                // Click pour ouvrir le sélecteur
-                filePreview.addEventListener('click', function() {
-                    fileInput.click();
-                });
-            }
-        }
-
-        function handleFileSelect(file, contentElement) {
+        function handleFileSelect(file, contentElement, previewElement, removeBtn) {
             if (file && contentElement) {
-                displayFilePreview(file, contentElement);
+                displayFilePreview(file, contentElement, previewElement, removeBtn);
             }
         }
 
@@ -1999,7 +2012,7 @@
             event.currentTarget.classList.remove('dragover');
         }
 
-        function handleFileDrop(event, inputElement, contentElement) {
+        function handleFileDrop(event, inputElement, contentElement, previewElement, removeBtn) {
             event.preventDefault();
             event.currentTarget.classList.remove('dragover');
             
@@ -2012,11 +2025,12 @@
                 dt.items.add(file);
                 inputElement.files = dt.files;
                 
-                displayFilePreview(file, contentElement);
+                displayFilePreview(file, contentElement, previewElement, removeBtn);
+                formHasChanges = true;
             }
         }
 
-        function displayFilePreview(file, contentElement) {
+        function displayFilePreview(file, contentElement, previewElement, removeBtn) {
             const fileSize = formatBytes(file.size);
             const fileType = file.type || 'Type inconnu';
             
@@ -2041,12 +2055,7 @@
                         ${previewHTML}
                     `;
                     contentElement.innerHTML = previewHTML;
-                    
-                    // Masquer le placeholder
-                    const placeholder = contentElement.closest('.file-preview').querySelector('.file-preview-placeholder');
-                    if (placeholder) {
-                        placeholder.style.display = 'none';
-                    }
+                    showFilePreview(previewElement, removeBtn);
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -2057,15 +2066,206 @@
                     ${previewHTML}
                 `;
                 contentElement.innerHTML = previewHTML;
-                
-                // Masquer le placeholder
-                const placeholder = contentElement.closest('.file-preview').querySelector('.file-preview-placeholder');
-                if (placeholder) {
-                    placeholder.style.display = 'none';
-                }
+                showFilePreview(previewElement, removeBtn);
             }
+        }
+
+        function showFilePreview(previewElement, removeBtn) {
+            // Ajouter classe has-file et afficher le bouton de suppression
+            previewElement.classList.add('has-file');
+            if (removeBtn) {
+                removeBtn.classList.remove('hidden');
+            }
+        }
+
+        function hideFilePreview(previewElement, removeBtn) {
+            // Retirer classe has-file et masquer le bouton de suppression
+            previewElement.classList.remove('has-file');
+            if (removeBtn) {
+                removeBtn.classList.add('hidden');
+            }
+        }
+
+        function removeMainFile() {
+            const fileInput = document.getElementById('fichierPrincipal');
+            const previewElement = document.getElementById('previewPrincipal');
+            const contentElement = document.getElementById('contentPrincipal');
+            const removeBtn = document.getElementById('removePrincipalBtn');
             
-            contentElement.style.display = 'block';
+            // Vider l'input file
+            fileInput.value = '';
+            
+            // Vider le contenu
+            contentElement.innerHTML = '';
+            
+            // Masquer la prévisualisation
+            hideFilePreview(previewElement, removeBtn);
+            
+            formHasChanges = true;
+            showNotification('Fichier principal supprimé', 'success');
+        }
+
+        function removeCoverImage() {
+            const fileInput = document.getElementById('imageCouverture');
+            const previewElement = document.getElementById('previewImage');
+            const contentElement = document.getElementById('contentImage');
+            const removeBtn = document.getElementById('removeImageBtn');
+            
+            // Vider l'input file
+            fileInput.value = '';
+            
+            // Vider le contenu
+            contentElement.innerHTML = '';
+            
+            // Masquer la prévisualisation
+            hideFilePreview(previewElement, removeBtn);
+            
+            formHasChanges = true;
+            showNotification('Image de couverture supprimée', 'success');
+        }
+
+        function confirmRemoveAnnexeFile(index) {
+            showGenericModal({
+                title: 'Supprimer le fichier',
+                bodyTitle: 'Confirmer la suppression',
+                bodyText: 'Êtes-vous sûr de vouloir supprimer ce fichier annexe ?',
+                confirmText: 'Supprimer',
+                confirmClass: 'btn-danger',
+                icon: 'bi-trash',
+                iconClass: 'danger',
+                onConfirm: () => removeAnnexeFile(index)
+            });
+        }
+
+        function removeAnnexeFile(index) {
+            const fileInput = document.getElementById('fichiersAnnexes');
+            const filesList = document.getElementById('annexesList');
+            const fileItem = filesList.querySelector(`[data-index="${index}"]`);
+            
+            if (fileItem) {
+                fileItem.remove();
+                
+                // Recréer la liste des fichiers sans celui supprimé
+                const dt = new DataTransfer();
+                const files = Array.from(fileInput.files);
+                
+                files.forEach((file, i) => {
+                    if (i !== index) {
+                        dt.items.add(file);
+                    }
+                });
+                
+                fileInput.files = dt.files;
+                
+                // Réafficher la liste mise à jour
+                handleMultipleFiles(fileInput.files, filesList);
+                formHasChanges = true;
+                showNotification('Fichier annexe supprimé', 'success');
+            }
+        }
+
+        // ========== GESTION DU MODAL GÉNÉRIQUE ==========
+        function showGenericModal(options) {
+            const modal = document.getElementById('genericModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalBodyTitle = document.getElementById('modalBodyTitle');
+            const modalBodyText = document.getElementById('modalBodyText');
+            const modalBodyIcon = document.getElementById('modalBodyIcon');
+            const modalIconContainer = document.getElementById('modalIconContainer');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+
+            // Configuration par défaut
+            const config = {
+                title: options.title || 'Confirmation',
+                bodyTitle: options.bodyTitle || 'Êtes-vous sûr ?',
+                bodyText: options.bodyText || 'Cette action ne peut pas être annulée.',
+                confirmText: options.confirmText || 'Confirmer',
+                cancelText: options.cancelText || 'Annuler',
+                confirmClass: options.confirmClass || 'btn-primary',
+                icon: options.icon || 'bi-exclamation-triangle',
+                iconClass: options.iconClass || 'warning',
+                onConfirm: options.onConfirm || function() {},
+                onCancel: options.onCancel || function() {}
+            };
+
+            // Mettre à jour le contenu
+            modalTitle.textContent = config.title;
+            modalIcon.className = config.icon;
+            modalBodyTitle.textContent = config.bodyTitle;
+            modalBodyText.textContent = config.bodyText;
+            modalBodyIcon.className = config.icon;
+            
+            // Mettre à jour les classes d'icône
+            modalIconContainer.className = `modal-icon ${config.iconClass}`;
+            
+            // Mettre à jour les boutons
+            confirmBtn.textContent = config.confirmText;
+            confirmBtn.className = `btn ${config.confirmClass}`;
+            cancelBtn.textContent = config.cancelText;
+
+            // Gestionnaires d'événements
+            const handleConfirm = () => {
+                config.onConfirm();
+                bootstrap.Modal.getInstance(modal).hide();
+                cleanup();
+            };
+
+            const handleCancel = () => {
+                config.onCancel();
+                bootstrap.Modal.getInstance(modal).hide();
+                cleanup();
+            };
+
+            const cleanup = () => {
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', handleCancel);
+            };
+
+            confirmBtn.addEventListener('click', handleConfirm);
+            cancelBtn.addEventListener('click', handleCancel);
+
+            // Afficher le modal
+            const modalInstance = new bootstrap.Modal(modal);
+            modalInstance.show();
+
+            // Nettoyer lors de la fermeture
+            modal.addEventListener('hidden.bs.modal', cleanup, { once: true });
+        }
+
+        // ========== FONCTIONS DE CONFIRMATION ==========
+        function confirmRemoveContact(button) {
+            showGenericModal({
+                title: 'Supprimer le contact',
+                bodyTitle: 'Confirmer la suppression',
+                bodyText: 'Êtes-vous sûr de vouloir supprimer ce contact ?',
+                confirmText: 'Supprimer',
+                confirmClass: 'btn-danger',
+                icon: 'bi-person-x',
+                iconClass: 'danger',
+                onConfirm: () => removeContact(button)
+            });
+        }
+
+        function confirmRemoveLink(button) {
+            showGenericModal({
+                title: 'Supprimer le lien',
+                bodyTitle: 'Confirmer la suppression',
+                bodyText: 'Êtes-vous sûr de vouloir supprimer ce lien ?',
+                confirmText: 'Supprimer',
+                confirmClass: 'btn-danger',
+                icon: 'bi-link-45deg',
+                iconClass: 'danger',
+                onConfirm: () => removeLink(button)
+            });
+        }
+
+        function confirmLeave() {
+            if (formHasChanges) {
+                return confirm('Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir quitter cette page ?');
+            }
+            return true;
         }
 
         // Fonction utilitaire pour afficher les notifications
@@ -2126,6 +2326,7 @@
                     if (tagValue && !tagsArray.includes(tagValue)) {
                         addTag(tagValue);
                         this.value = '';
+                        formHasChanges = true;
                     }
                 }
             });
@@ -2149,6 +2350,7 @@
                 tagsArray.splice(index, 1);
                 updateTagsDisplay();
                 updateHiddenTagsInput();
+                formHasChanges = true;
             }
         }
 
@@ -2183,6 +2385,7 @@
             if (colorInput && colorPreview) {
                 colorInput.addEventListener('input', function() {
                     colorPreview.style.background = this.value;
+                    formHasChanges = true;
                 });
             }
         }
@@ -2193,7 +2396,7 @@
             const newItem = document.createElement('div');
             newItem.className = 'collection-item';
             newItem.innerHTML = `
-                <button type="button" class="btn btn-remove-item" onclick="removeContact(this)">
+                <button type="button" class="btn btn-remove-item" onclick="confirmRemoveContact(this)">
                     <i class="bi-trash"></i>
                 </button>
                 <div class="row">
@@ -2213,10 +2416,13 @@
             `;
             collection.appendChild(newItem);
             contactIndex++;
+            formHasChanges = true;
         }
 
         function removeContact(button) {
             button.closest('.collection-item').remove();
+            formHasChanges = true;
+            showNotification('Contact supprimé', 'success');
         }
 
         function addLink() {
@@ -2224,7 +2430,7 @@
             const newItem = document.createElement('div');
             newItem.className = 'collection-item';
             newItem.innerHTML = `
-                <button type="button" class="btn btn-remove-item" onclick="removeLink(this)">
+                <button type="button" class="btn btn-remove-item" onclick="confirmRemoveLink(this)">
                     <i class="bi-trash"></i>
                 </button>
                 <div class="row">
@@ -2240,10 +2446,40 @@
             `;
             collection.appendChild(newItem);
             linkIndex++;
+            formHasChanges = true;
         }
 
         function removeLink(button) {
             button.closest('.collection-item').remove();
+            formHasChanges = true;
+            showNotification('Lien supprimé', 'success');
+        }
+
+        // ========== SUIVI DES MODIFICATIONS ==========
+        function setupChangeTracking() {
+            // Écouter tous les changements de formulaire
+            const form = document.getElementById('mkbaCompleteForm');
+            const inputs = form.querySelectorAll('input, textarea, select');
+            
+            inputs.forEach(input => {
+                input.addEventListener('change', () => {
+                    formHasChanges = true;
+                });
+                
+                if (input.type === 'text' || input.type === 'email' || input.type === 'url' || input.tagName === 'TEXTAREA') {
+                    input.addEventListener('input', () => {
+                        formHasChanges = true;
+                    });
+                }
+            });
+
+            // Avertir avant de quitter la page
+            window.addEventListener('beforeunload', (e) => {
+                if (formHasChanges) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
         }
 
         // Utilitaires
@@ -2266,12 +2502,20 @@
                 document.getElementById('contenuWysiwyg').value = quillEditor.root.innerHTML;
             }
             
-            // Logique pour sauvegarder comme brouillon
-            if (window.MKBAAdmin) {
-                window.MKBAAdmin.showNotification('Brouillon sauvegardé avec succès', 'success');
-            } else {
-                alert('Brouillon sauvegardé - À implémenter avec Symfony');
-            }
+            // Utiliser le modal générique pour confirmer
+            showGenericModal({
+                title: 'Sauvegarder le brouillon',
+                bodyTitle: 'Brouillon sauvegardé',
+                bodyText: 'Votre travail a été sauvegardé comme brouillon. Vous pourrez le reprendre plus tard.',
+                confirmText: 'Parfait',
+                confirmClass: 'btn-success',
+                icon: 'bi-save',
+                iconClass: 'success',
+                onConfirm: () => {
+                    formHasChanges = false;
+                    showNotification('Brouillon sauvegardé avec succès', 'success');
+                }
+            });
         }
 
         function setupFormValidation() {
@@ -2346,17 +2590,20 @@
                         firstError.focus();
                     }
                     
-                    // Afficher notification d'erreur
-                    if (window.MKBAAdmin) {
-                        window.MKBAAdmin.showNotification(`Erreurs de validation détectées: ${errors.join(', ')}`, 'error');
-                    } else {
-                        alert('Veuillez corriger les erreurs dans le formulaire');
-                    }
+                    // Afficher modal d'erreur
+                    showGenericModal({
+                        title: 'Erreurs de validation',
+                        bodyTitle: 'Formulaire incomplet',
+                        bodyText: `Veuillez corriger les erreurs suivantes : ${errors.join(', ')}`,
+                        confirmText: 'Corriger',
+                        confirmClass: 'btn-warning',
+                        icon: 'bi-exclamation-triangle',
+                        iconClass: 'warning'
+                    });
                 } else {
                     // Afficher notification de succès
-                    if (window.MKBAAdmin) {
-                        window.MKBAAdmin.showNotification('Formulaire validé, envoi en cours...', 'success');
-                    }
+                    formHasChanges = false;
+                    showNotification('Formulaire validé, envoi en cours...', 'success');
                 }
             });
         }
@@ -2437,11 +2684,91 @@
             }
         });
 
+        // ========== FONCTIONS SPÉCIFIQUES POUR LE MODAL ==========
+        
+        // Exemple d'utilisation pour différents types de confirmation
+        function showDeleteConfirmation(itemType, itemName, callback) {
+            showGenericModal({
+                title: `Supprimer ${itemType}`,
+                bodyTitle: 'Confirmer la suppression',
+                bodyText: `Êtes-vous sûr de vouloir supprimer "${itemName}" ? Cette action est irréversible.`,
+                confirmText: 'Supprimer définitivement',
+                confirmClass: 'btn-danger',
+                icon: 'bi-trash',
+                iconClass: 'danger',
+                onConfirm: callback
+            });
+        }
+
+        function showSaveConfirmation(callback) {
+            showGenericModal({
+                title: 'Sauvegarder les modifications',
+                bodyTitle: 'Confirmer la sauvegarde',
+                bodyText: 'Voulez-vous sauvegarder toutes les modifications apportées à ce document ?',
+                confirmText: 'Sauvegarder',
+                confirmClass: 'btn-success',
+                icon: 'bi-check-circle',
+                iconClass: 'success',
+                onConfirm: callback
+            });
+        }
+
+        function showWarningModal(title, message, callback) {
+            showGenericModal({
+                title: title,
+                bodyTitle: 'Attention',
+                bodyText: message,
+                confirmText: 'Continuer',
+                confirmClass: 'btn-warning',
+                icon: 'bi-exclamation-triangle',
+                iconClass: 'warning',
+                onConfirm: callback
+            });
+        }
+
+        function showInfoModal(title, message, callback) {
+            showGenericModal({
+                title: title,
+                bodyTitle: 'Information',
+                bodyText: message,
+                confirmText: 'Compris',
+                confirmClass: 'btn-info',
+                icon: 'bi-info-circle',
+                iconClass: 'info',
+                onConfirm: callback || function() {}
+            });
+        }
+
+        // ========== EXEMPLES D'UTILISATION DU MODAL ==========
+        
+        // Exemple : Confirmation avant suppression d'un enregistrement
+        function deleteDocument(documentId) {
+            showDeleteConfirmation('document', `Document #${documentId}`, () => {
+                // Logique de suppression ici
+                console.log(`Document ${documentId} supprimé`);
+                showNotification('Document supprimé avec succès', 'success');
+            });
+        }
+
+        // Exemple : Avertissement pour des données non sauvegardées
+        function warnUnsavedChanges() {
+            showWarningModal(
+                'Modifications non sauvegardées',
+                'Vous avez des modifications non sauvegardées qui seront perdues si vous continuez.',
+                () => {
+                    formHasChanges = false;
+                    window.location.href = '{{ path("admin_document_index") }}';
+                }
+            );
+        }
+
         console.log('%c🚀 Formulaire MK BA initialisé avec succès!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
         console.log('✅ Select2 pour les champs de recherche');
         console.log('✅ Éditeur WYSIWYG Quill.js');
-        console.log('✅ Upload de fichiers avec drag & drop');
+        console.log('✅ Upload de fichiers avec boutons de suppression permanents');
+        console.log('✅ Modal générique réutilisable');
         console.log('✅ Validation de formulaire');
         console.log('✅ Collections dynamiques');
+        console.log('✅ Suivi des modifications');
     </script>
 {% endblock %}
