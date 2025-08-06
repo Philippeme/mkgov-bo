@@ -44,43 +44,38 @@
             opacity: 0.3;
         }
 
-        /* ========== NAVIGATION PAR ÉTAPES ========== */
+        /* ========== NAVIGATION PAR ÉTAPES (VERSION FINE ET ÉLÉGANTE) ========== */
         .steps-navigation {
             display: flex;
             justify-content: center;
-            align-items: center;
-            padding: 30px 0;
-            margin-bottom: 40px;
+            align-items: flex-start;
+            padding: 20px 0;
+            margin-bottom: 30px;
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             position: relative;
             overflow: hidden;
         }
 
         .step-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             position: relative;
             flex: 1;
-            max-width: 250px;
+            max-width: 200px;
+            justify-content: center;
         }
 
         .step-item:not(:last-child)::after {
             content: '';
             position: absolute;
             right: -50%;
-            top: 50%;
-            transform: translateY(-50%);
+            top: 25px;
             width: 100%;
-            height: 2px;
-            background: #e5e7eb;
+            height: 1px;
+            background: linear-gradient(90deg, #e5e7eb 0%, transparent 100%);
             z-index: 0;
-        }
-
-        .step-item.completed:not(:last-child)::after,
-        .step-item.active:not(:last-child)::after {
-            background: var(--mk-primary);
         }
 
         .step-button {
@@ -90,76 +85,118 @@
             background: none;
             border: none;
             cursor: pointer;
-            padding: 10px;
+            padding: 8px;
             transition: all 0.3s ease;
             position: relative;
             z-index: 2;
             width: 100%;
-        }
-
-        .step-button:disabled {
-            cursor: not-allowed;
-            opacity: 0.5;
+            min-height: 80px;
         }
 
         .step-number {
-            width: 50px;
-            height: 50px;
+            width: 35px;
+            height: 35px;
             border-radius: 50%;
             background: #e5e7eb;
             color: var(--mk-gray);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 18px;
-            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
             transition: all 0.3s ease;
             position: relative;
+            border: 2px solid transparent;
+            flex-shrink: 0;
         }
 
         .step-item.active .step-number {
             background: var(--mk-primary);
             color: white;
-            box-shadow: 0 4px 15px rgba(109, 81, 146, 0.3);
-            transform: scale(1.1);
-        }
-
-        .step-item.completed .step-number {
-            background: var(--mk-success);
-            color: white;
-        }
-
-        .step-item.completed .step-number::after {
-            content: '✓';
-            position: absolute;
-            font-size: 22px;
-        }
-
-        .step-item.completed .step-number span {
-            opacity: 0;
+            border-color: var(--mk-primary);
+            box-shadow: 0 0 0 3px rgba(109, 81, 146, 0.2);
         }
 
         .step-label {
-            font-size: 14px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 500;
             color: var(--mk-gray);
             text-align: center;
             transition: all 0.3s ease;
+            line-height: 1.2;
         }
 
         .step-item.active .step-label {
             color: var(--mk-primary);
-        }
-
-        .step-item.completed .step-label {
-            color: var(--mk-success);
+            font-weight: 600;
         }
 
         .step-optional {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--mk-gray-light);
             font-style: italic;
+            margin-top: 2px;
+            line-height: 1.1;
+        }
+
+        /* ========== BOUTON DE TRADUCTION REPOSITIONNÉ ========== */
+        .language-switcher {
+            position: absolute;
+            top: 130px;
+            right: 30px;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.15);
+            padding: 6px;
+            display: flex;
+            gap: 4px;
+            border: 1px solid rgba(109, 81, 146, 0.2);
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            color: var(--mk-gray);
+        }
+
+        .lang-btn.active {
+            background: var(--mk-primary);
+            color: white;
+        }
+
+        .lang-btn:hover:not(.active) {
+            background: var(--mk-light);
+        }
+
+        /* ========== INDICATEUR DE LANGUE ========== */
+        .language-info {
+            background: rgba(109, 81, 146, 0.1);
+            border: 1px solid rgba(109, 81, 146, 0.2);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .language-info i {
+            color: var(--mk-primary);
+            font-size: 18px;
+        }
+
+        .language-info-text {
+            font-size: 14px;
+            color: var(--mk-dark);
         }
 
         /* ========== CONTENU DES ÉTAPES ========== */
@@ -324,7 +361,7 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-        /* ========== UPLOAD DE FICHIERS ========== */
+        /* ========== UPLOAD DE FICHIERS MODIFIÉ ========== */
         .file-upload-area {
             border: 3px dashed #e5e7eb;
             border-radius: 12px;
@@ -367,6 +404,7 @@
             border-radius: 8px;
             margin-bottom: 10px;
             transition: all 0.3s ease;
+            position: relative;
         }
 
         .file-item:hover {
@@ -377,6 +415,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            flex: 1;
         }
 
         .file-icon {
@@ -391,6 +430,7 @@
         .file-name {
             font-weight: 600;
             color: var(--mk-dark);
+            font-size: 14px;
         }
 
         .file-size {
@@ -398,168 +438,112 @@
             color: var(--mk-gray);
         }
 
-        /* ========== BOUTONS DE NAVIGATION ========== */
-        .form-navigation {
+        /* ========== BOUTON SUPPRIMER FICHIER INDIVIDUEL ========== */
+        .btn-remove-file {
+            background: var(--mk-danger);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
             display: flex;
-            justify-content: space-between;
             align-items: center;
+            gap: 4px;
+        }
+
+        .btn-remove-file:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+
+        /* ========== BOUTON SAUVEGARDER UNIQUE ========== */
+        .save-button-container {
+            display: flex;
+            justify-content: center;
             padding: 30px;
             background: white;
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
 
-        .btn-nav {
-            padding: 12px 30px;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-prev {
-            background: white;
-            color: var(--mk-dark);
-            border: 2px solid #e5e7eb;
-        }
-
-        .btn-prev:hover {
-            background: var(--mk-light);
-            border-color: var(--mk-primary);
-        }
-
-        .btn-next {
-            background: var(--mk-primary);
-            color: white;
-        }
-
-        .btn-next:hover {
-            background: var(--mk-secondary);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(109, 81, 146, 0.3);
-        }
-
-        .btn-submit {
+        .btn-save-project {
             background: var(--mk-gradient-primary);
             color: white;
-            padding: 14px 40px;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-weight: 600;
             font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .btn-submit:hover {
+        .btn-save-project:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(109, 81, 146, 0.3);
-        }
-
-        .btn-skip {
-            background: transparent;
-            color: var(--mk-gray);
-            border: 1px solid #e5e7eb;
-        }
-
-        .btn-skip:hover {
-            background: var(--mk-light);
-        }
-
-        /* ========== SWITCH LANGUE ========== */
-        .language-switcher {
-            position: fixed;
-            top: 100px;
-            right: 30px;
-            z-index: 100;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            padding: 8px;
-            display: flex;
-            gap: 5px;
-        }
-
-        .lang-btn {
-            background: transparent;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            color: var(--mk-gray);
-        }
-
-        .lang-btn.active {
-            background: var(--mk-primary);
             color: white;
-        }
-
-        .lang-btn:hover:not(.active) {
-            background: var(--mk-light);
         }
 
         /* ========== RESPONSIVE ========== */
         @media (max-width: 768px) {
             .steps-navigation {
-                padding: 20px 10px;
+                padding: 15px 10px;
             }
 
             .step-label {
-                font-size: 12px;
+                font-size: 11px;
             }
 
             .step-number {
-                width: 40px;
-                height: 40px;
-                font-size: 16px;
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
             }
 
             .form-steps-container {
                 padding: 20px;
             }
 
-            .form-navigation {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .btn-nav {
-                width: 100%;
-                justify-content: center;
-            }
-
             .language-switcher {
-                top: auto;
-                bottom: 20px;
-                right: 20px;
+                top: 10px;
+                right: 15px;
+                padding: 4px;
+            }
+
+            .lang-btn {
+                padding: 4px 8px;
+                font-size: 11px;
             }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-<!-- Switch de langue -->
-<div class="language-switcher">
-    <button class="lang-btn active" data-lang="fr">FR</button>
-    <button class="lang-btn" data-lang="en">EN</button>
-</div>
-
 <!-- Header -->
 <div class="project-form-header">
+    <!-- Switch de langue repositionné -->
+    <div class="language-switcher">
+        <button class="lang-btn active" data-lang="fr">FR</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+    </div>
+    
     <div class="container-fluid position-relative">
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="mb-2">
                     <i class="bi-folder-plus me-3"></i>
-                    <span data-i18n="project.header.title">Nouveau Projet</span>
+                    Nouveau Projet
                 </h1>
-                <p class="mb-0" data-i18n="project.header.subtitle">Créez un nouveau projet en suivant les étapes</p>
+                <p class="mb-0">Créez un nouveau projet en suivant les étapes</p>
             </div>
             <div class="col-md-4 text-end">
                 <a href="{{ path('admin_document_index') }}" class="btn btn-outline-light">
                     <i class="bi-arrow-left me-2"></i>
-                    <span data-i18n="common.back">Retour</span>
+                    Retour
                 </a>
             </div>
         </div>
@@ -575,37 +559,37 @@
                 <div class="step-number">
                     <span>1</span>
                 </div>
-                <div class="step-label" data-i18n="steps.identification">Identification</div>
+                <div class="step-label">Identification</div>
             </button>
         </div>
 
         <div class="step-item" data-step="2">
-            <button type="button" class="step-button" data-step-btn="2" disabled>
+            <button type="button" class="step-button" data-step-btn="2">
                 <div class="step-number">
                     <span>2</span>
                 </div>
-                <div class="step-label" data-i18n="steps.members">Membres</div>
-                <small class="step-optional" data-i18n="common.optional">(Optionnel)</small>
+                <div class="step-label">Membres</div>
+                <small class="step-optional">(Optionnel)</small>
             </button>
         </div>
 
         <div class="step-item" data-step="3">
-            <button type="button" class="step-button" data-step-btn="3" disabled>
+            <button type="button" class="step-button" data-step-btn="3">
                 <div class="step-number">
                     <span>3</span>
                 </div>
-                <div class="step-label" data-i18n="steps.links">Liens</div>
-                <small class="step-optional" data-i18n="common.optional">(Optionnel)</small>
+                <div class="step-label">Liens</div>
+                <small class="step-optional">(Optionnel)</small>
             </button>
         </div>
 
         <div class="step-item" data-step="4">
-            <button type="button" class="step-button" data-step-btn="4" disabled>
+            <button type="button" class="step-button" data-step-btn="4">
                 <div class="step-number">
                     <span>4</span>
                 </div>
-                <div class="step-label" data-i18n="steps.attachments">Pièces jointes</div>
-                <small class="step-optional" data-i18n="common.optional">(Optionnel)</small>
+                <div class="step-label">Pièces jointes</div>
+                <small class="step-optional">(Optionnel)</small>
             </button>
         </div>
     </div>
@@ -618,9 +602,9 @@
             <div class="form-step active" data-step-content="1">
                 <h2 class="step-title">
                     <i class="bi-card-text text-primary"></i>
-                    <span data-i18n="step1.title">Identification du projet</span>
+                    Identification du projet
                 </h2>
-                <p class="step-description" data-i18n="step1.description">
+                <p class="step-description">
                     Renseignez les informations principales de votre projet
                 </p>
 
@@ -629,11 +613,11 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">
-                                    <span data-i18n="fields.projectName">Nom du projet</span>
+                                    Nom du projet
                                     <span class="required-indicator">*</span>
                                 </label>
                                 <input type="text" class="form-control" name="project_name" required>
-                                <div class="help-text" data-i18n="fields.projectNameHelp">
+                                <div class="help-text">
                                     Donnez un nom unique et descriptif à votre projet
                                 </div>
                             </div>
@@ -641,12 +625,12 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">
-                                    <span data-i18n="fields.projectCode">Code du projet</span>
+                                    Code du projet
                                     <span class="required-indicator">*</span>
                                 </label>
                                 <input type="text" class="form-control" name="project_code" required 
                                        pattern="[A-Z]{2,4}-[0-9]{4}" placeholder="Ex: PROJ-2024">
-                                <div class="help-text" data-i18n="fields.projectCodeHelp">
+                                <div class="help-text">
                                     Format: XX-0000 (lettres majuscules et chiffres)
                                 </div>
                             </div>
@@ -657,29 +641,27 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">
-                                    <span data-i18n="fields.category">Catégorie</span>
+                                    Catégorie
                                     <span class="required-indicator">*</span>
                                 </label>
                                 <select class="form-select" name="category" required>
-                                    <option value="" data-i18n="fields.selectCategory">Sélectionnez une catégorie</option>
-                                    <option value="development" data-i18n="categories.development">Développement</option>
-                                    <option value="research" data-i18n="categories.research">Recherche</option>
-                                    <option value="infrastructure" data-i18n="categories.infrastructure">Infrastructure</option>
-                                    <option value="marketing" data-i18n="categories.marketing">Marketing</option>
-                                    <option value="other" data-i18n="categories.other">Autre</option>
+                                    <option value="">Sélectionnez une catégorie</option>
+                                    <option value="development">Développement</option>
+                                    <option value="research">Recherche</option>
+                                    <option value="infrastructure">Infrastructure</option>
+                                    <option value="marketing">Marketing</option>
+                                    <option value="other">Autre</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">
-                                    <span data-i18n="fields.priority">Priorité</span>
-                                </label>
+                                <label class="form-label">Priorité</label>
                                 <select class="form-select" name="priority">
-                                    <option value="low" data-i18n="priority.low">Faible</option>
-                                    <option value="medium" selected data-i18n="priority.medium">Moyenne</option>
-                                    <option value="high" data-i18n="priority.high">Élevée</option>
-                                    <option value="critical" data-i18n="priority.critical">Critique</option>
+                                    <option value="low">Faible</option>
+                                    <option value="medium" selected>Moyenne</option>
+                                    <option value="high">Élevée</option>
+                                    <option value="critical">Critique</option>
                                 </select>
                             </div>
                         </div>
@@ -687,11 +669,11 @@
 
                     <div class="mb-3">
                         <label class="form-label">
-                            <span data-i18n="fields.description">Description</span>
+                            Description
                             <span class="required-indicator">*</span>
                         </label>
                         <textarea class="form-control" name="description" rows="4" required></textarea>
-                        <div class="help-text" data-i18n="fields.descriptionHelp">
+                        <div class="help-text">
                             Décrivez les objectifs et le contexte du projet
                         </div>
                     </div>
@@ -699,19 +681,19 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label" data-i18n="fields.startDate">Date de début</label>
+                                <label class="form-label">Date de début</label>
                                 <input type="date" class="form-control" name="start_date">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label" data-i18n="fields.endDate">Date de fin</label>
+                                <label class="form-label">Date de fin</label>
                                 <input type="date" class="form-control" name="end_date">
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label class="form-label" data-i18n="fields.budget">Budget (€)</label>
+                                <label class="form-label">Budget (€)</label>
                                 <input type="number" class="form-control" name="budget" step="0.01" min="0">
                             </div>
                         </div>
@@ -721,11 +703,11 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">
-                                    <span data-i18n="fields.responsible">Responsable</span>
+                                    Responsable
                                     <span class="required-indicator">*</span>
                                 </label>
                                 <select class="form-select searchable-select" name="responsible" required>
-                                    <option value="" data-i18n="fields.selectResponsible">Sélectionnez un responsable</option>
+                                    <option value="">Sélectionnez un responsable</option>
                                     <option value="1">Marie Dupont</option>
                                     <option value="2">Pierre Martin</option>
                                     <option value="3">Sophie Bernard</option>
@@ -734,13 +716,13 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label" data-i18n="fields.department">Département</label>
+                                <label class="form-label">Département</label>
                                 <select class="form-select" name="department">
-                                    <option value="" data-i18n="fields.selectDepartment">Sélectionnez un département</option>
-                                    <option value="it" data-i18n="departments.it">Informatique</option>
-                                    <option value="hr" data-i18n="departments.hr">Ressources Humaines</option>
-                                    <option value="finance" data-i18n="departments.finance">Finance</option>
-                                    <option value="operations" data-i18n="departments.operations">Opérations</option>
+                                    <option value="">Sélectionnez un département</option>
+                                    <option value="it">Informatique</option>
+                                    <option value="hr">Ressources Humaines</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="operations">Opérations</option>
                                 </select>
                             </div>
                         </div>
@@ -752,9 +734,9 @@
             <div class="form-step" data-step-content="2">
                 <h2 class="step-title">
                     <i class="bi-people text-primary"></i>
-                    <span data-i18n="step2.title">Membres du projet</span>
+                    Membres du projet
                 </h2>
-                <p class="step-description" data-i18n="step2.description">
+                <p class="step-description">
                     Ajoutez les membres qui participeront au projet
                 </p>
 
@@ -762,11 +744,11 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h4 class="section-title">
                             <i class="bi-person-plus"></i>
-                            <span data-i18n="step2.teamMembers">Équipe projet</span>
+                            Équipe projet
                         </h4>
                         <button type="button" class="btn-add-item" onclick="addMember()">
                             <i class="bi-plus-circle"></i>
-                            <span data-i18n="step2.addMember">Ajouter un membre</span>
+                            Ajouter un membre
                         </button>
                     </div>
 
@@ -777,21 +759,21 @@
                             </button>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label class="form-label" data-i18n="fields.memberName">Nom complet</label>
+                                    <label class="form-label">Nom complet</label>
                                     <input type="text" class="form-control" name="members[0][name]">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label" data-i18n="fields.memberEmail">Email</label>
+                                    <label class="form-label">Email</label>
                                     <input type="email" class="form-control" name="members[0][email]">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label" data-i18n="fields.memberRole">Rôle</label>
+                                    <label class="form-label">Rôle</label>
                                     <select class="form-select" name="members[0][role]">
-                                        <option value="developer" data-i18n="roles.developer">Développeur</option>
-                                        <option value="designer" data-i18n="roles.designer">Designer</option>
-                                        <option value="manager" data-i18n="roles.manager">Chef de projet</option>
-                                        <option value="analyst" data-i18n="roles.analyst">Analyste</option>
-                                        <option value="tester" data-i18n="roles.tester">Testeur</option>
+                                        <option value="developer">Développeur</option>
+                                        <option value="designer">Designer</option>
+                                        <option value="manager">Chef de projet</option>
+                                        <option value="analyst">Analyste</option>
+                                        <option value="tester">Testeur</option>
                                     </select>
                                 </div>
                             </div>
@@ -800,7 +782,7 @@
 
                     <div class="alert alert-info">
                         <i class="bi-info-circle me-2"></i>
-                        <span data-i18n="step2.info">Cette étape est optionnelle. Vous pourrez ajouter des membres plus tard.</span>
+                        Cette étape est optionnelle. Vous pourrez ajouter des membres plus tard.
                     </div>
                 </div>
             </div>
@@ -809,9 +791,9 @@
             <div class="form-step" data-step-content="3">
                 <h2 class="step-title">
                     <i class="bi-link-45deg text-primary"></i>
-                    <span data-i18n="step3.title">Liens et ressources</span>
+                    Liens et ressources
                 </h2>
-                <p class="step-description" data-i18n="step3.description">
+                <p class="step-description">
                     Ajoutez des liens vers des ressources externes liées au projet
                 </p>
 
@@ -819,11 +801,11 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h4 class="section-title">
                             <i class="bi-globe"></i>
-                            <span data-i18n="step3.externalLinks">Liens externes</span>
+                            Liens externes
                         </h4>
                         <button type="button" class="btn-add-item" onclick="addLink()">
                             <i class="bi-plus-circle"></i>
-                            <span data-i18n="step3.addLink">Ajouter un lien</span>
+                            Ajouter un lien
                         </button>
                     </div>
 
@@ -834,20 +816,20 @@
                             </button>
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label class="form-label" data-i18n="fields.linkTitle">Titre du lien</label>
+                                    <label class="form-label">Titre du lien</label>
                                     <input type="text" class="form-control" name="links[0][title]">
                                 </div>
                                 <div class="col-md-5">
-                                    <label class="form-label" data-i18n="fields.linkUrl">URL</label>
+                                    <label class="form-label">URL</label>
                                     <input type="url" class="form-control" name="links[0][url]" placeholder="https://">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label" data-i18n="fields.linkType">Type</label>
+                                    <label class="form-label">Type</label>
                                     <select class="form-select" name="links[0][type]">
-                                        <option value="documentation" data-i18n="linkTypes.doc">Documentation</option>
-                                        <option value="repository" data-i18n="linkTypes.repo">Repository</option>
-                                        <option value="website" data-i18n="linkTypes.website">Site web</option>
-                                        <option value="other" data-i18n="linkTypes.other">Autre</option>
+                                        <option value="documentation">Documentation</option>
+                                        <option value="repository">Repository</option>
+                                        <option value="website">Site web</option>
+                                        <option value="other">Autre</option>
                                     </select>
                                 </div>
                             </div>
@@ -856,7 +838,7 @@
 
                     <div class="alert alert-info">
                         <i class="bi-info-circle me-2"></i>
-                        <span data-i18n="step3.info">Les liens permettent de référencer des ressources externes importantes pour le projet.</span>
+                        Les liens permettent de référencer des ressources externes importantes pour le projet.
                     </div>
                 </div>
             </div>
@@ -865,24 +847,24 @@
             <div class="form-step" data-step-content="4">
                 <h2 class="step-title">
                     <i class="bi-paperclip text-primary"></i>
-                    <span data-i18n="step4.title">Pièces jointes</span>
+                    Pièces jointes
                 </h2>
-                <p class="step-description" data-i18n="step4.description">
+                <p class="step-description">
                     Ajoutez des documents et fichiers relatifs au projet
                 </p>
 
                 <div class="form-section">
                     <div class="file-upload-area" id="fileUploadArea">
                         <i class="bi-cloud-upload file-upload-icon"></i>
-                        <h4 data-i18n="step4.uploadTitle">Glissez-déposez vos fichiers ici</h4>
-                        <p class="text-muted" data-i18n="step4.uploadOr">ou</p>
+                        <h4>Glissez-déposez vos fichiers ici</h4>
+                        <p class="text-muted">ou</p>
                         <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
                             <i class="bi-folder-open me-2"></i>
-                            <span data-i18n="step4.browse">Parcourir les fichiers</span>
+                            Parcourir les fichiers
                         </button>
                         <input type="file" id="fileInput" name="attachments[]" multiple style="display: none;" 
                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.jpg,.jpeg,.png">
-                        <p class="help-text mt-3" data-i18n="step4.fileTypes">
+                        <p class="help-text mt-3">
                             Formats acceptés: PDF, Word, Excel, PowerPoint, Images, ZIP (Max 10MB par fichier)
                         </p>
                     </div>
@@ -892,32 +874,14 @@
             </div>
         </div>
 
-        <!-- Navigation -->
-        <div class="form-navigation">
-            <div>
-                <button type="button" class="btn-nav btn-prev" id="btnPrev" style="display: none;">
-                    <i class="bi-arrow-left"></i>
-                    <span data-i18n="navigation.previous">Précédent</span>
-                </button>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button type="button" class="btn-nav btn-skip" id="btnSkip" style="display: none;">
-                    <span data-i18n="navigation.skip">Passer cette étape</span>
-                    <i class="bi-arrow-right"></i>
-                </button>
-                
-                <button type="button" class="btn-nav btn-next" id="btnNext">
-                    <span data-i18n="navigation.next">Suivant</span>
-                    <i class="bi-arrow-right"></i>
-                </button>
-
-                <button type="submit" class="btn-nav btn-submit" id="btnSubmit" style="display: none;">
-                    <i class="bi-check-circle"></i>
-                    <span data-i18n="navigation.submit">Enregistrer le projet</span>
-                </button>
-            </div>
+        <!-- Bouton Sauvegarder unique -->
+        <div class="save-button-container">
+            <button type="submit" class="btn-save-project" id="btnSaveProject">
+                <i class="bi-save"></i>
+                Sauvegarder le projet
+            </button>
         </div>
+        
     </form>
 </div>
 
@@ -931,166 +895,6 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     
     <script>
-        // ========== TRADUCTIONS I18N ==========
-        const translations = {
-            fr: {
-                "project.header.title": "Nouveau Projet",
-                "project.header.subtitle": "Créez un nouveau projet en suivant les étapes",
-                "common.back": "Retour",
-                "common.optional": "(Optionnel)",
-                "progress.step": "Étape",
-                "progress.completed": "complété",
-                "steps.identification": "Identification",
-                "steps.members": "Membres",
-                "steps.links": "Liens",
-                "steps.attachments": "Pièces jointes",
-                "step1.title": "Identification du projet",
-                "step1.description": "Renseignez les informations principales de votre projet",
-                "step2.title": "Membres du projet",
-                "step2.description": "Ajoutez les membres qui participeront au projet",
-                "step2.teamMembers": "Équipe projet",
-                "step2.addMember": "Ajouter un membre",
-                "step2.info": "Cette étape est optionnelle. Vous pourrez ajouter des membres plus tard.",
-                "step3.title": "Liens et ressources",
-                "step3.description": "Ajoutez des liens vers des ressources externes liées au projet",
-                "step3.externalLinks": "Liens externes",
-                "step3.addLink": "Ajouter un lien",
-                "step3.info": "Les liens permettent de référencer des ressources externes importantes pour le projet.",
-                "step4.title": "Pièces jointes",
-                "step4.description": "Ajoutez des documents et fichiers relatifs au projet",
-                "step4.uploadTitle": "Glissez-déposez vos fichiers ici",
-                "step4.uploadOr": "ou",
-                "step4.browse": "Parcourir les fichiers",
-                "step4.fileTypes": "Formats acceptés: PDF, Word, Excel, PowerPoint, Images, ZIP (Max 10MB par fichier)",
-                "fields.projectName": "Nom du projet",
-                "fields.projectNameHelp": "Donnez un nom unique et descriptif à votre projet",
-                "fields.projectCode": "Code du projet",
-                "fields.projectCodeHelp": "Format: XX-0000 (lettres majuscules et chiffres)",
-                "fields.category": "Catégorie",
-                "fields.selectCategory": "Sélectionnez une catégorie",
-                "fields.priority": "Priorité",
-                "fields.description": "Description",
-                "fields.descriptionHelp": "Décrivez les objectifs et le contexte du projet",
-                "fields.startDate": "Date de début",
-                "fields.endDate": "Date de fin",
-                "fields.budget": "Budget (€)",
-                "fields.responsible": "Responsable",
-                "fields.selectResponsible": "Sélectionnez un responsable",
-                "fields.department": "Département",
-                "fields.selectDepartment": "Sélectionnez un département",
-                "fields.memberName": "Nom complet",
-                "fields.memberEmail": "Email",
-                "fields.memberRole": "Rôle",
-                "fields.linkTitle": "Titre du lien",
-                "fields.linkUrl": "URL",
-                "fields.linkType": "Type",
-                "categories.development": "Développement",
-                "categories.research": "Recherche",
-                "categories.infrastructure": "Infrastructure",
-                "categories.marketing": "Marketing",
-                "categories.other": "Autre",
-                "priority.low": "Faible",
-                "priority.medium": "Moyenne",
-                "priority.high": "Élevée",
-                "priority.critical": "Critique",
-                "departments.it": "Informatique",
-                "departments.hr": "Ressources Humaines",
-                "departments.finance": "Finance",
-                "departments.operations": "Opérations",
-                "roles.developer": "Développeur",
-                "roles.designer": "Designer",
-                "roles.manager": "Chef de projet",
-                "roles.analyst": "Analyste",
-                "roles.tester": "Testeur",
-                "linkTypes.doc": "Documentation",
-                "linkTypes.repo": "Repository",
-                "linkTypes.website": "Site web",
-                "linkTypes.other": "Autre",
-                "navigation.previous": "Précédent",
-                "navigation.next": "Suivant",
-                "navigation.skip": "Passer cette étape",
-                "navigation.submit": "Enregistrer le projet"
-            },
-            en: {
-                "project.header.title": "New Project",
-                "project.header.subtitle": "Create a new project by following the steps",
-                "common.back": "Back",
-                "common.optional": "(Optional)",
-                "progress.step": "Step",
-                "progress.completed": "completed",
-                "steps.identification": "Identification",
-                "steps.members": "Members",
-                "steps.links": "Links",
-                "steps.attachments": "Attachments",
-                "step1.title": "Project identification",
-                "step1.description": "Enter the main information about your project",
-                "step2.title": "Project members",
-                "step2.description": "Add members who will participate in the project",
-                "step2.teamMembers": "Project team",
-                "step2.addMember": "Add member",
-                "step2.info": "This step is optional. You can add members later.",
-                "step3.title": "Links and resources",
-                "step3.description": "Add links to external resources related to the project",
-                "step3.externalLinks": "External links",
-                "step3.addLink": "Add link",
-                "step3.info": "Links allow you to reference important external resources for the project.",
-                "step4.title": "Attachments",
-                "step4.description": "Add documents and files related to the project",
-                "step4.uploadTitle": "Drag and drop your files here",
-                "step4.uploadOr": "or",
-                "step4.browse": "Browse files",
-                "step4.fileTypes": "Accepted formats: PDF, Word, Excel, PowerPoint, Images, ZIP (Max 10MB per file)",
-                "fields.projectName": "Project name",
-                "fields.projectNameHelp": "Give a unique and descriptive name to your project",
-                "fields.projectCode": "Project code",
-                "fields.projectCodeHelp": "Format: XX-0000 (uppercase letters and numbers)",
-                "fields.category": "Category",
-                "fields.selectCategory": "Select a category",
-                "fields.priority": "Priority",
-                "fields.description": "Description",
-                "fields.descriptionHelp": "Describe the objectives and context of the project",
-                "fields.startDate": "Start date",
-                "fields.endDate": "End date",
-                "fields.budget": "Budget (€)",
-                "fields.responsible": "Responsible",
-                "fields.selectResponsible": "Select a responsible",
-                "fields.department": "Department",
-                "fields.selectDepartment": "Select a department",
-                "fields.memberName": "Full name",
-                "fields.memberEmail": "Email",
-                "fields.memberRole": "Role",
-                "fields.linkTitle": "Link title",
-                "fields.linkUrl": "URL",
-                "fields.linkType": "Type",
-                "categories.development": "Development",
-                "categories.research": "Research",
-                "categories.infrastructure": "Infrastructure",
-                "categories.marketing": "Marketing",
-                "categories.other": "Other",
-                "priority.low": "Low",
-                "priority.medium": "Medium",
-                "priority.high": "High",
-                "priority.critical": "Critical",
-                "departments.it": "IT",
-                "departments.hr": "Human Resources",
-                "departments.finance": "Finance",
-                "departments.operations": "Operations",
-                "roles.developer": "Developer",
-                "roles.designer": "Designer",
-                "roles.manager": "Project Manager",
-                "roles.analyst": "Analyst",
-                "roles.tester": "Tester",
-                "linkTypes.doc": "Documentation",
-                "linkTypes.repo": "Repository",
-                "linkTypes.website": "Website",
-                "linkTypes.other": "Other",
-                "navigation.previous": "Previous",
-                "navigation.next": "Next",
-                "navigation.skip": "Skip this step",
-                "navigation.submit": "Save project"
-            }
-        };
-
         // ========== VARIABLES GLOBALES ==========
         let currentStep = 1;
         let currentLang = 'fr';
@@ -1104,7 +908,6 @@
             setupEventListeners();
             setupFileUpload();
             initializeSearchableSelects();
-            updateNavigationButtons();
         });
 
         function initializeForm() {
@@ -1113,112 +916,33 @@
             setLanguage(savedLang);
         }
 
-        // ========== GESTION DES ÉTAPES ==========
+        // ========== GESTION DES ÉTAPES SIMPLIFIÉE ========== 
         function goToStep(step) {
-            // Validation de l'étape actuelle avant de passer à la suivante
-            if (step > currentStep && !validateCurrentStep()) {
-                return false;
-            }
-
-            // Masquer l'étape actuelle
-            document.querySelector(`[data-step-content="${currentStep}"]`).classList.remove('active');
-            document.querySelector(`[data-step="${currentStep}"]`).classList.remove('active');
+            // Retirer l'état actif de toutes les étapes
+            document.querySelectorAll('[data-step]').forEach(stepItem => {
+                stepItem.classList.remove('active');
+            });
             
-            // Si on passe une étape complétée
-            if (step > currentStep) {
-                document.querySelector(`[data-step="${currentStep}"]`).classList.add('completed');
-            }
+            document.querySelectorAll('[data-step-content]').forEach(stepContent => {
+                stepContent.classList.remove('active');
+            });
 
-            // Afficher la nouvelle étape
+            // Activer la nouvelle étape
             currentStep = step;
             document.querySelector(`[data-step-content="${currentStep}"]`).classList.add('active');
             document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
-
-            // Activer les boutons de navigation des étapes
-            for (let i = 1; i <= currentStep; i++) {
-                document.querySelector(`[data-step-btn="${i}"]`).disabled = false;
-            }
-
-            // Mettre à jour la barre de progression
-            updateProgress();
-            
-            // Mettre à jour les boutons de navigation
-            updateNavigationButtons();
 
             // Scroll vers le haut
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        function updateProgress() {
-            const percent = (currentStep / 4) * 100;
-            document.querySelector('.progress-bar').style.width = percent + '%';
-            document.getElementById('currentStep').textContent = currentStep;
-            document.getElementById('progressPercent').textContent = Math.round(percent);
-        }
-
-        function updateNavigationButtons() {
-            const btnPrev = document.getElementById('btnPrev');
-            const btnNext = document.getElementById('btnNext');
-            const btnSkip = document.getElementById('btnSkip');
-            const btnSubmit = document.getElementById('btnSubmit');
-
-            // Bouton précédent
-            btnPrev.style.display = currentStep > 1 ? 'inline-flex' : 'none';
-
-            // Boutons suivant et passer
-            if (currentStep === 1) {
-                btnNext.style.display = 'inline-flex';
-                btnSkip.style.display = 'none';
-                btnSubmit.style.display = 'none';
-            } else if (currentStep === 4) {
-                btnNext.style.display = 'none';
-                btnSkip.style.display = 'none';
-                btnSubmit.style.display = 'inline-flex';
-            } else {
-                btnNext.style.display = 'inline-flex';
-                btnSkip.style.display = 'inline-flex';
-                btnSubmit.style.display = 'none';
-            }
-        }
-
-        function validateCurrentStep() {
-            if (currentStep === 1) {
-                // Validation des champs obligatoires de l'étape 1
-                const requiredFields = document.querySelectorAll('[data-step-content="1"] [required]');
-                let isValid = true;
-                
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        field.classList.add('is-invalid');
-                        isValid = false;
-                    } else {
-                        field.classList.remove('is-invalid');
-                    }
-                });
-
-                if (!isValid) {
-                    showNotification('Veuillez remplir tous les champs obligatoires', 'error');
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
         // ========== EVENT LISTENERS ==========
         function setupEventListeners() {
-            // Navigation par boutons
-            document.getElementById('btnNext').addEventListener('click', () => goToStep(currentStep + 1));
-            document.getElementById('btnPrev').addEventListener('click', () => goToStep(currentStep - 1));
-            document.getElementById('btnSkip').addEventListener('click', () => goToStep(currentStep + 1));
-
-            // Navigation par étapes
+            // Navigation par étapes (tous les boutons toujours actifs)
             document.querySelectorAll('[data-step-btn]').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const step = parseInt(this.dataset.stepBtn);
-                    if (!this.disabled) {
-                        goToStep(step);
-                    }
+                    goToStep(step);
                 });
             });
 
@@ -1234,7 +958,7 @@
             document.getElementById('projectForm').addEventListener('submit', handleFormSubmit);
         }
 
-        // ========== GESTION DE LA LANGUE ==========
+        // ========== GESTION DE LA LANGUE (SIMPLIFIÉE) ==========
         function setLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('mkba_lang', lang);
@@ -1244,19 +968,11 @@
                 btn.classList.toggle('active', btn.dataset.lang === lang);
             });
 
-            // Traduire tous les éléments
-            document.querySelectorAll('[data-i18n]').forEach(element => {
-                const key = element.dataset.i18n;
-                if (translations[lang][key]) {
-                    // Gérer les éléments avec enfants (comme les spans avec numéros)
-                    if (element.childElementCount > 0 && element.querySelector('#currentStep')) {
-                        const stepNum = element.querySelector('#currentStep').textContent;
-                        element.innerHTML = translations[lang][key].replace('<span id="currentStep">1</span>', `<span id="currentStep">${stepNum}</span>`);
-                    } else {
-                        element.textContent = translations[lang][key];
-                    }
-                }
-            });
+            // Mettre à jour l'indicateur de langue
+            const languageText = document.getElementById('currentLanguageText');
+            if (languageText) {
+                languageText.textContent = lang === 'fr' ? 'Français' : 'English';
+            }
         }
 
         // ========== GESTION DES COLLECTIONS ==========
@@ -1270,21 +986,21 @@
                 </button>
                 <div class="row">
                     <div class="col-md-4">
-                        <label class="form-label" data-i18n="fields.memberName">${translations[currentLang]['fields.memberName']}</label>
+                        <label class="form-label">Nom complet</label>
                         <input type="text" class="form-control" name="members[${memberIndex}][name]">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" data-i18n="fields.memberEmail">${translations[currentLang]['fields.memberEmail']}</label>
+                        <label class="form-label">Email</label>
                         <input type="email" class="form-control" name="members[${memberIndex}][email]">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" data-i18n="fields.memberRole">${translations[currentLang]['fields.memberRole']}</label>
+                        <label class="form-label">Rôle</label>
                         <select class="form-select" name="members[${memberIndex}][role]">
-                            <option value="developer">${translations[currentLang]['roles.developer']}</option>
-                            <option value="designer">${translations[currentLang]['roles.designer']}</option>
-                            <option value="manager">${translations[currentLang]['roles.manager']}</option>
-                            <option value="analyst">${translations[currentLang]['roles.analyst']}</option>
-                            <option value="tester">${translations[currentLang]['roles.tester']}</option>
+                            <option value="developer">Développeur</option>
+                            <option value="designer">Designer</option>
+                            <option value="manager">Chef de projet</option>
+                            <option value="analyst">Analyste</option>
+                            <option value="tester">Testeur</option>
                         </select>
                     </div>
                 </div>
@@ -1307,20 +1023,20 @@
                 </button>
                 <div class="row">
                     <div class="col-md-4">
-                        <label class="form-label" data-i18n="fields.linkTitle">${translations[currentLang]['fields.linkTitle']}</label>
+                        <label class="form-label">Titre du lien</label>
                         <input type="text" class="form-control" name="links[${linkIndex}][title]">
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label" data-i18n="fields.linkUrl">${translations[currentLang]['fields.linkUrl']}</label>
+                        <label class="form-label">URL</label>
                         <input type="url" class="form-control" name="links[${linkIndex}][url]" placeholder="https://">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" data-i18n="fields.linkType">${translations[currentLang]['fields.linkType']}</label>
+                        <label class="form-label">Type</label>
                         <select class="form-select" name="links[${linkIndex}][type]">
-                            <option value="documentation">${translations[currentLang]['linkTypes.doc']}</option>
-                            <option value="repository">${translations[currentLang]['linkTypes.repo']}</option>
-                            <option value="website">${translations[currentLang]['linkTypes.website']}</option>
-                            <option value="other">${translations[currentLang]['linkTypes.other']}</option>
+                            <option value="documentation">Documentation</option>
+                            <option value="repository">Repository</option>
+                            <option value="website">Site web</option>
+                            <option value="other">Autre</option>
                         </select>
                     </div>
                 </div>
@@ -1333,7 +1049,7 @@
             button.closest('.collection-item').remove();
         }
 
-        // ========== GESTION DES FICHIERS ==========
+        // ========== GESTION DES FICHIERS AVEC BOUTONS SUPPRIMER INDIVIDUELS ==========
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1367,14 +1083,15 @@
                     return;
                 }
                 uploadedFiles.push(file);
-                displayFile(file);
+                displayFile(file, uploadedFiles.length - 1);
             });
         }
 
-        function displayFile(file) {
+        function displayFile(file, index) {
             const filesList = document.getElementById('filesList');
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
+            fileItem.dataset.fileIndex = index;
             fileItem.innerHTML = `
                 <div class="file-info">
                     <i class="bi-file-earmark file-icon"></i>
@@ -1383,16 +1100,28 @@
                         <div class="file-size">${formatFileSize(file.size)}</div>
                     </div>
                 </div>
-                <button type="button" class="btn-remove-item" onclick="removeFile(this, '${file.name}')">
+                <button type="button" class="btn-remove-file" onclick="removeFile(this, ${index})">
                     <i class="bi-trash"></i>
+                    Supprimer
                 </button>
             `;
             filesList.appendChild(fileItem);
         }
 
-        function removeFile(button, fileName) {
-            uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
+        function removeFile(button, index) {
+            // Supprimer le fichier du tableau
+            uploadedFiles.splice(index, 1);
+            
+            // Supprimer l'élément DOM
             button.closest('.file-item').remove();
+            
+            // Réajuster les indices
+            const remainingItems = document.querySelectorAll('.file-item');
+            remainingItems.forEach((item, newIndex) => {
+                item.dataset.fileIndex = newIndex;
+                const removeBtn = item.querySelector('.btn-remove-file');
+                removeBtn.setAttribute('onclick', `removeFile(this, ${newIndex})`);
+            });
         }
 
         function formatFileSize(bytes) {
@@ -1418,7 +1147,21 @@
         function handleFormSubmit(e) {
             e.preventDefault();
             
-            if (!validateCurrentStep()) {
+            // Validation de base
+            const requiredFields = document.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                showNotification('Veuillez remplir tous les champs obligatoires', 'error');
                 return false;
             }
 
@@ -1430,7 +1173,7 @@
                 formData.append('files[]', file);
             });
 
-            showNotification('Projet enregistré avec succès!', 'success');
+            showNotification('Projet sauvegardé avec succès!', 'success');
             
             // Redirection après succès
             setTimeout(() => {
