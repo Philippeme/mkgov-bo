@@ -1,0 +1,1144 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Gestion des Projets{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        .mkba-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .mkba-header {
+            background: linear-gradient(135deg, #f18221 0%, #0071BC 100%);
+            color: white;
+            padding: 20px 25px;
+            border-bottom: none;
+            position: relative;
+            z-index: 50;
+        }
+
+        .mkba-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mkba-header-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .mkba-header h2 {
+            margin: 0 0 15px 0;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+
+        .mkba-stats-badges {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .mkba-add-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mkba-add-button:hover {
+            background: #6D5192;
+            border-color: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .mkba-controls {
+            padding: 20px 25px;
+            background: #fafbfc;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            z-index: 40;
+        }
+
+        .mkba-search-box {
+            position: relative;
+        }
+
+        .mkba-search-box input {
+            border-radius: 25px;
+            padding: 10px 20px 10px 45px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .mkba-search-box input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+
+        .mkba-search-box .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .mkba-btn {
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mkba-btn-primary {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        .mkba-btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-1px);
+        }
+
+        .mkba-btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-success {
+            background: white !important;
+            color: var(--success-color) !important;
+            border: 1px solid var(--success-color) !important;
+        }
+
+        .btn-success:hover {
+            background: var(--success-color) !important;
+            color: white !important;
+            border: 1px solid var(--success-color) !important;
+        }
+
+        .mkba-btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .mkba-btn-danger {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .mkba-table-container {
+            overflow-x: auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mkba-table {
+            margin: 0;
+            border: none;
+            position: relative;
+        }
+
+        .mkba-table thead th {
+            background: #0071BC;
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 15px 12px;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            user-select: none;
+            z-index: 10;
+        }
+
+        .mkba-table thead th:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .mkba-table thead th.sortable::after {
+            content: '\f0dc';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 8px;
+            opacity: 0.5;
+        }
+
+        .mkba-table thead th.sort-asc::after {
+            content: '\f0de';
+            opacity: 1;
+            color: #ffc107;
+        }
+
+        .mkba-table thead th.sort-desc::after {
+            content: '\f0dd';
+            opacity: 1;
+            color: #ffc107;
+        }
+
+        .mkba-table tbody tr {
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .mkba-table tbody tr:hover {
+            background-color: #f8f9fa;
+            transform: translateX(2px);
+        }
+
+        .mkba-table tbody tr.selected {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--secondary-color);
+        }
+
+        .mkba-table tbody td {
+            padding: 12px;
+            vertical-align: middle;
+            border-top: 1px solid #f1f3f4;
+            position: relative;
+        }
+
+        .mkba-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .mkba-badge.planning {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+        }
+
+        .mkba-badge.in_progress {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .mkba-badge.on_hold {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+
+        .mkba-badge.completed {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+
+        .mkba-badge.cancelled {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .priority-badge {
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .priority-low { background: #e9ecef; color: #495057; }
+        .priority-medium { background: #fff3cd; color: #856404; }
+        .priority-high { background: #f8d7da; color: #721c24; }
+        .priority-critical { background: #f5c6cb; color: #721c24; }
+
+        .mkba-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-details {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .btn-details:hover {
+            background: #2980b9;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .dropdown-actions {
+            position: relative;
+            display: inline-block;
+        }
+
+        .btn-three-dots {
+            background: transparent;
+            color: var(--primary-color);
+            border: 1px solid rgba(44, 62, 80, 0.2);
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            position: relative;
+            z-index: 5;
+            min-width: 36px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-three-dots:hover {
+            background: rgba(44, 62, 80, 0.1);
+            border-color: rgba(44, 62, 80, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-three-dots.active {
+            background: #6D5192;
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .dropdown-menu-actions {
+            display: none;
+            position: fixed;
+            background: white;
+            min-width: 140px;
+            box-shadow: 
+                0 10px 25px rgba(0,0,0,0.15),
+                0 4px 10px rgba(0,0,0,0.1),
+                0 0 0 1px rgba(0,0,0,0.05);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            z-index: 9999;
+            padding: 6px 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-menu-actions.show {
+            display: block;
+            animation: fadeInScale 0.2s ease-out;
+        }
+
+        .dropdown-menu-actions.show-above {
+            transform-origin: bottom center;
+        }
+
+        .dropdown-menu-actions.show-below {
+            transform-origin: top center;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(-5px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .dropdown-menu-actions a {
+            display: block;
+            padding: 10px 16px;
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            border-radius: 4px;
+            margin: 2px 6px;
+            cursor: pointer;
+        }
+
+        .dropdown-menu-actions a:hover {
+            background-color: rgba(44, 62, 80, 0.08);
+            color: var(--primary-color);
+            transform: translateX(3px);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .dropdown-menu-actions a i {
+            width: 16px;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        .dropdown-menu-actions .dropdown-divider {
+            height: 1px;
+            background: rgba(0,0,0,0.1);
+            margin: 6px 0;
+            border: none;
+        }
+
+        .dropdown-menu-actions a.action-view:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary-color);
+        }
+
+        .dropdown-menu-actions a.action-edit:hover {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning-color);
+        }
+
+        .dropdown-menu-actions a.action-delete:hover {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent-color);
+        }
+
+        .dropdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 9998;
+            display: none;
+        }
+
+        .dropdown-overlay.show {
+            display: block;
+        }
+
+        .mkba-pagination {
+            padding: 20px 25px;
+            background: #fafbfc;
+            border-top: 1px solid var(--border-color);
+            position: relative;
+            z-index: 1;
+        }
+
+        .mkba-pagination-info {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .mkba-pagination-controls .btn {
+            margin: 0 2px;
+            border-radius: 6px;
+        }
+
+        .mkba-pagination-controls .btn.active {
+            background: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .mkba-export-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .mkba-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 180px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            top: 100%;
+            right: 0;
+        }
+
+        .mkba-dropdown-content a {
+            color: var(--primary-color);
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.2s;
+        }
+
+        .mkba-dropdown-content a:hover {
+            background-color: #f1f1f1;
+        }
+
+        .mkba-export-dropdown:hover .mkba-dropdown-content {
+            display: block;
+        }
+
+        .mkba-bulk-actions-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .mkba-bulk-actions-dropdown .mkba-dropdown-content {
+            left: 0;
+            right: auto;
+        }
+
+        .mkba-bulk-actions-dropdown:hover .mkba-dropdown-content {
+            display: block;
+        }
+
+        .mkba-loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+        }
+
+        .mkba-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .mkba-select-all {
+            transform: scale(1.2);
+        }
+
+        .mkba-row-select {
+            transform: scale(1.1);
+        }
+
+        @media (max-width: 768px) {
+            .mkba-header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .mkba-controls {
+                padding: 15px;
+            }
+            
+            .mkba-controls .row > div {
+                margin-bottom: 10px;
+            }
+            
+            .mkba-table {
+                font-size: 0.9rem;
+            }
+            
+            .mkba-table thead th,
+            .mkba-table tbody td {
+                padding: 8px;
+            }
+
+            .mkba-actions-group {
+                flex-direction: column;
+                gap: 4px;
+            }
+
+            .dropdown-menu-actions {
+                min-width: 130px;
+                font-size: 0.85rem;
+            }
+
+            .dropdown-menu-actions a,
+            .dropdown-menu-actions button {
+                padding: 9px 12px !important;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Overlay pour fermer les menus dropdown -->
+    <div class="dropdown-overlay" id="dropdownOverlay"></div>
+
+    <div class="mkba-container">
+        <!-- En-tête -->
+        <div class="mkba-header">
+            <div class="mkba-header-content">
+                <div style="width: 200px;"></div> <!-- Spacer gauche -->
+                <div class="mkba-header-center">
+                    <h2><i class="fas fa-folder-open me-2"></i>Gestion des Projets MK BA</h2>
+                    <div class="mkba-stats-badges">
+                        <span class="badge bg-light text-dark">
+                            <span id="totalRecords">{{ stats.total }}</span> projets
+                        </span>
+                        <span class="badge bg-info text-white">
+                            <span id="activeRecords">{{ stats.active }}</span> actifs
+                        </span>
+                        <span class="badge bg-primary text-white">
+                            <span id="inProgressRecords">{{ stats.in_progress }}</span> en cours
+                        </span>
+                        <span class="badge bg-success text-white">
+                            <span id="completedRecords">{{ stats.completed }}</span> terminés
+                        </span>
+                        <span class="badge bg-warning text-dark">
+                            <span id="selectedCount">0</span> sélectionnés
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <a href="{{ path('admin_project_new') }}" class="mkba-add-button">
+                        <i class="fas fa-plus"></i>
+                        Nouveau projet
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contrôles -->
+        <div class="mkba-controls">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <div class="mkba-search-box">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher dans tous les champs...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <select id="statusFilter" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        <option value="planning">Planification</option>
+                        <option value="in_progress">En cours</option>
+                        <option value="on_hold">En pause</option>
+                        <option value="completed">Terminé</option>
+                        <option value="cancelled">Annulé</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">Toutes catégories</option>
+                        <option value="development">Développement</option>
+                        <option value="research">Recherche</option>
+                        <option value="infrastructure">Infrastructure</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select id="priorityFilter" class="form-select">
+                        <option value="">Toutes priorités</option>
+                        <option value="low">Faible</option>
+                        <option value="medium">Moyenne</option>
+                        <option value="high">Élevée</option>
+                        <option value="critical">Critique</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-end gap-2">
+                        <!-- Actions groupées -->
+                        <div class="mkba-bulk-actions-dropdown" id="bulkActionsDropdown" style="display: none;">
+                            <button class="mkba-btn mkba-btn-warning">
+                                <i class="fas fa-list-check me-1"></i>Actions <i class="fas fa-chevron-down ms-1"></i>
+                            </button>
+                            <div class="mkba-dropdown-content">
+                                <a href="#" onclick="bulkAction('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Exporter Excel</a>
+                                <a href="#" onclick="bulkAction('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>Exporter PDF</a>
+                                <a href="#" onclick="bulkAction('delete')" class="text-danger"><i class="fas fa-trash me-2"></i>Supprimer sélection</a>
+                            </div>
+                        </div>
+                        <!-- Export -->
+                        <div class="mkba-export-dropdown">
+                            <button class="mkba-btn mkba-btn-primary">
+                                <i class="fas fa-download me-1"></i>Exporter <i class="fas fa-chevron-down ms-1"></i>
+                            </button>
+                            <div class="mkba-dropdown-content">
+                                <a href="#" onclick="exportData('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Excel</a>
+                                <a href="#" onclick="exportData('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>PDF</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="mkba-table-container position-relative">
+            <div class="mkba-loading" id="loadingSpinner">
+                <div class="mkba-spinner"></div>
+            </div>
+            <table class="table mkba-table">
+                <thead>
+                    <tr>
+                        <th width="50">
+                            <input type="checkbox" class="form-check-input mkba-select-all" id="selectAll">
+                        </th>
+                        <th class="sortable" data-column="code">Code</th>
+                        <th class="sortable" data-column="name">Nom</th>
+                        <th class="sortable" data-column="category">Catégorie</th>
+                        <th class="sortable" data-column="priority">Priorité</th>
+                        <th class="sortable" data-column="status">Statut</th>
+                        <th class="sortable" data-column="responsible">Responsable</th>
+                        <th class="sortable" data-column="start_date">Date début</th>
+                        <th class="sortable" data-column="created_at">Créé le</th>
+                        <th width="100">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% for project in projects %}
+                    <tr data-project-id="{{ project.id }}">
+                        <td>
+                            <input type="checkbox" class="form-check-input mkba-row-select" value="{{ project.id }}">
+                        </td>
+                        <td><strong>{{ project.code }}</strong></td>
+                        <td>{{ project.getName(currentLocale) ?: 'N/A' }}</td>
+                        <td>{{ project.categoryLabel }}</td>
+                        <td><span class="priority-badge priority-{{ project.priority }}">{{ project.priorityLabel }}</span></td>
+                        <td><span class="mkba-badge {{ project.status }}">{{ project.statusLabel }}</span></td>
+                        <td>{{ project.responsible ?: 'N/A' }}</td>
+                        <td>{{ project.startDate ? project.startDate|date('d/m/Y') : 'N/A' }}</td>
+                        <td>{{ project.createdAt|date('d/m/Y H:i') }}</td>
+                        <td>
+                            <div class="mkba-actions-group">
+                                <div class="dropdown-actions">
+                                    <button class="btn-three-dots" onclick="toggleActionMenu(event, {{ project.id }})" title="Actions">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    <div class="dropdown-menu-actions" id="actionMenu{{ project.id }}">
+                                        <a href="{{ path('admin_project_show', {id: project.id}) }}" class="action-view">
+                                            <i class="fas fa-eye text-info"></i>Détails
+                                        </a>
+                                        <a href="{{ path('admin_project_edit', {id: project.id}) }}" class="action-edit">
+                                            <i class="fas fa-edit text-warning"></i>Modifier
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <a href="javascript:void(0)" class="action-delete" onclick="deleteRecord({{ project.id }})">
+                                            <i class="fas fa-trash text-danger"></i>Supprimer
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <i class="fas fa-folder-open text-muted mb-2" style="font-size: 2rem;"></i>
+                            <p class="text-muted mb-0">Aucun projet trouvé</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="mkba-pagination">
+            <div class="row align-items-center">
+                <div class="col-md-3">
+                    <select id="entriesSelect" class="form-select" style="max-width: 135px;">
+                        <option value="10">10 par page</option>
+                        <option value="25" selected>25 par page</option>
+                        <option value="50">50 par page</option>
+                        <option value="100">100 par page</option>
+                    </select>
+                </div>
+                <div class="col-md-6 text-center">
+                    <div class="mkba-pagination-info">
+                        Affichage de <span id="showingFrom">1</span> à <span id="showingTo">{{ projects|length }}</span> 
+                        sur <span id="totalEntries">{{ projects|length }}</span> entrées
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <nav aria-label="Navigation des pages">
+                        <div class="mkba-pagination-controls d-flex justify-content-end" id="paginationControls">
+                            <!-- Les contrôles de pagination seront générés par JS -->
+                        </div>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Variables globales
+        let filteredProjects = {{ projects|json_encode|raw }};
+        let allProjects = {{ projects|json_encode|raw }};
+        let currentPage = 1;
+        let itemsPerPage = 25;
+        let selectedRows = new Set();
+        let currentOpenDropdown = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTable();
+            setupEventListeners();
+            setupDropdownHandlers();
+        });
+
+        function initializeTable() {
+            updateTableDisplay();
+            updateStats();
+        }
+
+        function setupEventListeners() {
+            // Recherche
+            document.getElementById('searchInput').addEventListener('input', function(e) {
+                searchProjects(e.target.value);
+            });
+
+            // Filtres
+            ['statusFilter', 'categoryFilter', 'priorityFilter'].forEach(filterId => {
+                document.getElementById(filterId).addEventListener('change', applyFilters);
+            });
+
+            // Sélection globale
+            document.getElementById('selectAll').addEventListener('change', function(e) {
+                toggleSelectAll(e.target.checked);
+            });
+
+            // Nombre d'entrées par page
+            document.getElementById('entriesSelect').addEventListener('change', function(e) {
+                itemsPerPage = parseInt(e.target.value);
+                currentPage = 1;
+                updateTableDisplay();
+            });
+        }
+
+        function setupDropdownHandlers() {
+            const overlay = document.getElementById('dropdownOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', closeAllDropdowns);
+            }
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAllDropdowns();
+                }
+            });
+
+            window.addEventListener('scroll', closeAllDropdowns);
+        }
+
+        function toggleActionMenu(event, projectId) {
+            event.stopPropagation();
+            event.preventDefault();
+            
+            const button = event.target.closest('.btn-three-dots');
+            const menu = document.getElementById(`actionMenu${projectId}`);
+            const overlay = document.getElementById('dropdownOverlay');
+            
+            closeAllDropdowns();
+            
+            if (menu && !menu.classList.contains('show')) {
+                openDropdownMenu(button, menu, projectId);
+                if (overlay) {
+                    overlay.classList.add('show');
+                }
+                currentOpenDropdown = projectId;
+            }
+        }
+
+        function openDropdownMenu(button, menu, projectId) {
+            const buttonRect = button.getBoundingClientRect();
+            const menuHeight = 120;
+            const menuWidth = 140;
+            
+            let top = buttonRect.bottom + 5;
+            let left = buttonRect.right - menuWidth;
+            
+            const spaceBelow = window.innerHeight - buttonRect.bottom;
+            const spaceAbove = buttonRect.top;
+            
+            if (spaceBelow < 130) {
+                if (spaceAbove >= menuHeight + 20) {
+                    top = buttonRect.top - menuHeight - 5;
+                    menu.classList.add('show-above');
+                    menu.classList.remove('show-below');
+                } else {
+                    top = buttonRect.top - menuHeight - 5;
+                    menu.classList.add('show-above');
+                    menu.classList.remove('show-below');
+                }
+            } else {
+                menu.classList.add('show-below');
+                menu.classList.remove('show-above');
+            }
+            
+            if (left < 10) {
+                left = buttonRect.left;
+            }
+            if (left + menuWidth > window.innerWidth - 10) {
+                left = window.innerWidth - menuWidth - 10;
+            }
+            if (top < 10) {
+                top = 10;
+            }
+            
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
+            
+            menu.classList.add('show');
+            button.classList.add('active');
+        }
+
+        function closeAllDropdowns() {
+            const dropdowns = document.querySelectorAll('.dropdown-menu-actions.show');
+            const buttons = document.querySelectorAll('.btn-three-dots.active');
+            const overlay = document.getElementById('dropdownOverlay');
+            
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.remove('show', 'show-above', 'show-below');
+            });
+            
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+            currentOpenDropdown = null;
+        }
+
+        function searchProjects(searchTerm) {
+            if (!searchTerm.trim()) {
+                filteredProjects = [...allProjects];
+            } else {
+                const term = searchTerm.toLowerCase();
+                filteredProjects = allProjects.filter(project => {
+                    return project.code.toLowerCase().includes(term) ||
+                           (project.name && project.name.toLowerCase().includes(term)) ||
+                           (project.responsible && project.responsible.toLowerCase().includes(term)) ||
+                           project.categoryLabel.toLowerCase().includes(term);
+                });
+            }
+            currentPage = 1;
+            updateTableDisplay();
+            updateStats();
+        }
+
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+
+            filteredProjects = allProjects.filter(project => {
+                return (!statusFilter || project.status === statusFilter) &&
+                       (!categoryFilter || project.category === categoryFilter) &&
+                       (!priorityFilter || project.priority === priorityFilter);
+            });
+
+            currentPage = 1;
+            updateTableDisplay();
+            updateStats();
+        }
+
+        function updateTableDisplay() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = filteredProjects.slice(startIndex, endIndex);
+            
+            updateStats();
+        }
+
+        function toggleSelectAll(selectAll) {
+            const checkboxes = document.querySelectorAll('.mkba-row-select');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll;
+                const row = checkbox.closest('tr');
+                if (selectAll) {
+                    selectedRows.add(parseInt(checkbox.value));
+                    row.classList.add('selected');
+                } else {
+                    selectedRows.delete(parseInt(checkbox.value));
+                    row.classList.remove('selected');
+                }
+            });
+            updateBulkActions();
+            updateStats();
+        }
+
+        function updateBulkActions() {
+            const bulkDropdown = document.getElementById('bulkActionsDropdown');
+            if (selectedRows.size > 0) {
+                bulkDropdown.style.display = 'inline-block';
+            } else {
+                bulkDropdown.style.display = 'none';
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('selectedCount').textContent = selectedRows.size;
+        }
+
+        function deleteRecord(projectId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `{{ path('admin_project_delete', {id: '__ID__'}) }}`.replace('__ID__', projectId);
+                
+                const token = document.createElement('input');
+                token.type = 'hidden';
+                token.name = '_token';
+                token.value = '{{ csrf_token('delete' ~ '__ID__') }}'.replace('__ID__', projectId);
+                
+                form.appendChild(token);
+                document.body.appendChild(form);
+                form.submit();
+            }
+            closeAllDropdowns();
+        }
+
+        function bulkAction(action) {
+            if (selectedRows.size === 0) {
+                alert('Veuillez sélectionner au moins un projet');
+                return;
+            }
+
+            const selectedIds = Array.from(selectedRows);
+
+            switch (action) {
+                case 'excel':
+                    exportToExcel(selectedIds);
+                    break;
+                case 'pdf':
+                    exportToPdf(selectedIds);
+                    break;
+                case 'delete':
+                    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedRows.size} projet(s) ?`)) {
+                        bulkDelete(selectedIds);
+                    }
+                    break;
+            }
+        }
+
+        function exportData(format) {
+            switch (format) {
+                case 'excel':
+                    exportToExcel([]);
+                    break;
+                case 'pdf':
+                    exportToPdf([]);
+                    break;
+            }
+        }
+
+        function exportToExcel(ids) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ path('admin_project_export_excel') }}';
+            
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids[]';
+                input.value = id;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function exportToPdf(ids) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ path('admin_project_export_pdf') }}';
+            
+            ids.forEach(id => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids[]';
+                input.value = id;
+                form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+
+        function bulkDelete(ids) {
+            fetch('{{ path('admin_project_bulk_delete') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: 'ids=' + encodeURIComponent(JSON.stringify(ids))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            });
+        }
+
+        // Gestion des checkbox individuelles
+        document.addEventListener('change', function(e) {
+            if (e.target.classList.contains('mkba-row-select')) {
+                const projectId = parseInt(e.target.value);
+                const row = e.target.closest('tr');
+                
+                if (e.target.checked) {
+                    selectedRows.add(projectId);
+                    row.classList.add('selected');
+                } else {
+                    selectedRows.delete(projectId);
+                    row.classList.remove('selected');
+                }
+                
+                updateBulkActions();
+                updateStats();
+                
+                // Mettre à jour le checkbox "Tout sélectionner"
+                const allCheckboxes = document.querySelectorAll('.mkba-row-select');
+                const checkedCheckboxes = document.querySelectorAll('.mkba-row-select:checked');
+                const selectAllCheckbox = document.getElementById('selectAll');
+                
+                if (checkedCheckboxes.length === allCheckboxes.length) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (checkedCheckboxes.length > 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                }
+            }
+        });
+    </script>
+{% endblock %}

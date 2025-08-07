@@ -1,0 +1,842 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ project.getName(currentLocale) ?: project.code }} - Détails{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --mk-primary: #6d5192;
+            --mk-secondary: #8e32e9;
+            --mk-orange: #f18221;
+            --mk-blue: #0071BC;
+            --mk-dark: #1c273c;
+            --mk-success: #10b981;
+            --mk-warning: #f59e0b;
+            --mk-danger: #ef4444;
+            --mk-info: #3b82f6;
+            --mk-light: #f8f9fa;
+            --mk-lighter: #ffffff;
+            --mk-gradient-primary: linear-gradient(135deg, #f18221 0%, #0071BC 100%);
+        }
+
+        .project-header {
+            background: var(--mk-gradient-primary);
+            color: white;
+            padding: 2rem 0;
+            margin: -2rem -2rem 2rem -2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23dots)"/></svg>') repeat;
+            opacity: 0.3;
+        }
+
+        .project-header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .project-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .project-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .project-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .meta-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .actions-header {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-header-action {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-header-action:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-header-action.btn-edit {
+            background: var(--mk-warning);
+            border-color: var(--mk-warning);
+        }
+
+        .btn-header-action.btn-delete {
+            background: var(--mk-danger);
+            border-color: var(--mk-danger);
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .section-title {
+            color: var(--mk-primary);
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid rgba(109, 81, 146, 0.1);
+            padding-bottom: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--mk-dark);
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: #495057;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .status-planning {
+            background: rgba(108, 117, 125, 0.2);
+            color: #6c757d;
+        }
+
+        .status-in_progress {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .status-on_hold {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+
+        .status-completed {
+            background: rgba(39, 174, 96, 0.2);
+            color: #27ae60;
+        }
+
+        .status-cancelled {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .priority-badge {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+        }
+
+        .priority-low { background: #e9ecef; color: #495057; }
+        .priority-medium { background: #fff3cd; color: #856404; }
+        .priority-high { background: #f8d7da; color: #721c24; }
+        .priority-critical { background: #f5c6cb; color: #721c24; }
+
+        .members-list, .links-list, .attachments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .member-item, .link-item, .attachment-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .member-item:hover, .link-item:hover, .attachment-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .member-header, .link-header, .attachment-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .member-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--mk-gradient-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .member-info h5 {
+            margin: 0;
+            color: var(--mk-dark);
+            font-weight: 600;
+        }
+
+        .member-role {
+            color: var(--mk-gray);
+            font-size: 0.9rem;
+            margin: 2px 0;
+        }
+
+        .member-email {
+            color: var(--mk-primary);
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
+
+        .member-email:hover {
+            text-decoration: underline;
+        }
+
+        .link-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--mk-info);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .link-info h5 {
+            margin: 0;
+            color: var(--mk-dark);
+            font-weight: 600;
+        }
+
+        .link-url {
+            color: var(--mk-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        .link-url:hover {
+            text-decoration: underline;
+        }
+
+        .link-type {
+            background: var(--mk-light);
+            color: var(--mk-dark);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .attachment-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--mk-success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .attachment-info h5 {
+            margin: 0;
+            color: var(--mk-dark);
+            font-weight: 600;
+        }
+
+        .attachment-meta {
+            color: var(--mk-gray);
+            font-size: 0.85rem;
+        }
+
+        .btn-download {
+            background: var(--mk-primary);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-download:hover {
+            background: var(--mk-secondary);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--mk-gray);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .language-switcher {
+            position: fixed;
+            top: 150px;
+            right: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 6px;
+            display: flex;
+            gap: 4px;
+            border: 1px solid rgba(109, 81, 146, 0.2);
+            z-index: 1000;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            color: var(--mk-gray);
+        }
+
+        .lang-btn.active {
+            background: var(--mk-primary);
+            color: white;
+        }
+
+        .lang-btn:hover:not(.active) {
+            background: var(--mk-light);
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 30px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 60px;
+            margin-bottom: 30px;
+        }
+
+        .timeline-marker {
+            position: absolute;
+            left: 20px;
+            top: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--mk-primary);
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .timeline-content {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .timeline-date {
+            font-size: 0.8rem;
+            color: var(--mk-gray);
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .project-header {
+                padding: 1.5rem 0;
+                margin: -2rem -10px 2rem -10px;
+            }
+
+            .project-title {
+                font-size: 1.5rem;
+            }
+
+            .project-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .actions-header {
+                width: 100%;
+                justify-content: stretch;
+            }
+
+            .btn-header-action {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .info-section {
+                padding: 20px;
+                margin: 0 -10px 20px -10px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .language-switcher {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 20px;
+                align-self: flex-end;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Bouton de langue flottant -->
+    <div class="language-switcher">
+        <button class="lang-btn {{ currentLocale == 'fr' ? 'active' : '' }}" data-lang="fr" type="button">FR</button>
+        <button class="lang-btn {{ currentLocale == 'en' ? 'active' : '' }}" data-lang="en" type="button">EN</button>
+    </div>
+
+    <!-- En-tête du projet -->
+    <div class="project-header">
+        <div class="container-fluid project-header-content">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="project-title">
+                        <i class="fas fa-folder-open me-3"></i>
+                        {{ project.getName(currentLocale) ?: project.code }}
+                    </h1>
+                    <div class="project-subtitle">
+                        Code: {{ project.code }} • {{ project.categoryLabel }}
+                    </div>
+                    <div class="project-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-user me-2"></i>
+                            {{ project.responsible ?: 'Non assigné' }}
+                        </div>
+                        {% if project.startDate %}
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-start me-2"></i>
+                            Début: {{ project.startDate|date('d/m/Y') }}
+                        </div>
+                        {% endif %}
+                        {% if project.endDate %}
+                        <div class="meta-item">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            Fin: {{ project.endDate|date('d/m/Y') }}
+                        </div>
+                        {% endif %}
+                        {% if project.budget %}
+                        <div class="meta-item">
+                            <i class="fas fa-euro-sign me-2"></i>
+                            {{ project.budget }}€
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="actions-header">
+                        <a href="{{ path('admin_project_edit', {id: project.id}) }}" class="btn-header-action btn-edit">
+                            <i class="fas fa-edit"></i>
+                            Modifier
+                        </a>
+                        <button type="button" class="btn-header-action btn-delete" onclick="confirmDelete()">
+                            <i class="fas fa-trash"></i>
+                            Supprimer
+                        </button>
+                        <a href="{{ path('admin_project_index') }}" class="btn-header-action">
+                            <i class="fas fa-arrow-left"></i>
+                            Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informations principales -->
+    <div class="info-section">
+        <h3 class="section-title">
+            <i class="fas fa-info-circle"></i>
+            Informations générales
+        </h3>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Statut</div>
+                <div class="info-value">
+                    <span class="status-badge status-{{ project.status }}">{{ project.statusLabel }}</span>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Priorité</div>
+                <div class="info-value">
+                    <span class="priority-badge priority-{{ project.priority }}">{{ project.priorityLabel }}</span>
+                </div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Département</div>
+                <div class="info-value">{{ project.department ?: 'Non défini' }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Créé le</div>
+                <div class="info-value">{{ project.createdAt|date('d/m/Y H:i') }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Modifié le</div>
+                <div class="info-value">{{ project.updatedAt|date('d/m/Y H:i') }}</div>
+            </div>
+            
+            <div class="info-item">
+                <div class="info-label">Statut d'activation</div>
+                <div class="info-value">
+                    <span class="status-badge {{ project.isActive ? 'status-completed' : 'status-cancelled' }}">
+                        {{ project.isActive ? 'Actif' : 'Inactif' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Description -->
+    {% set description = project.getDescription(currentLocale) %}
+    {% if description %}
+    <div class="info-section">
+        <h3 class="section-title">
+            <i class="fas fa-file-text"></i>
+            Description
+        </h3>
+        <div class="info-value">
+            {{ description|nl2br }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Membres du projet -->
+    <div class="info-section">
+        <h3 class="section-title">
+            <i class="fas fa-users"></i>
+            Équipe projet
+            <span class="badge bg-secondary ms-2">{{ project.members|length }}</span>
+        </h3>
+        
+        {% if project.members|length > 0 %}
+            <div class="members-list">
+                {% for member in project.members %}
+                <div class="member-item">
+                    <div class="member-header">
+                        <div class="member-avatar">
+                            {{ member.name|slice(0, 1)|upper }}
+                        </div>
+                        <div class="member-info">
+                            <h5>{{ member.name }}</h5>
+                            {% if member.role %}
+                                <div class="member-role">{{ member.role|title }}</div>
+                            {% endif %}
+                            {% if member.email %}
+                                <a href="mailto:{{ member.email }}" class="member-email">
+                                    <i class="fas fa-envelope me-1"></i>{{ member.email }}
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>Aucun membre assigné au projet</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Liens externes -->
+    <div class="info-section">
+        <h3 class="section-title">
+            <i class="fas fa-link"></i>
+            Liens externes
+            <span class="badge bg-secondary ms-2">{{ project.links|length }}</span>
+        </h3>
+        
+        {% if project.links|length > 0 %}
+            <div class="links-list">
+                {% for link in project.links %}
+                <div class="link-item">
+                    <div class="link-header">
+                        <div class="link-icon">
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                        <div class="link-info">
+                            <h5>{{ link.title }}</h5>
+                            <a href="{{ link.url }}" target="_blank" class="link-url">
+                                {{ link.url }}
+                            </a>
+                            {% if link.type %}
+                                <div class="mt-2">
+                                    <span class="link-type">{{ link.type|title }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-link"></i>
+                <p>Aucun lien externe défini</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pièces jointes -->
+    <div class="info-section">
+        <h3 class="section-title">
+            <i class="fas fa-paperclip"></i>
+            Pièces jointes
+            <span class="badge bg-secondary ms-2">{{ project.attachments|length }}</span>
+        </h3>
+        
+        {% if project.attachments|length > 0 %}
+            <div class="attachments-list">
+                {% for attachment in project.attachments %}
+                <div class="attachment-item">
+                    <div class="attachment-header">
+                        <div class="attachment-icon">
+                            <i class="fas fa-file"></i>
+                        </div>
+                        <div class="attachment-info">
+                            <h5>{{ attachment.originalName }}</h5>
+                            <div class="attachment-meta">
+                                {{ attachment.formattedFileSize }} • 
+                                Ajouté le {{ attachment.uploadedAt|date('d/m/Y H:i') }}
+                            </div>
+                        </div>
+                        <div class="ms-auto">
+                            <a href="{{ asset('uploads/projects/' ~ attachment.fileName) }}" 
+                               class="btn-download" 
+                               target="_blank"
+                               download="{{ attachment.originalName }}">
+                                <i class="fas fa-download"></i>
+                                Télécharger
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-paperclip"></i>
+                <p>Aucune pièce jointe</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Historique du projet (Timeline) -->
+    <div class="info-section">
+        <h3 class="section-title">
+            <i class="fas fa-history"></i>
+            Historique
+        </h3>
+        
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <div class="timeline-date">{{ project.createdAt|date('d/m/Y H:i') }}</div>
+                    <strong>Projet créé</strong>
+                    <p class="mb-0 mt-1">Le projet {{ project.code }} a été créé dans la catégorie {{ project.categoryLabel }}.</p>
+                </div>
+            </div>
+            
+            {% if project.createdAt.format('Y-m-d') != project.updatedAt.format('Y-m-d') %}
+            <div class="timeline-item">
+                <div class="timeline-marker"></div>
+                <div class="timeline-content">
+                    <div class="timeline-date">{{ project.updatedAt|date('d/m/Y H:i') }}</div>
+                    <strong>Dernière modification</strong>
+                    <p class="mb-0 mt-1">Le projet a été modifié.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Formulaire de suppression caché -->
+    <form id="deleteForm" method="post" action="{{ path('admin_project_delete', {id: project.id}) }}" style="display: none;">
+        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ project.id) }}">
+    </form>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion du switch de langue
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const lang = this.dataset.lang;
+                    switchLanguage(lang);
+                });
+            });
+        });
+
+        function switchLanguage(locale) {
+            // Rediriger vers la même page avec la nouvelle locale
+            const url = new URL(window.location);
+            url.searchParams.set('locale', locale);
+            window.location.href = url.toString();
+        }
+
+        function confirmDelete() {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ? Cette action ne peut pas être annulée.')) {
+                document.getElementById('deleteForm').submit();
+            }
+        }
+
+        // Animation d'apparition des sections
+        function animateOnScroll() {
+            const sections = document.querySelectorAll('.info-section');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            sections.forEach((section, index) => {
+                section.style.opacity = '0';
+                section.style.transform = 'translateY(20px)';
+                section.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+                observer.observe(section);
+            });
+        }
+
+        // Effet de scroll sur la langue
+        window.addEventListener('scroll', function() {
+            const languageSwitcher = document.querySelector('.language-switcher');
+            if (window.scrollY > 100) {
+                languageSwitcher.style.transform = 'scale(0.9)';
+                languageSwitcher.style.opacity = '0.8';
+            } else {
+                languageSwitcher.style.transform = 'scale(1)';
+                languageSwitcher.style.opacity = '1';
+            }
+        });
+
+        // Initialiser les animations
+        animateOnScroll();
+
+        console.log('%c🚀 Page détails projet MK BA initialisée!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Gestion du switch de langue');
+        console.log('✅ Animations au scroll');
+        console.log('✅ Interface responsive');
+    </script>
+{% endblock %}

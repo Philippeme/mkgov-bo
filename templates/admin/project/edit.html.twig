@@ -1,6 +1,6 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}Nouveau Projet - MK BA{% endblock %}
+{% block title %}Modifier {{ project.getName(currentLocale) ?: project.code }} - MK BA{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -440,9 +440,39 @@
             transform: scale(1.05);
         }
 
+        .existing-attachments {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .existing-attachment {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .btn-remove-existing {
+            background: var(--mk-warning);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
         .save-button-container {
             display: flex;
             justify-content: center;
+            gap: 15px;
             padding: 30px;
             background: white;
             border-radius: 16px;
@@ -469,7 +499,27 @@
             color: white;
         }
 
-        /* Indicateur de changements non sauvegardés */
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+            color: white;
+            transform: translateY(-2px);
+        }
+
         .unsaved-changes {
             position: fixed;
             top: 20px;
@@ -498,6 +548,17 @@
                 transform: translateX(0);
                 opacity: 1;
             }
+        }
+
+        .is-invalid {
+            border-color: var(--mk-danger);
+            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+        }
+
+        .invalid-feedback {
+            color: var(--mk-danger);
+            font-size: 13px;
+            margin-top: 5px;
         }
 
         @media (max-width: 768px) {
@@ -535,6 +596,10 @@
                 padding: 4px 8px;
                 font-size: 11px;
             }
+
+            .save-button-container {
+                flex-direction: column;
+            }
         }
 
         .scroll-indicator {
@@ -550,18 +615,6 @@
 
         .steps-navigation.scrolled .scroll-indicator {
             width: 100%;
-        }
-
-        /* Styles pour les erreurs de validation */
-        .is-invalid {
-            border-color: var(--mk-danger);
-            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
-        }
-
-        .invalid-feedback {
-            color: var(--mk-danger);
-            font-size: 13px;
-            margin-top: 5px;
         }
     </style>
 {% endblock %}
@@ -579,15 +632,15 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="mb-2">
-                    <i class="bi-folder-plus me-3"></i>
-                    Nouveau Projet
+                    <i class="bi-pencil-square me-3"></i>
+                    Modifier le projet
                 </h1>
-                <p class="mb-0">Créez un nouveau projet en suivant les étapes</p>
+                <p class="mb-0">{{ project.getName(currentLocale) ?: project.code }}</p>
             </div>
             <div class="col-md-4 text-end">
-                <a href="{{ path('admin_project_index') }}" class="btn btn-outline-light">
+                <a href="{{ path('admin_project_show', {id: project.id}) }}" class="btn btn-outline-light">
                     <i class="bi-arrow-left me-2"></i>
-                    Retour
+                    Retour aux détails
                 </a>
             </div>
         </div>
@@ -614,7 +667,7 @@
                     <span>2</span>
                 </div>
                 <div class="step-label">Membres</div>
-                <small class="step-optional">(Optionnel)</small>
+                <small class="step-optional">({{ project.members|length }})</small>
             </button>
         </div>
 
@@ -624,7 +677,7 @@
                     <span>3</span>
                 </div>
                 <div class="step-label">Liens</div>
-                <small class="step-optional">(Optionnel)</small>
+                <small class="step-optional">({{ project.links|length }})</small>
             </button>
         </div>
 
@@ -634,15 +687,15 @@
                     <span>4</span>
                 </div>
                 <div class="step-label">Pièces jointes</div>
-                <small class="step-optional">(Optionnel)</small>
+                <small class="step-optional">({{ project.attachments|length }})</small>
             </button>
         </div>
     </div>
 
     <!-- Bouton de langue repositionné à droite de la navigation -->
     <div class="language-switcher">
-        <button class="lang-btn active" data-lang="fr" type="button">FR</button>
-        <button class="lang-btn" data-lang="en" type="button">EN</button>
+        <button class="lang-btn {{ currentLocale == 'fr' ? 'active' : '' }}" data-lang="fr" type="button">FR</button>
+        <button class="lang-btn {{ currentLocale == 'en' ? 'active' : '' }}" data-lang="en" type="button">EN</button>
     </div>
 </div>
 
@@ -657,7 +710,7 @@
                     Identification du projet
                 </h2>
                 <p class="step-description">
-                    Renseignez les informations principales de votre projet
+                    Modifiez les informations principales de votre projet
                 </p>
 
                 <div class="form-section">
@@ -666,7 +719,7 @@
                             <div class="mb-3">
                                 {{ form_label(form.translation.name, 'Nom du projet', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                                 <span class="required-indicator">*</span>
-                                {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true'}}) }}
+                                {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'value': project.getName(currentLocale)}}) }}
                                 {{ form_help(form.translation.name) }}
                                 <div class="invalid-feedback"></div>
                             </div>
@@ -702,7 +755,7 @@
                     <div class="mb-3">
                         {{ form_label(form.translation.description, 'Description', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                         <span class="required-indicator">*</span>
-                        {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true'}}) }}
+                        {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'value': project.getDescription(currentLocale)}}) }}
                         {{ form_help(form.translation.description) }}
                         <div class="invalid-feedback"></div>
                     </div>
@@ -775,7 +828,7 @@
                     Membres du projet
                 </h2>
                 <p class="step-description">
-                    Ajoutez les membres qui participeront au projet
+                    Gérez les membres qui participent au projet
                 </p>
 
                 <div class="form-section">
@@ -790,7 +843,7 @@
                         </button>
                     </div>
 
-                    <div class="collection-container" id="membersCollection" data-prototype="{{ form_widget(form.members.vars.prototype)|e('html_attr') }}">
+                    <div class="collection-container" id="membersCollection">
                         {% for member in form.members %}
                             <div class="collection-item">
                                 <button type="button" class="btn-remove-item" onclick="removeMember(this)">
@@ -816,7 +869,7 @@
 
                     <div class="alert alert-info">
                         <i class="bi-info-circle me-2"></i>
-                        Cette étape est optionnelle. Vous pourrez ajouter des membres plus tard.
+                        Vous pouvez ajouter ou supprimer des membres à tout moment.
                     </div>
                 </div>
             </div>
@@ -828,7 +881,7 @@
                     Liens et ressources
                 </h2>
                 <p class="step-description">
-                    Ajoutez des liens vers des ressources externes liées au projet
+                    Gérez les liens vers des ressources externes liées au projet
                 </p>
 
                 <div class="form-section">
@@ -843,7 +896,7 @@
                         </button>
                     </div>
 
-                    <div class="collection-container" id="linksCollection" data-prototype="{{ form_widget(form.links.vars.prototype)|e('html_attr') }}">
+                    <div class="collection-container" id="linksCollection">
                         {% for link in form.links %}
                             <div class="collection-item">
                                 <button type="button" class="btn-remove-item" onclick="removeLink(this)">
@@ -881,14 +934,44 @@
                     Pièces jointes
                 </h2>
                 <p class="step-description">
-                    Ajoutez des documents et fichiers relatifs au projet
+                    Gérez les documents et fichiers relatifs au projet
                 </p>
 
                 <div class="form-section">
+                    <!-- Pièces jointes existantes -->
+                    {% if project.attachments|length > 0 %}
+                    <div class="existing-attachments">
+                        <h5><i class="fas fa-folder-open me-2"></i>Fichiers existants</h5>
+                        {% for attachment in project.attachments %}
+                        <div class="existing-attachment" data-attachment-id="{{ attachment.id }}">
+                            <div class="file-info">
+                                <i class="bi-file-earmark file-icon me-2"></i>
+                                <div class="file-details">
+                                    <div class="file-name">{{ attachment.originalName }}</div>
+                                    <div class="file-size">{{ attachment.formattedFileSize }} • {{ attachment.uploadedAt|date('d/m/Y') }}</div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{{ asset('uploads/projects/' ~ attachment.fileName) }}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   target="_blank"
+                                   download="{{ attachment.originalName }}">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <button type="button" class="btn-remove-existing" onclick="removeExistingAttachment({{ attachment.id }}, this)">
+                                    <i class="bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Zone d'upload pour nouveaux fichiers -->
                     <div class="file-upload-area" id="fileUploadArea">
                         <i class="bi-cloud-upload file-upload-icon"></i>
-                        <h4>Glissez-déposez vos fichiers ici</h4>
-                        <p class="text-muted">ou</p>
+                        <h4>Ajouter de nouveaux fichiers</h4>
+                        <p class="text-muted">Glissez-déposez vos fichiers ici ou</p>
                         <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
                             <i class="bi-folder-open me-2"></i>
                             Parcourir les fichiers
@@ -905,15 +988,20 @@
             </div>
         </div>
 
-        <!-- Bouton Enregistrer unique -->
+        <!-- Boutons de sauvegarde -->
         <div class="save-button-container">
+            <a href="{{ path('admin_project_show', {id: project.id}) }}" class="btn-cancel" onclick="return confirmCancel()">
+                <i class="bi-x-circle"></i>
+                Annuler
+            </a>
             <button type="submit" class="btn-save-project" id="btnSaveProject">
                 <i class="bi-save"></i>
-                Enregistrer le projet
+                Enregistrer les modifications
             </button>
         </div>
 
-        <!-- Champs cachés pour les collections -->
+        <!-- Champs cachés pour les collections et les fichiers supprimés -->
+        <input type="hidden" id="removedAttachments" name="removed_attachments" value="">
         <div style="display: none;">
             {{ form_rest(form) }}
         </div>
@@ -938,7 +1026,8 @@
         let linkIndex = {{ form.links|length }};
         let uploadedFiles = [];
         let hasUnsavedChanges = false;
-        let originalFormData = {};
+        let removedAttachments = [];
+        const projectId = {{ project.id }};
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -947,7 +1036,7 @@
             setupFileUpload();
             initializeSearchableSelects();
             trackFormChanges();
-            captureOriginalFormData();
+            loadTranslationForCurrentLocale();
         });
 
         function initializeForm() {
@@ -955,8 +1044,17 @@
             setLanguage(savedLang);
         }
 
-        function captureOriginalFormData() {
-            originalFormData = new FormData(document.getElementById('projectForm'));
+        function loadTranslationForCurrentLocale() {
+            // Pré-remplir les champs translatables avec les données de la langue actuelle
+            const nameField = document.querySelector('[name="project[translation][name]"]');
+            const descField = document.querySelector('[name="project[translation][description]"]');
+            
+            if (nameField && !nameField.value) {
+                nameField.value = '{{ project.getName(currentLocale)|e('js') }}' || '';
+            }
+            if (descField && !descField.value) {
+                descField.value = '{{ project.getDescription(currentLocale)|e('js') }}' || '';
+            }
         }
 
         function trackFormChanges() {
@@ -1016,7 +1114,7 @@
                     const lang = this.dataset.lang;
                     
                     if (hasUnsavedChanges && lang !== currentLang) {
-                        if (confirm('Vous avez des modifications non sauvegardées. Changer de langue réinitialisera le formulaire. Continuer ?')) {
+                        if (confirm('Vous avez des modifications non sauvegardées. Changer de langue peut perdre certaines modifications pour cette langue. Continuer ?')) {
                             switchLanguage(lang);
                         }
                     } else {
@@ -1040,19 +1138,9 @@
         function switchLanguage(lang) {
             if (lang === currentLang) return;
             
-            // Réinitialiser les champs translatables
-            const translatableFields = document.querySelectorAll('[data-translatable="true"]');
-            translatableFields.forEach(field => {
-                field.value = '';
-            });
-            
+            // Charger la traduction pour la nouvelle langue
             setLanguage(lang);
-            markAsUnsaved();
-            
-            // Charger la traduction existante si elle existe
-            if (window.projectId) {
-                loadTranslation(lang);
-            }
+            loadTranslation(lang);
         }
 
         function setLanguage(lang) {
@@ -1065,9 +1153,6 @@
         }
 
         function loadTranslation(locale) {
-            const projectId = window.projectId;
-            if (!projectId) return;
-            
             fetch(`{{ path('admin_project_get_translation') }}?project_id=${projectId}&locale=${locale}`)
                 .then(response => response.json())
                 .then(data => {
@@ -1083,11 +1168,9 @@
                 });
         }
 
-        // Gestion des collections
+        // Gestion des collections (même logique que new.html.twig)
         function addMember() {
             const collection = document.getElementById('membersCollection');
-            const prototype = collection.dataset.prototype;
-            const newForm = prototype.replace(/__member_name__/g, memberIndex);
             
             const wrapper = document.createElement('div');
             wrapper.className = 'collection-item';
@@ -1122,8 +1205,6 @@
             collection.appendChild(wrapper);
             memberIndex++;
             markAsUnsaved();
-            
-            // Réattacher les event listeners pour les changements
             trackFormChanges();
         }
 
@@ -1167,8 +1248,6 @@
             collection.appendChild(wrapper);
             linkIndex++;
             markAsUnsaved();
-            
-            // Réattacher les event listeners pour les changements
             trackFormChanges();
         }
 
@@ -1177,7 +1256,18 @@
             markAsUnsaved();
         }
 
-        // Gestion des fichiers
+        // Gestion des fichiers existants
+        function removeExistingAttachment(attachmentId, button) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce fichier ?')) {
+                removedAttachments.push(attachmentId);
+                document.getElementById('removedAttachments').value = JSON.stringify(removedAttachments);
+                
+                button.closest('.existing-attachment').remove();
+                markAsUnsaved();
+            }
+        }
+
+        // Gestion des fichiers (même logique que new.html.twig)
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1289,7 +1379,7 @@
             });
 
             markAsSaved();
-            showNotification('Enregistrement en cours...', 'info');
+            showNotification('Enregistrement des modifications...', 'info');
             
             // Soumettre avec FormData pour gérer les fichiers
             fetch(e.target.action, {
@@ -1297,9 +1387,9 @@
                 body: formData
             }).then(response => {
                 if (response.ok) {
-                    showNotification('Projet enregistré avec succès!', 'success');
+                    showNotification('Modifications enregistrées avec succès!', 'success');
                     setTimeout(() => {
-                        window.location.href = response.url || '{{ path("admin_project_index") }}';
+                        window.location.href = '{{ path("admin_project_show", {id: project.id}) }}';
                     }, 1500);
                 } else {
                     throw new Error('Erreur de sauvegarde');
@@ -1338,6 +1428,13 @@
             return isValid;
         }
 
+        function confirmCancel() {
+            if (hasUnsavedChanges) {
+                return confirm('Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir annuler ?');
+            }
+            return true;
+        }
+
         function showNotification(message, type = 'info') {
             const alertClass = type === 'error' ? 'danger' : type;
             const alertHtml = `
@@ -1359,12 +1456,12 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Projet MK BA initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('%c🚀 Formulaire Modification Projet MK BA initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
         console.log(`✅ Langue actuelle: ${currentLang}`);
         console.log('✅ Gestion des traductions i18n');
         console.log('✅ Suivi des changements non sauvegardés');
-        console.log('✅ Upload de fichiers');
-        console.log('✅ Collections dynamiques');
+        console.log('✅ Gestion des fichiers existants et nouveaux');
+        console.log('✅ Collections dynamiques pré-remplies');
     </script>
 
 {% endblock %}
