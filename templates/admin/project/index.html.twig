@@ -722,7 +722,9 @@
                         <td>
                             <div class="mkba-actions-group">
                                 <div class="dropdown-actions">
-                                    <button class="btn-three-dots" onclick="toggleActionMenu(event, {{ project.id }})" title="Actions">
+                                    <button class="btn-three-dots" 
+                                            data-project-id="{{ project.id }}" 
+                                            title="Actions">
                                         <i class="fas fa-ellipsis-h"></i>
                                     </button>
                                     <div class="dropdown-menu-actions" id="actionMenu{{ project.id }}">
@@ -733,7 +735,9 @@
                                             <i class="fas fa-edit text-warning"></i>Modifier
                                         </a>
                                         <div class="dropdown-divider"></div>
-                                        <a href="javascript:void(0)" class="action-delete" onclick="deleteRecord({{ project.id }})">
+                                        <a href="javascript:void(0)" 
+                                           class="action-delete" 
+                                           data-project-id="{{ project.id }}">
                                             <i class="fas fa-trash text-danger"></i>Supprimer
                                         </a>
                                     </div>
@@ -789,14 +793,10 @@
     {{ parent() }}
     <script>
         // Variables globales
-        let filteredProjects = {{ projects|json_encode|raw }};
-        let allProjects = {{ projects|json_encode|raw }};
-        let currentPage = 1;
-        let itemsPerPage = 25;
         let selectedRows = new Set();
         let currentOpenDropdown = null;
 
-        // URLs pour les actions - générées côté JavaScript
+        // URLs pour les actions
         const projectUrls = {
             deleteBase: '{{ path('admin_project_index') }}'.replace('/index', '/'),
             exportExcel: '{{ path('admin_project_export_excel') }}',
@@ -804,42 +804,106 @@
             bulkDelete: '{{ path('admin_project_bulk_delete') }}'
         };
 
+        // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
-            initializeTable();
-            setupEventListeners();
-            setupDropdownHandlers();
+            console.log('🚀 Démarrage initialisation...');
+            
+            // Attendre que le DOM soit complètement chargé
+            setTimeout(() => {
+                initializeProjectModule();
+            }, 100);
         });
 
-        function initializeTable() {
-            updateTableDisplay();
+        function initializeProjectModule() {
+            console.log('📋 Initialisation du module Project...');
+            
+            // Vérifier la présence des boutons
+            const threeDotsButtons = document.querySelectorAll('.btn-three-dots');
+            console.log(`🔍 Nombre de boutons trois points trouvés: ${threeDotsButtons.length}`);
+            
+            // Initialiser les event listeners
+            initializeEventListeners();
+            initializeDropdownHandlers();
             updateStats();
+            
+            console.log('✅ Module Project initialisé avec succès!');
         }
 
-        function setupEventListeners() {
-            // Recherche
-            document.getElementById('searchInput').addEventListener('input', function(e) {
-                searchProjects(e.target.value);
+        function initializeEventListeners() {
+            console.log('🔧 Initialisation des event listeners...');
+            
+            // 1. GESTION DES BOUTONS TROIS POINTS - Méthode directe
+            const threeDotsButtons = document.querySelectorAll('.btn-three-dots');
+            threeDotsButtons.forEach((button, index) => {
+                console.log(`📌 Attachement event sur bouton ${index + 1}`);
+                
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const projectId = parseInt(this.dataset.projectId);
+                    console.log(`🎯 Clic détecté sur bouton projet ID: ${projectId}`);
+                    
+                    if (projectId) {
+                        toggleActionMenu(e, projectId, this);
+                    } else {
+                        console.error('❌ Project ID manquant sur le bouton');
+                    }
+                });
             });
-
-            // Filtres
+            
+            // 2. GESTION DES BOUTONS DE SUPPRESSION
+            const deleteButtons = document.querySelectorAll('.action-delete');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const projectId = parseInt(this.dataset.projectId);
+                    if (projectId) {
+                        deleteRecord(projectId);
+                    }
+                });
+            });
+            
+            // 3. GESTION DES CHECKBOXES
+            const rowCheckboxes = document.querySelectorAll('.mkba-row-select');
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    handleRowCheckboxChange(this);
+                });
+            });
+            
+            // 4. SÉLECTION GLOBALE
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function(e) {
+                    toggleSelectAll(e.target.checked);
+                });
+            }
+            
+            // 5. FILTRES
             ['statusFilter', 'categoryFilter', 'priorityFilter'].forEach(filterId => {
-                document.getElementById(filterId).addEventListener('change', applyFilters);
+                const filter = document.getElementById(filterId);
+                if (filter) {
+                    filter.addEventListener('change', applyFilters);
+                }
             });
-
-            // Sélection globale
-            document.getElementById('selectAll').addEventListener('change', function(e) {
-                toggleSelectAll(e.target.checked);
-            });
-
-            // Nombre d'entrées par page
-            document.getElementById('entriesSelect').addEventListener('change', function(e) {
-                itemsPerPage = parseInt(e.target.value);
-                currentPage = 1;
-                updateTableDisplay();
-            });
+            
+            // 6. RECHERCHE
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    searchProjects(e.target.value);
+                });
+            }
+            
+            console.log('✅ Event listeners attachés avec succès');
         }
 
-        function setupDropdownHandlers() {
+        function initializeDropdownHandlers() {
+            console.log('🔧 Initialisation des dropdown handlers...');
+            
             const overlay = document.getElementById('dropdownOverlay');
             if (overlay) {
                 overlay.addEventListener('click', closeAllDropdowns);
@@ -850,40 +914,66 @@
                     closeAllDropdowns();
                 }
             });
-
+            
             window.addEventListener('scroll', closeAllDropdowns);
+            
+            console.log('✅ Dropdown handlers initialisés');
         }
 
-        function toggleActionMenu(event, projectId) {
-            event.stopPropagation();
-            event.preventDefault();
+        function toggleActionMenu(event, projectId, button) {
+            console.log(`🎯 Toggle menu pour le projet ID: ${projectId}`);
             
-            const button = event.target.closest('.btn-three-dots');
+            // Vérifier que le menu existe
             const menu = document.getElementById(`actionMenu${projectId}`);
+            if (!menu) {
+                console.error(`❌ Menu avec ID "actionMenu${projectId}" introuvable`);
+                
+                // Debug: lister tous les menus disponibles
+                const allMenus = document.querySelectorAll('.dropdown-menu-actions');
+                console.log('📋 Menus disponibles:', Array.from(allMenus).map(m => m.id));
+                return;
+            }
+            
+            console.log(`✅ Menu trouvé: actionMenu${projectId}`);
+            
             const overlay = document.getElementById('dropdownOverlay');
             
+            // Fermer tous les autres menus d'abord
             closeAllDropdowns();
             
-            if (menu && !menu.classList.contains('show')) {
-                openDropdownMenu(button, menu, projectId);
-                if (overlay) {
-                    overlay.classList.add('show');
-                }
-                currentOpenDropdown = projectId;
+            // Ouvrir le menu
+            console.log('🔓 Ouverture du menu...');
+            openDropdownMenu(button, menu, projectId);
+            
+            if (overlay) {
+                overlay.classList.add('show');
             }
+            
+            currentOpenDropdown = projectId;
+            console.log(`✅ Menu ouvert pour le projet ${projectId}`);
         }
 
         function openDropdownMenu(button, menu, projectId) {
+            console.log(`📍 Positionnement du menu pour le projet ${projectId}`);
+            
+            // Récupérer les dimensions et positions
             const buttonRect = button.getBoundingClientRect();
             const menuHeight = 120;
             const menuWidth = 140;
             
+            console.log('📐 Position du bouton:', buttonRect);
+            
+            // Calculer la position initiale
             let top = buttonRect.bottom + 5;
             let left = buttonRect.right - menuWidth;
             
+            // Vérifications des bords de l'écran
             const spaceBelow = window.innerHeight - buttonRect.bottom;
             const spaceAbove = buttonRect.top;
             
+            console.log(`📏 Espace disponible - En bas: ${spaceBelow}px, En haut: ${spaceAbove}px`);
+            
+            // Si pas assez d'espace en bas
             if (spaceBelow < 130) {
                 if (spaceAbove >= menuHeight + 20) {
                     top = buttonRect.top - menuHeight - 5;
@@ -899,6 +989,7 @@
                 menu.classList.remove('show-above');
             }
             
+            // Vérifier les bords horizontaux
             if (left < 10) {
                 left = buttonRect.left;
             }
@@ -909,11 +1000,22 @@
                 top = 10;
             }
             
+            console.log(`📍 Position finale du menu: top=${top}px, left=${left}px`);
+            
+            // Appliquer la position
             menu.style.top = `${top}px`;
             menu.style.left = `${left}px`;
+            menu.style.zIndex = '9999';
             
+            // Afficher le menu
             menu.classList.add('show');
             button.classList.add('active');
+            
+            // Vérification finale
+            const computedStyle = window.getComputedStyle(menu);
+            console.log(`🎨 Style appliqué - display: ${computedStyle.display}, visibility: ${computedStyle.visibility}`);
+            
+            console.log(`✅ Menu positionné et affiché pour le projet ${projectId}`);
         }
 
         function closeAllDropdowns() {
@@ -921,8 +1023,11 @@
             const buttons = document.querySelectorAll('.btn-three-dots.active');
             const overlay = document.getElementById('dropdownOverlay');
             
+            console.log(`🔒 Fermeture de ${dropdowns.length} dropdown(s)`);
+            
             dropdowns.forEach(dropdown => {
                 dropdown.classList.remove('show', 'show-above', 'show-below');
+                dropdown.style.display = 'none'; // Force hide
             });
             
             buttons.forEach(button => {
@@ -932,48 +1037,25 @@
             if (overlay) {
                 overlay.classList.remove('show');
             }
+            
             currentOpenDropdown = null;
         }
 
-        function searchProjects(searchTerm) {
-            if (!searchTerm.trim()) {
-                filteredProjects = [...allProjects];
-            } else {
-                const term = searchTerm.toLowerCase();
-                filteredProjects = allProjects.filter(project => {
-                    return project.code.toLowerCase().includes(term) ||
-                           (project.name && project.name.toLowerCase().includes(term)) ||
-                           (project.responsible && project.responsible.toLowerCase().includes(term)) ||
-                           project.categoryLabel.toLowerCase().includes(term);
-                });
-            }
-            currentPage = 1;
-            updateTableDisplay();
-            updateStats();
-        }
-
-        function applyFilters() {
-            const statusFilter = document.getElementById('statusFilter').value;
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            const priorityFilter = document.getElementById('priorityFilter').value;
-
-            filteredProjects = allProjects.filter(project => {
-                return (!statusFilter || project.status === statusFilter) &&
-                       (!categoryFilter || project.category === categoryFilter) &&
-                       (!priorityFilter || project.priority === priorityFilter);
-            });
-
-            currentPage = 1;
-            updateTableDisplay();
-            updateStats();
-        }
-
-        function updateTableDisplay() {
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageData = filteredProjects.slice(startIndex, endIndex);
+        function handleRowCheckboxChange(checkbox) {
+            const projectId = parseInt(checkbox.value);
+            const row = checkbox.closest('tr');
             
+            if (checkbox.checked) {
+                selectedRows.add(projectId);
+                row.classList.add('selected');
+            } else {
+                selectedRows.delete(projectId);
+                row.classList.remove('selected');
+            }
+            
+            updateBulkActions();
             updateStats();
+            updateSelectAllCheckbox();
         }
 
         function toggleSelectAll(selectAll) {
@@ -981,58 +1063,126 @@
             checkboxes.forEach(checkbox => {
                 checkbox.checked = selectAll;
                 const row = checkbox.closest('tr');
+                const projectId = parseInt(checkbox.value);
+                
                 if (selectAll) {
-                    selectedRows.add(parseInt(checkbox.value));
+                    selectedRows.add(projectId);
                     row.classList.add('selected');
                 } else {
-                    selectedRows.delete(parseInt(checkbox.value));
+                    selectedRows.delete(projectId);
                     row.classList.remove('selected');
                 }
             });
+            
             updateBulkActions();
             updateStats();
         }
 
-        function updateBulkActions() {
-            const bulkDropdown = document.getElementById('bulkActionsDropdown');
-            if (selectedRows.size > 0) {
-                bulkDropdown.style.display = 'inline-block';
+        function updateSelectAllCheckbox() {
+            const allCheckboxes = document.querySelectorAll('.mkba-row-select');
+            const checkedCheckboxes = document.querySelectorAll('.mkba-row-select:checked');
+            const selectAllCheckbox = document.getElementById('selectAll');
+            
+            if (!selectAllCheckbox) return;
+            
+            if (checkedCheckboxes.length === allCheckboxes.length && allCheckboxes.length > 0) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else if (checkedCheckboxes.length > 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
             } else {
-                bulkDropdown.style.display = 'none';
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
             }
         }
 
-        function updateStats() {
-            document.getElementById('selectedCount').textContent = selectedRows.size;
-        }
-
         function deleteRecord(projectId) {
+            closeAllDropdowns();
+            
             if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
-                // Créer le formulaire dynamiquement pour éviter l'erreur Twig
+                console.log('🗑️ Suppression du projet:', projectId);
+                
+                // Créer le formulaire dynamiquement
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = projectUrls.deleteBase + projectId + '/delete';
                 
-                // Générer le token CSRF côté client
-                fetch('/admin/csrf-token/project-delete/' + projectId)
-                    .then(response => response.text())
-                    .then(token => {
-                        const tokenInput = document.createElement('input');
-                        tokenInput.type = 'hidden';
-                        tokenInput.name = '_token';
-                        tokenInput.value = token;
-                        
-                        form.appendChild(tokenInput);
-                        document.body.appendChild(form);
-                        form.submit();
-                    })
-                    .catch(error => {
-                        // Fallback sans token CSRF si l'endpoint n'existe pas
-                        document.body.appendChild(form);
-                        form.submit();
-                    });
+                // Ajouter le token CSRF
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '_token';
+                tokenInput.value = 'dummy-token'; // À remplacer par un vrai token CSRF
+                
+                form.appendChild(tokenInput);
+                document.body.appendChild(form);
+                form.submit();
             }
-            closeAllDropdowns();
+        }
+
+        function updateBulkActions() {
+            const bulkDropdown = document.getElementById('bulkActionsDropdown');
+            if (bulkDropdown) {
+                bulkDropdown.style.display = selectedRows.size > 0 ? 'inline-block' : 'none';
+            }
+        }
+
+        function updateStats() {
+            const selectedCountElement = document.getElementById('selectedCount');
+            if (selectedCountElement) {
+                selectedCountElement.textContent = selectedRows.size;
+            }
+        }
+
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+            
+            const rows = document.querySelectorAll('#tableBody tr[data-project-id]');
+            
+            rows.forEach(row => {
+                let visible = true;
+                
+                // Récupérer les données de la ligne
+                const cells = row.querySelectorAll('td');
+                const category = cells[3]?.textContent.trim();
+                const status = row.querySelector('.mkba-badge')?.classList.contains('planning') ? 'planning' :
+                            row.querySelector('.mkba-badge')?.classList.contains('in_progress') ? 'in_progress' :
+                            row.querySelector('.mkba-badge')?.classList.contains('on_hold') ? 'on_hold' :
+                            row.querySelector('.mkba-badge')?.classList.contains('completed') ? 'completed' :
+                            row.querySelector('.mkba-badge')?.classList.contains('cancelled') ? 'cancelled' : '';
+                const priority = row.querySelector('.priority-badge')?.classList.contains('priority-low') ? 'low' :
+                                row.querySelector('.priority-badge')?.classList.contains('priority-medium') ? 'medium' :
+                                row.querySelector('.priority-badge')?.classList.contains('priority-high') ? 'high' :
+                                row.querySelector('.priority-badge')?.classList.contains('priority-critical') ? 'critical' : '';
+                
+                // Appliquer les filtres
+                if (statusFilter && status !== statusFilter) visible = false;
+                if (categoryFilter && !category.toLowerCase().includes(categoryFilter.toLowerCase())) visible = false;
+                if (priorityFilter && priority !== priorityFilter) visible = false;
+                
+                row.style.display = visible ? '' : 'none';
+            });
+        }
+
+        function searchProjects(searchTerm) {
+            const rows = document.querySelectorAll('#tableBody tr[data-project-id]');
+            const term = searchTerm.toLowerCase();
+            
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                let visible = false;
+                
+                // Rechercher dans toutes les cellules de texte
+                cells.forEach(cell => {
+                    if (cell.textContent.toLowerCase().includes(term)) {
+                        visible = true;
+                    }
+                });
+                
+                row.style.display = visible ? '' : 'none';
+            });
         }
 
         function bulkAction(action) {
@@ -1128,39 +1278,10 @@
             });
         }
 
-        // Gestion des checkbox individuelles
-        document.addEventListener('change', function(e) {
-            if (e.target.classList.contains('mkba-row-select')) {
-                const projectId = parseInt(e.target.value);
-                const row = e.target.closest('tr');
-                
-                if (e.target.checked) {
-                    selectedRows.add(projectId);
-                    row.classList.add('selected');
-                } else {
-                    selectedRows.delete(projectId);
-                    row.classList.remove('selected');
-                }
-                
-                updateBulkActions();
-                updateStats();
-                
-                // Mettre à jour le checkbox "Tout sélectionner"
-                const allCheckboxes = document.querySelectorAll('.mkba-row-select');
-                const checkedCheckboxes = document.querySelectorAll('.mkba-row-select:checked');
-                const selectAllCheckbox = document.getElementById('selectAll');
-                
-                if (checkedCheckboxes.length === allCheckboxes.length) {
-                    selectAllCheckbox.checked = true;
-                    selectAllCheckbox.indeterminate = false;
-                } else if (checkedCheckboxes.length > 0) {
-                    selectAllCheckbox.checked = false;
-                    selectAllCheckbox.indeterminate = true;
-                } else {
-                    selectAllCheckbox.checked = false;
-                    selectAllCheckbox.indeterminate = false;
-                }
-            }
-        });
+        // Debug final
+        console.log('%c🚀 Module Project MK BA avec debug avancé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Event listeners directs sur chaque bouton');
+        console.log('✅ Logs détaillés pour debugging');
+        console.log('✅ Vérifications de sécurité ajoutées');
     </script>
 {% endblock %}
