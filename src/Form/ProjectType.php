@@ -12,6 +12,7 @@ use Symfony\Component\Form\Extension\Core\Type\MoneyType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\FormInterface;
@@ -137,11 +138,17 @@ class ProjectType extends AbstractType
                 'attr' => ['class' => 'form-check-input']
             ])
             
-            // CORRECTION: Champ translation non mappé à l'entité
+            // Champs de traduction gérés dynamiquement côté client
             ->add('translation', TranslationType::class, [
                 'label' => false,
                 'current_locale' => $currentLocale,
-                'mapped' => false  // Correction principale: le champ n'est pas mappé à l'entité
+                'mapped' => false  // Non mappé car géré manuellement dans le contrôleur
+            ])
+            
+            // Champ caché pour la locale courante
+            ->add('currentLocale', HiddenType::class, [
+                'data' => $currentLocale,
+                'mapped' => false
             ])
             
             // Collection des membres
@@ -175,8 +182,11 @@ class ProjectType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Project::class,
-            'current_locale' => 'fr'
+            'current_locale' => 'fr',
+            'allow_extra_fields' => true, // Permet les champs extra pour la gestion multilingue
         ]);
+        
+        $resolver->setAllowedTypes('current_locale', 'string');
     }
 }
 
@@ -185,13 +195,17 @@ class TranslationType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $currentLocale = $options['current_locale'] ?? 'fr';
+        
         $builder
             ->add('name', TextType::class, [
                 'label' => 'Nom du projet',
+                'required' => true,
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'Nom du projet',
-                    'data-translatable' => 'true'
+                    'placeholder' => $currentLocale === 'fr' ? 'Project name' : 'Nom du projet',
+                    'data-translatable' => 'true',
+                    'data-locale' => $currentLocale
                 ],
                 'mapped' => false  // Non mappé car géré manuellement
             ])
@@ -201,8 +215,9 @@ class TranslationType extends AbstractType
                 'attr' => [
                     'class' => 'form-control',
                     'rows' => 4,
-                    'placeholder' => 'Description du projet',
-                    'data-translatable' => 'true'
+                    'placeholder' => $currentLocale === 'fr' ? 'Project description' : 'Description du projet',
+                    'data-translatable' => 'true',
+                    'data-locale' => $currentLocale
                 ],
                 'mapped' => false  // Non mappé car géré manuellement
             ]);
@@ -212,8 +227,11 @@ class TranslationType extends AbstractType
     {
         $resolver->setDefaults([
             'current_locale' => 'fr',
-            'data_class' => null  // Pas de classe de données car non mappé
+            'data_class' => null,  // Pas de classe de données car non mappé
+            'inherit_data' => false
         ]);
+        
+        $resolver->setAllowedTypes('current_locale', 'string');
     }
 }
 
@@ -262,7 +280,8 @@ class MemberType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => null  // Pas de classe de données car non mappé
+            'data_class' => null,  // Pas de classe de données car non mappé
+            'inherit_data' => false
         ]);
     }
 }
@@ -311,7 +330,8 @@ class LinkType extends AbstractType
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'data_class' => null  // Pas de classe de données car non mappé
+            'data_class' => null,  // Pas de classe de données car non mappé
+            'inherit_data' => false
         ]);
     }
 }

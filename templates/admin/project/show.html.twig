@@ -108,6 +108,110 @@
             border-color: var(--mk-danger);
         }
 
+        .language-switcher {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 6px;
+            display: flex;
+            gap: 4px;
+            border: 1px solid rgba(109, 81, 146, 0.2);
+            margin-bottom: 20px;
+            align-self: flex-end;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            color: var(--mk-gray);
+        }
+
+        .lang-btn.active {
+            background: var(--mk-primary);
+            color: white;
+        }
+
+        .lang-btn:hover:not(.active) {
+            background: var(--mk-light);
+        }
+
+        .translation-alert {
+            background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffc107;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: #856404;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .translation-alert::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #ffc107;
+        }
+
+        .translation-alert .alert-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: #f39c12;
+        }
+
+        .translation-alert .alert-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .translation-alert .alert-text {
+            flex: 1;
+        }
+
+        .translation-alert .alert-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .translation-alert .alert-description {
+            margin-bottom: 0;
+            opacity: 0.9;
+        }
+
+        .btn-add-translation {
+            background: var(--mk-primary);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 20px;
+        }
+
+        .btn-add-translation:hover {
+            background: var(--mk-secondary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(109, 81, 146, 0.3);
+        }
+
         .info-section {
             background: white;
             border-radius: 12px;
@@ -360,41 +464,6 @@
             opacity: 0.5;
         }
 
-        .language-switcher {
-            position: fixed;
-            top: 150px;
-            right: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            padding: 6px;
-            display: flex;
-            gap: 4px;
-            border: 1px solid rgba(109, 81, 146, 0.2);
-            z-index: 1000;
-        }
-
-        .lang-btn {
-            background: transparent;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            color: var(--mk-gray);
-        }
-
-        .lang-btn.active {
-            background: var(--mk-primary);
-            color: white;
-        }
-
-        .lang-btn:hover:not(.active) {
-            background: var(--mk-light);
-        }
-
         .timeline {
             position: relative;
             padding: 20px 0;
@@ -441,6 +510,27 @@
             font-weight: 500;
         }
 
+        .translation-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .translation-complete {
+            background: rgba(39, 174, 96, 0.1);
+            color: #27ae60;
+        }
+
+        .translation-missing {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+        }
+
         @media (max-width: 768px) {
             .project-header {
                 padding: 1.5rem 0;
@@ -478,22 +568,71 @@
             }
 
             .language-switcher {
-                position: relative;
-                top: auto;
-                right: auto;
-                margin-bottom: 20px;
-                align-self: flex-end;
+                margin: 0 0 20px 0;
+                align-self: stretch;
+            }
+
+            .translation-alert .alert-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .btn-add-translation {
+                margin-left: 0;
+                width: 100%;
+                justify-content: center;
             }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-    <!-- Bouton de langue flottant -->
+    <!-- Bouton de langue avec statut des traductions -->
     <div class="language-switcher">
-        <button class="lang-btn {{ currentLocale == 'fr' ? 'active' : '' }}" data-lang="fr" type="button">FR</button>
-        <button class="lang-btn {{ currentLocale == 'en' ? 'active' : '' }}" data-lang="en" type="button">EN</button>
+        {% for locale in supportedLocales %}
+            <button class="lang-btn {{ currentLocale == locale ? 'active' : '' }}" 
+                    data-lang="{{ locale }}" 
+                    type="button">
+                {{ locale|upper }}
+                {% if availableTranslations[locale].exists %}
+                    <span class="translation-status-badge translation-complete">
+                        <i class="fas fa-check"></i>
+                    </span>
+                {% else %}
+                    <span class="translation-status-badge translation-missing">
+                        <i class="fas fa-exclamation"></i>
+                    </span>
+                {% endif %}
+            </button>
+        {% endfor %}
     </div>
+
+    <!-- Alerte pour traduction manquante -->
+    {% if not availableTranslations[currentLocale].exists %}
+        <div class="translation-alert">
+            <div class="alert-content">
+                <div style="display: flex; align-items: center;">
+                    <i class="fas fa-language alert-icon"></i>
+                    <div class="alert-text">
+                        <div class="alert-title">
+                            Traduction manquante pour {{ currentLocale == 'fr' ? 'le français' : 'l\'anglais' }}
+                        </div>
+                        <div class="alert-description">
+                            Les informations de ce projet ne sont pas encore disponibles dans cette langue. 
+                            Cliquez sur "Ajouter la traduction" pour renseigner le contenu 
+                            {{ currentLocale == 'fr' ? 'en français' : 'en anglais' }}.
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ path('admin_project_edit', {id: project.id, locale: currentLocale}) }}" 
+                   class="btn-add-translation">
+                    <i class="fas fa-plus"></i>
+                    Ajouter la traduction {{ currentLocale|upper }}
+                </a>
+            </div>
+        </div>
+    {% endif %}
 
     <!-- En-tête du projet -->
     <div class="project-header">
@@ -502,10 +641,20 @@
                 <div class="col-md-8">
                     <h1 class="project-title">
                         <i class="fas fa-folder-open me-3"></i>
-                        {{ project.getName(currentLocale) ?: project.code }}
+                        {% if availableTranslations[currentLocale].exists %}
+                            {{ project.getName(currentLocale) }}
+                        {% else %}
+                            {{ project.code }} <span class="text-warning">(Non traduit)</span>
+                        {% endif %}
                     </h1>
                     <div class="project-subtitle">
                         Code: {{ project.code }} • {{ project.categoryLabel }}
+                        {% if not availableTranslations[currentLocale].exists %}
+                            <span class="badge bg-warning text-dark ms-2">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                Traduction {{ currentLocale|upper }} manquante
+                            </span>
+                        {% endif %}
                     </div>
                     <div class="project-meta">
                         <div class="meta-item">
@@ -534,9 +683,9 @@
                 </div>
                 <div class="col-md-4">
                     <div class="actions-header">
-                        <a href="{{ path('admin_project_edit', {id: project.id}) }}" class="btn-header-action btn-edit">
+                        <a href="{{ path('admin_project_edit', {id: project.id, locale: currentLocale}) }}" class="btn-header-action btn-edit">
                             <i class="fas fa-edit"></i>
-                            Modifier
+                            {{ availableTranslations[currentLocale].exists ? 'Modifier' : 'Traduire' }}
                         </a>
                         <button type="button" class="btn-header-action btn-delete" onclick="confirmDelete()">
                             <i class="fas fa-trash"></i>
@@ -557,6 +706,15 @@
         <h3 class="section-title">
             <i class="fas fa-info-circle"></i>
             Informations générales
+            {% if availableTranslations[currentLocale].exists %}
+                <span class="translation-status-badge translation-complete">
+                    <i class="fas fa-check"></i> Traduit en {{ currentLocale|upper }}
+                </span>
+            {% else %}
+                <span class="translation-status-badge translation-missing">
+                    <i class="fas fa-exclamation"></i> Non traduit en {{ currentLocale|upper }}
+                </span>
+            {% endif %}
         </h3>
         
         <div class="info-grid">
@@ -601,18 +759,34 @@
     </div>
 
     <!-- Description -->
-    {% set description = project.getDescription(currentLocale) %}
-    {% if description %}
     <div class="info-section">
         <h3 class="section-title">
             <i class="fas fa-file-text"></i>
             Description
         </h3>
-        <div class="info-value">
-            {{ description|nl2br }}
-        </div>
+        {% set description = project.getDescription(currentLocale) %}
+        {% if description and availableTranslations[currentLocale].exists %}
+            <div class="info-value">
+                {{ description|nl2br }}
+            </div>
+        {% elseif not availableTranslations[currentLocale].exists %}
+            <div class="empty-state">
+                <i class="fas fa-language"></i>
+                <p><strong>Description non disponible en {{ currentLocale == 'fr' ? 'français' : 'anglais' }}</strong></p>
+                <p class="text-muted">Cette description n'a pas encore été traduite dans cette langue.</p>
+                <a href="{{ path('admin_project_edit', {id: project.id, locale: currentLocale}) }}" 
+                   class="btn-add-translation">
+                    <i class="fas fa-plus"></i>
+                    Ajouter la description {{ currentLocale|upper }}
+                </a>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-text"></i>
+                <p>Aucune description renseignée</p>
+            </div>
+        {% endif %}
     </div>
-    {% endif %}
 
     <!-- Membres du projet -->
     <div class="info-section">
@@ -736,6 +910,47 @@
         {% endif %}
     </div>
 
+    <!-- Résumé des traductions disponibles -->
+    <div class="info-section">
+        <h3 class="section-title">
+            <i class="fas fa-language"></i>
+            Traductions disponibles
+        </h3>
+        
+        <div class="info-grid">
+            {% for locale in supportedLocales %}
+                <div class="info-item">
+                    <div class="info-label">{{ locale == 'fr' ? 'Français' : 'English' }}</div>
+                    <div class="info-value">
+                        {% if availableTranslations[locale].exists %}
+                            <span class="status-badge status-completed">
+                                <i class="fas fa-check me-1"></i>
+                                Traduit
+                            </span>
+                            {% if availableTranslations[locale].translation %}
+                                <div class="mt-2 text-muted">
+                                    {{ availableTranslations[locale].translation.name|slice(0, 50) }}{% if availableTranslations[locale].translation.name|length > 50 %}...{% endif %}
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <span class="status-badge status-cancelled">
+                                <i class="fas fa-times me-1"></i>
+                                Non traduit
+                            </span>
+                            <div class="mt-2">
+                                <a href="{{ path('admin_project_edit', {id: project.id, locale: locale}) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Ajouter
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
     <!-- Historique du projet (Timeline) -->
     <div class="info-section">
         <h3 class="section-title">
@@ -763,6 +978,19 @@
                 </div>
             </div>
             {% endif %}
+
+            {% for locale in supportedLocales %}
+                {% if availableTranslations[locale].exists %}
+                <div class="timeline-item">
+                    <div class="timeline-marker"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-date">{{ availableTranslations[locale].translation.project.updatedAt|date('d/m/Y H:i') }}</div>
+                        <strong>Traduction {{ locale|upper }} ajoutée</strong>
+                        <p class="mb-0 mt-1">Le contenu a été traduit en {{ locale == 'fr' ? 'français' : 'anglais' }}.</p>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
         </div>
     </div>
 
@@ -819,24 +1047,12 @@
             });
         }
 
-        // Effet de scroll sur la langue
-        window.addEventListener('scroll', function() {
-            const languageSwitcher = document.querySelector('.language-switcher');
-            if (window.scrollY > 100) {
-                languageSwitcher.style.transform = 'scale(0.9)';
-                languageSwitcher.style.opacity = '0.8';
-            } else {
-                languageSwitcher.style.transform = 'scale(1)';
-                languageSwitcher.style.opacity = '1';
-            }
-        });
-
         // Initialiser les animations
         animateOnScroll();
 
-        console.log('%c🚀 Page détails projet MK BA initialisée!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ Gestion du switch de langue');
-        console.log('✅ Animations au scroll');
-        console.log('✅ Interface responsive');
+        console.log('%c🚀 Page détails projet MK BA avec gestion multilingue initialisée!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Gestion du switch de langue avec détection des traductions');
+        console.log('✅ Alertes pour traductions manquantes');
+        console.log('✅ Interface responsive améliorée');
     </script>
 {% endblock %}

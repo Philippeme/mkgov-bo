@@ -171,6 +171,7 @@
             font-size: 12px;
             transition: all 0.3s ease;
             color: var(--mk-gray);
+            position: relative;
         }
 
         .lang-btn.active {
@@ -180,6 +181,35 @@
 
         .lang-btn:hover:not(.active) {
             background: var(--mk-light);
+        }
+
+        .translation-status-indicator {
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .translation-complete {
+            background: var(--mk-success);
+            color: white;
+        }
+
+        .translation-incomplete {
+            background: var(--mk-warning);
+            color: white;
+        }
+
+        .translation-missing {
+            background: var(--mk-danger);
+            color: white;
         }
 
         .form-steps-container {
@@ -230,6 +260,95 @@
             color: var(--mk-gray);
             margin-bottom: 30px;
             font-size: 15px;
+        }
+
+        .translation-notice {
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            border: 1px solid #2196f3;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: #1976d2;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .translation-notice.edit-mode {
+            background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .translation-notice.missing-mode {
+            background: linear-gradient(45deg, #f8d7da, #f5c6cb);
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .translation-notice::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #2196f3;
+        }
+
+        .translation-notice.edit-mode::before {
+            background: #ffc107;
+        }
+
+        .translation-notice.missing-mode::before {
+            background: #dc3545;
+        }
+
+        .translation-notice .notice-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+
+        .translation-notice .notice-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .translation-notice .notice-text {
+            flex: 1;
+        }
+
+        .translation-notice .notice-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .translation-notice .notice-description {
+            margin-bottom: 0;
+            opacity: 0.9;
+        }
+
+        .btn-auto-translate {
+            background: var(--mk-info);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 20px;
+        }
+
+        .btn-auto-translate:hover {
+            background: #2563eb;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         }
 
         .form-section {
@@ -283,6 +402,34 @@
             font-size: 13px;
             color: #6c757d;
             margin-top: 5px;
+        }
+
+        .translatable-field {
+            position: relative;
+        }
+
+        .translatable-indicator {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            color: var(--mk-primary);
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        .field-status {
+            position: absolute;
+            top: 8px;
+            right: 35px;
+            z-index: 10;
+        }
+
+        .field-status.filled {
+            color: var(--mk-success);
+        }
+
+        .field-status.empty {
+            color: var(--mk-danger);
         }
 
         .collection-container {
@@ -600,6 +747,18 @@
             .save-button-container {
                 flex-direction: column;
             }
+
+            .translation-notice .notice-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .btn-auto-translate {
+                margin-left: 0;
+                width: 100%;
+                justify-content: center;
+            }
         }
 
         .scroll-indicator {
@@ -694,14 +853,94 @@
 
     <!-- Bouton de langue repositionné à droite de la navigation -->
     <div class="language-switcher">
-        <button class="lang-btn {{ currentLocale == 'fr' ? 'active' : '' }}" data-lang="fr" type="button">FR</button>
-        <button class="lang-btn {{ currentLocale == 'en' ? 'active' : '' }}" data-lang="en" type="button">EN</button>
+        <button class="lang-btn {{ currentLocale == 'fr' ? 'active' : '' }}" data-lang="fr" type="button">
+            FR
+            {% set frTranslation = project.getTranslation('fr') %}
+            {% if frTranslation and frTranslation.name %}
+                <span class="translation-status-indicator translation-complete" title="Traduction française complète">✓</span>
+            {% elseif frTranslation %}
+                <span class="translation-status-indicator translation-incomplete" title="Traduction française incomplète">!</span>
+            {% else %}
+                <span class="translation-status-indicator translation-missing" title="Traduction française manquante">×</span>
+            {% endif %}
+        </button>
+        <button class="lang-btn {{ currentLocale == 'en' ? 'active' : '' }}" data-lang="en" type="button">
+            EN
+            {% set enTranslation = project.getTranslation('en') %}
+            {% if enTranslation and enTranslation.name %}
+                <span class="translation-status-indicator translation-complete" title="Traduction anglaise complète">✓</span>
+            {% elseif enTranslation %}
+                <span class="translation-status-indicator translation-incomplete" title="Traduction anglaise incomplète">!</span>
+            {% else %}
+                <span class="translation-status-indicator translation-missing" title="Traduction anglaise manquante">×</span>
+            {% endif %}
+        </button>
     </div>
 </div>
 
 <div class="container-fluid main-content-wrapper">
     {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate'}}) }}
         <div class="form-steps-container">
+            
+            <!-- Notice de traduction dynamique -->
+            {% set currentTranslation = project.getTranslation(currentLocale) %}
+            {% if currentTranslation and currentTranslation.name %}
+                <div class="translation-notice edit-mode">
+                    <div class="notice-content">
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-edit notice-icon"></i>
+                            <div class="notice-text">
+                                <div class="notice-title">
+                                    Modification de la traduction {{ currentLocale|upper }}
+                                </div>
+                                <div class="notice-description">
+                                    Vous modifiez actuellement la version {{ currentLocale == 'fr' ? 'française' : 'anglaise' }} 
+                                    de ce projet. Les autres langues restent inchangées.
+                                </div>
+                            </div>
+                        </div>
+                        {% if currentLocale == 'fr' and project.getTranslation('en') %}
+                            <button type="button" class="btn-auto-translate" onclick="copyFromFrench()">
+                                <i class="fas fa-language"></i>
+                                Copier depuis FR
+                            </button>
+                        {% elseif currentLocale == 'en' and project.getTranslation('fr') %}
+                            <button type="button" class="btn-auto-translate" onclick="copyFromEnglish()">
+                                <i class="fas fa-language"></i>
+                                Copier depuis EN
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="translation-notice missing-mode">
+                    <div class="notice-content">
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-plus-circle notice-icon"></i>
+                            <div class="notice-text">
+                                <div class="notice-title">
+                                    Création de la traduction {{ currentLocale|upper }}
+                                </div>
+                                <div class="notice-description">
+                                    Cette traduction n'existe pas encore. Remplissez les champs ci-dessous pour créer 
+                                    la version {{ currentLocale == 'fr' ? 'française' : 'anglaise' }} de ce projet.
+                                </div>
+                            </div>
+                        </div>
+                        {% if currentLocale == 'en' and project.getTranslation('fr') %}
+                            <button type="button" class="btn-auto-translate" onclick="copyFromFrench()">
+                                <i class="fas fa-copy"></i>
+                                Copier depuis FR
+                            </button>
+                        {% elseif currentLocale == 'fr' and project.getTranslation('en') %}
+                            <button type="button" class="btn-auto-translate" onclick="copyFromEnglish()">
+                                <i class="fas fa-copy"></i>
+                                Copier depuis EN
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
             
             <!-- ÉTAPE 1: IDENTIFICATION -->
             <div class="form-step active" data-step-content="1">
@@ -716,10 +955,12 @@
                 <div class="form-section">
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="mb-3">
+                            <div class="mb-3 translatable-field">
                                 {{ form_label(form.translation.name, 'Nom du projet', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                                 <span class="required-indicator">*</span>
-                                {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'value': project.getName(currentLocale)}}) }}
+                                <i class="fas fa-language translatable-indicator" title="Champ traduisible"></i>
+                                <i class="fas fa-circle field-status" id="nameStatus"></i>
+                                {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'value': currentTranslation ? currentTranslation.name : ''}}) }}
                                 {{ form_help(form.translation.name) }}
                                 <div class="invalid-feedback"></div>
                             </div>
@@ -752,10 +993,12 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 translatable-field">
                         {{ form_label(form.translation.description, 'Description', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                         <span class="required-indicator">*</span>
-                        {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'value': project.getDescription(currentLocale)}}) }}
+                        <i class="fas fa-language translatable-indicator" title="Champ traduisible"></i>
+                        <i class="fas fa-circle field-status" id="descriptionStatus"></i>
+                        {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'value': currentTranslation ? currentTranslation.description : ''}}) }}
                         {{ form_help(form.translation.description) }}
                         <div class="invalid-feedback"></div>
                     </div>
@@ -844,23 +1087,31 @@
                     </div>
 
                     <div class="collection-container" id="membersCollection">
-                        {% for member in form.members %}
+                        {% for member in project.members %}
                             <div class="collection-item">
                                 <button type="button" class="btn-remove-item" onclick="removeMember(this)">
                                     <i class="bi-trash"></i>
                                 </button>
                                 <div class="row">
                                     <div class="col-md-4">
-                                        {{ form_label(member.name) }}
-                                        {{ form_widget(member.name, {'attr': {'class': 'form-control'}}) }}
+                                        <label class="form-label">Nom complet</label>
+                                        <input type="text" class="form-control" name="members[{{ loop.index0 }}][name]" value="{{ member.name }}">
                                     </div>
                                     <div class="col-md-4">
-                                        {{ form_label(member.email) }}
-                                        {{ form_widget(member.email, {'attr': {'class': 'form-control'}}) }}
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="members[{{ loop.index0 }}][email]" value="{{ member.email }}">
                                     </div>
                                     <div class="col-md-4">
-                                        {{ form_label(member.role) }}
-                                        {{ form_widget(member.role, {'attr': {'class': 'form-select'}}) }}
+                                        <label class="form-label">Rôle</label>
+                                        <select class="form-select" name="members[{{ loop.index0 }}][role]">
+                                            <option value="">Sélectionnez un rôle</option>
+                                            <option value="developer" {{ member.role == 'developer' ? 'selected' : '' }}>Développeur</option>
+                                            <option value="designer" {{ member.role == 'designer' ? 'selected' : '' }}>Designer</option>
+                                            <option value="manager" {{ member.role == 'manager' ? 'selected' : '' }}>Chef de projet</option>
+                                            <option value="analyst" {{ member.role == 'analyst' ? 'selected' : '' }}>Analyste</option>
+                                            <option value="tester" {{ member.role == 'tester' ? 'selected' : '' }}>Testeur</option>
+                                            <option value="consultant" {{ member.role == 'consultant' ? 'selected' : '' }}>Consultant</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -897,23 +1148,30 @@
                     </div>
 
                     <div class="collection-container" id="linksCollection">
-                        {% for link in form.links %}
+                        {% for link in project.links %}
                             <div class="collection-item">
                                 <button type="button" class="btn-remove-item" onclick="removeLink(this)">
                                     <i class="bi-trash"></i>
                                 </button>
                                 <div class="row">
                                     <div class="col-md-4">
-                                        {{ form_label(link.title) }}
-                                        {{ form_widget(link.title, {'attr': {'class': 'form-control'}}) }}
+                                        <label class="form-label">Titre du lien</label>
+                                        <input type="text" class="form-control" name="links[{{ loop.index0 }}][title]" value="{{ link.title }}">
                                     </div>
                                     <div class="col-md-5">
-                                        {{ form_label(link.url) }}
-                                        {{ form_widget(link.url, {'attr': {'class': 'form-control'}}) }}
+                                        <label class="form-label">URL</label>
+                                        <input type="url" class="form-control" name="links[{{ loop.index0 }}][url]" value="{{ link.url }}">
                                     </div>
                                     <div class="col-md-3">
-                                        {{ form_label(link.type) }}
-                                        {{ form_widget(link.type, {'attr': {'class': 'form-select'}}) }}
+                                        <label class="form-label">Type</label>
+                                        <select class="form-select" name="links[{{ loop.index0 }}][type]">
+                                            <option value="">Type de lien</option>
+                                            <option value="documentation" {{ link.type == 'documentation' ? 'selected' : '' }}>Documentation</option>
+                                            <option value="repository" {{ link.type == 'repository' ? 'selected' : '' }}>Repository</option>
+                                            <option value="website" {{ link.type == 'website' ? 'selected' : '' }}>Site web</option>
+                                            <option value="api" {{ link.type == 'api' ? 'selected' : '' }}>API</option>
+                                            <option value="other" {{ link.type == 'other' ? 'selected' : '' }}>Autre</option>
+                                        </select>
                                     </div>
                                 </div>
                             </div>
@@ -1022,12 +1280,24 @@
         // Variables globales
         let currentStep = 1;
         let currentLang = '{{ currentLocale }}';
-        let memberIndex = {{ form.members|length }};
-        let linkIndex = {{ form.links|length }};
+        let memberIndex = {{ project.members|length }};
+        let linkIndex = {{ project.links|length }};
         let uploadedFiles = [];
         let hasUnsavedChanges = false;
         let removedAttachments = [];
         const projectId = {{ project.id }};
+
+        // Données existantes du projet par langue
+        const projectTranslations = {
+            fr: {
+                name: '{{ project.getTranslation("fr") ? project.getTranslation("fr").name|e("js") : "" }}',
+                description: '{{ project.getTranslation("fr") ? project.getTranslation("fr").description|e("js") : "" }}'
+            },
+            en: {
+                name: '{{ project.getTranslation("en") ? project.getTranslation("en").name|e("js") : "" }}',
+                description: '{{ project.getTranslation("en") ? project.getTranslation("en").description|e("js") : "" }}'
+            }
+        };
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -1036,7 +1306,7 @@
             setupFileUpload();
             initializeSearchableSelects();
             trackFormChanges();
-            loadTranslationForCurrentLocale();
+            updateFieldStatus();
         });
 
         function initializeForm() {
@@ -1044,16 +1314,24 @@
             setLanguage(savedLang);
         }
 
-        function loadTranslationForCurrentLocale() {
-            // Pré-remplir les champs translatables avec les données de la langue actuelle
+        function updateFieldStatus() {
             const nameField = document.querySelector('[name="project[translation][name]"]');
             const descField = document.querySelector('[name="project[translation][description]"]');
             
-            if (nameField && !nameField.value) {
-                nameField.value = '{{ project.getName(currentLocale)|e('js') }}' || '';
-            }
-            if (descField && !descField.value) {
-                descField.value = '{{ project.getDescription(currentLocale)|e('js') }}' || '';
+            updateSingleFieldStatus('nameStatus', nameField);
+            updateSingleFieldStatus('descriptionStatus', descField);
+        }
+
+        function updateSingleFieldStatus(statusId, field) {
+            const status = document.getElementById(statusId);
+            if (status && field) {
+                if (field.value && field.value.trim() !== '') {
+                    status.className = 'fas fa-circle field-status filled';
+                    status.title = 'Champ rempli';
+                } else {
+                    status.className = 'fas fa-circle field-status empty';
+                    status.title = 'Champ vide';
+                }
             }
         }
 
@@ -1064,11 +1342,13 @@
             inputs.forEach(input => {
                 input.addEventListener('change', () => {
                     markAsUnsaved();
+                    updateFieldStatus();
                 });
                 
                 if (input.type === 'text' || input.type === 'email' || input.type === 'url' || input.tagName === 'TEXTAREA') {
                     input.addEventListener('input', () => {
                         markAsUnsaved();
+                        updateFieldStatus();
                     });
                 }
             });
@@ -1153,19 +1433,53 @@
         }
 
         function loadTranslation(locale) {
-            fetch(`{{ path('admin_project_get_translation') }}?project_id=${projectId}&locale=${locale}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Remplir les champs de traduction
-                    const nameField = document.querySelector('[name="project[translation][name]"]');
-                    const descField = document.querySelector('[name="project[translation][description]"]');
-                    
-                    if (nameField) nameField.value = data.name || '';
-                    if (descField) descField.value = data.description || '';
-                })
-                .catch(error => {
-                    console.error('Erreur lors du chargement de la traduction:', error);
-                });
+            const translation = projectTranslations[locale];
+            
+            // Remplir les champs de traduction
+            const nameField = document.querySelector('[name="project[translation][name]"]');
+            const descField = document.querySelector('[name="project[translation][description]"]');
+            
+            if (nameField) nameField.value = translation.name || '';
+            if (descField) descField.value = translation.description || '';
+            
+            updateFieldStatus();
+        }
+
+        // Fonctions de copie entre langues
+        function copyFromFrench() {
+            const frTranslation = projectTranslations.fr;
+            
+            const nameField = document.querySelector('[name="project[translation][name]"]');
+            const descField = document.querySelector('[name="project[translation][description]"]');
+            
+            if (nameField && frTranslation.name) {
+                nameField.value = frTranslation.name;
+            }
+            if (descField && frTranslation.description) {
+                descField.value = frTranslation.description;
+            }
+            
+            updateFieldStatus();
+            markAsUnsaved();
+            showNotification('Contenu copié depuis la version française', 'success');
+        }
+
+        function copyFromEnglish() {
+            const enTranslation = projectTranslations.en;
+            
+            const nameField = document.querySelector('[name="project[translation][name]"]');
+            const descField = document.querySelector('[name="project[translation][description]"]');
+            
+            if (nameField && enTranslation.name) {
+                nameField.value = enTranslation.name;
+            }
+            if (descField && enTranslation.description) {
+                descField.value = enTranslation.description;
+            }
+            
+            updateFieldStatus();
+            markAsUnsaved();
+            showNotification('Contenu copié depuis la version anglaise', 'success');
         }
 
         // Gestion des collections (même logique que new.html.twig)
@@ -1181,15 +1495,15 @@
                 <div class="row">
                     <div class="col-md-4">
                         <label class="form-label">Nom complet</label>
-                        <input type="text" class="form-control" name="project[members][${memberIndex}][name]">
+                        <input type="text" class="form-control" name="members[${memberIndex}][name]">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="project[members][${memberIndex}][email]">
+                        <input type="email" class="form-control" name="members[${memberIndex}][email]">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Rôle</label>
-                        <select class="form-select" name="project[members][${memberIndex}][role]">
+                        <select class="form-select" name="members[${memberIndex}][role]">
                             <option value="">Sélectionnez un rôle</option>
                             <option value="developer">Développeur</option>
                             <option value="designer">Designer</option>
@@ -1225,15 +1539,15 @@
                 <div class="row">
                     <div class="col-md-4">
                         <label class="form-label">Titre du lien</label>
-                        <input type="text" class="form-control" name="project[links][${linkIndex}][title]">
+                        <input type="text" class="form-control" name="links[${linkIndex}][title]">
                     </div>
                     <div class="col-md-5">
                         <label class="form-label">URL</label>
-                        <input type="url" class="form-control" name="project[links][${linkIndex}][url]" placeholder="https://">
+                        <input type="url" class="form-control" name="links[${linkIndex}][url]" placeholder="https://">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Type</label>
-                        <select class="form-select" name="project[links][${linkIndex}][type]">
+                        <select class="form-select" name="links[${linkIndex}][type]">
                             <option value="">Type de lien</option>
                             <option value="documentation">Documentation</option>
                             <option value="repository">Repository</option>
@@ -1366,14 +1680,17 @@
             }
             
             // Ajouter la langue actuelle
-            const localeInput = document.createElement('input');
-            localeInput.type = 'hidden';
-            localeInput.name = 'locale';
-            localeInput.value = currentLang;
-            e.target.appendChild(localeInput);
+            const formData = new FormData(e.target);
+            formData.append('locale', currentLang);
+            
+            // Ajouter les données de traduction
+            const nameField = document.querySelector('[name="project[translation][name]"]');
+            const descField = document.querySelector('[name="project[translation][description]"]');
+            
+            formData.append('translation[name]', nameField ? nameField.value : '');
+            formData.append('translation[description]', descField ? descField.value : '');
 
             // Ajouter les fichiers
-            const formData = new FormData(e.target);
             uploadedFiles.forEach(file => {
                 formData.append('files[]', file);
             });
@@ -1456,9 +1773,10 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Modification Projet MK BA initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('%c🚀 Formulaire Modification Projet MK BA avec gestion multilingue initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
         console.log(`✅ Langue actuelle: ${currentLang}`);
-        console.log('✅ Gestion des traductions i18n');
+        console.log('✅ Gestion des traductions i18n avec indicateurs visuels');
+        console.log('✅ Copie entre langues disponible');
         console.log('✅ Suivi des changements non sauvegardés');
         console.log('✅ Gestion des fichiers existants et nouveaux');
         console.log('✅ Collections dynamiques pré-remplies');

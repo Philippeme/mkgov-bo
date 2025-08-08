@@ -182,6 +182,22 @@
             background: var(--mk-light);
         }
 
+        .language-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--mk-success);
+            color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
         .form-steps-container {
             background: white;
             border-radius: 16px;
@@ -230,6 +246,53 @@
             color: var(--mk-gray);
             margin-bottom: 30px;
             font-size: 15px;
+        }
+
+        .translation-notice {
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            border: 1px solid #2196f3;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            color: #1976d2;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .translation-notice::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #2196f3;
+        }
+
+        .translation-notice .notice-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: #1976d2;
+        }
+
+        .translation-notice .notice-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .translation-notice .notice-text {
+            flex: 1;
+        }
+
+        .translation-notice .notice-title {
+            font-weight: 700;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .translation-notice .notice-description {
+            margin-bottom: 0;
+            opacity: 0.9;
         }
 
         .form-section {
@@ -283,6 +346,19 @@
             font-size: 13px;
             color: #6c757d;
             margin-top: 5px;
+        }
+
+        .translatable-field {
+            position: relative;
+        }
+
+        .translatable-indicator {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            color: var(--mk-primary);
+            font-size: 14px;
+            z-index: 10;
         }
 
         .collection-container {
@@ -443,6 +519,7 @@
         .save-button-container {
             display: flex;
             justify-content: center;
+            gap: 15px;
             padding: 30px;
             background: white;
             border-radius: 16px;
@@ -469,23 +546,44 @@
             color: white;
         }
 
-        /* Indicateur de changements non sauvegardés */
-        .unsaved-changes {
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .language-reset-warning {
             position: fixed;
             top: 20px;
             right: 20px;
             background: var(--mk-warning);
             color: white;
-            padding: 10px 15px;
+            padding: 15px 20px;
             border-radius: 8px;
             font-size: 14px;
             font-weight: 500;
             z-index: 9999;
             display: none;
             animation: slideInRight 0.3s ease;
+            max-width: 350px;
         }
 
-        .unsaved-changes.show {
+        .language-reset-warning.show {
             display: block;
         }
 
@@ -498,6 +596,17 @@
                 transform: translateX(0);
                 opacity: 1;
             }
+        }
+
+        .is-invalid {
+            border-color: var(--mk-danger);
+            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+        }
+
+        .invalid-feedback {
+            color: var(--mk-danger);
+            font-size: 13px;
+            margin-top: 5px;
         }
 
         @media (max-width: 768px) {
@@ -535,42 +644,32 @@
                 padding: 4px 8px;
                 font-size: 11px;
             }
-        }
 
-        .scroll-indicator {
-            position: absolute;
-            bottom: -3px;
-            left: 0;
-            width: 0;
-            height: 3px;
-            background: var(--mk-gradient-primary);
-            transition: width 0.3s ease;
-            border-radius: 0 2px 2px 0;
-        }
+            .save-button-container {
+                flex-direction: column;
+            }
 
-        .steps-navigation.scrolled .scroll-indicator {
-            width: 100%;
-        }
-
-        /* Styles pour les erreurs de validation */
-        .is-invalid {
-            border-color: var(--mk-danger);
-            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
-        }
-
-        .invalid-feedback {
-            color: var(--mk-danger);
-            font-size: 13px;
-            margin-top: 5px;
+            .language-reset-warning {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin-bottom: 20px;
+                max-width: none;
+            }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-<!-- Indicateur de changements non sauvegardés -->
-<div class="unsaved-changes" id="unsavedChanges">
-    <i class="fas fa-exclamation-triangle me-2"></i>
-    Modifications non sauvegardées
+<!-- Avertissement de réinitialisation de langue -->
+<div class="language-reset-warning" id="languageResetWarning">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <strong>Formulaire réinitialisé</strong><br>
+            <small>Les champs translatables ont été vidés pour permettre la saisie dans la nouvelle langue.</small>
+        </div>
+    </div>
 </div>
 
 <!-- Header -->
@@ -641,8 +740,14 @@
 
     <!-- Bouton de langue repositionné à droite de la navigation -->
     <div class="language-switcher">
-        <button class="lang-btn active" data-lang="fr" type="button">FR</button>
-        <button class="lang-btn" data-lang="en" type="button">EN</button>
+        <button class="lang-btn active" data-lang="fr" type="button">
+            FR
+            <span class="language-indicator" id="frIndicator" style="display: none;">✓</span>
+        </button>
+        <button class="lang-btn" data-lang="en" type="button">
+            EN
+            <span class="language-indicator" id="enIndicator" style="display: none;">✓</span>
+        </button>
     </div>
 </div>
 
@@ -663,7 +768,7 @@
                 <div class="form-section">
                     <div class="row">
                         <div class="col-md-6">
-                            <div class="mb-3">
+                            <div class="mb-3 translatable-field">
                                 {{ form_label(form.translation.name, 'Nom du projet', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                                 <span class="required-indicator">*</span>
                                 {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true'}}) }}
@@ -699,7 +804,7 @@
                         </div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 translatable-field">
                         {{ form_label(form.translation.description, 'Description', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                         <span class="required-indicator">*</span>
                         {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true'}}) }}
@@ -790,28 +895,8 @@
                         </button>
                     </div>
 
-                    <div class="collection-container" id="membersCollection" data-prototype="{{ form_widget(form.members.vars.prototype)|e('html_attr') }}">
-                        {% for member in form.members %}
-                            <div class="collection-item">
-                                <button type="button" class="btn-remove-item" onclick="removeMember(this)">
-                                    <i class="bi-trash"></i>
-                                </button>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        {{ form_label(member.name) }}
-                                        {{ form_widget(member.name, {'attr': {'class': 'form-control'}}) }}
-                                    </div>
-                                    <div class="col-md-4">
-                                        {{ form_label(member.email) }}
-                                        {{ form_widget(member.email, {'attr': {'class': 'form-control'}}) }}
-                                    </div>
-                                    <div class="col-md-4">
-                                        {{ form_label(member.role) }}
-                                        {{ form_widget(member.role, {'attr': {'class': 'form-select'}}) }}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
+                    <div class="collection-container" id="membersCollection">
+                        <!-- Les membres seront ajoutés dynamiquement ici -->
                     </div>
 
                     <div class="alert alert-info">
@@ -843,28 +928,8 @@
                         </button>
                     </div>
 
-                    <div class="collection-container" id="linksCollection" data-prototype="{{ form_widget(form.links.vars.prototype)|e('html_attr') }}">
-                        {% for link in form.links %}
-                            <div class="collection-item">
-                                <button type="button" class="btn-remove-item" onclick="removeLink(this)">
-                                    <i class="bi-trash"></i>
-                                </button>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        {{ form_label(link.title) }}
-                                        {{ form_widget(link.title, {'attr': {'class': 'form-control'}}) }}
-                                    </div>
-                                    <div class="col-md-5">
-                                        {{ form_label(link.url) }}
-                                        {{ form_widget(link.url, {'attr': {'class': 'form-control'}}) }}
-                                    </div>
-                                    <div class="col-md-3">
-                                        {{ form_label(link.type) }}
-                                        {{ form_widget(link.type, {'attr': {'class': 'form-select'}}) }}
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
+                    <div class="collection-container" id="linksCollection">
+                        <!-- Les liens seront ajoutés dynamiquement ici -->
                     </div>
 
                     <div class="alert alert-info">
@@ -905,8 +970,12 @@
             </div>
         </div>
 
-        <!-- Bouton Enregistrer unique -->
+        <!-- Boutons Enregistrer -->
         <div class="save-button-container">
+            <a href="{{ path('admin_project_index') }}" class="btn-cancel" onclick="return confirmCancel()">
+                <i class="bi-x-circle"></i>
+                Annuler
+            </a>
             <button type="submit" class="btn-save-project" id="btnSaveProject">
                 <i class="bi-save"></i>
                 Enregistrer le projet
@@ -934,11 +1003,12 @@
         // Variables globales
         let currentStep = 1;
         let currentLang = '{{ currentLocale }}';
-        let memberIndex = {{ form.members|length }};
-        let linkIndex = {{ form.links|length }};
+        let memberIndex = 0;
+        let linkIndex = 0;
         let uploadedFiles = [];
         let hasUnsavedChanges = false;
-        let originalFormData = {};
+        let savedTranslations = { fr: {}, en: {} }; // Stockage des traductions
+        let hasDataInLanguage = { fr: false, en: false };
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -947,16 +1017,20 @@
             setupFileUpload();
             initializeSearchableSelects();
             trackFormChanges();
-            captureOriginalFormData();
+            updateLanguageIndicators();
         });
 
         function initializeForm() {
             const savedLang = localStorage.getItem('mkba_project_lang') || currentLang;
             setLanguage(savedLang);
+            updateLanguageDisplay();
         }
 
-        function captureOriginalFormData() {
-            originalFormData = new FormData(document.getElementById('projectForm'));
+        function updateLanguageDisplay() {
+            const display = document.getElementById('currentLanguageDisplay');
+            if (display) {
+                display.textContent = currentLang === 'fr' ? 'français' : 'anglais';
+            }
         }
 
         function trackFormChanges() {
@@ -966,24 +1040,50 @@
             inputs.forEach(input => {
                 input.addEventListener('change', () => {
                     markAsUnsaved();
+                    checkForDataInCurrentLanguage();
                 });
                 
                 if (input.type === 'text' || input.type === 'email' || input.type === 'url' || input.tagName === 'TEXTAREA') {
                     input.addEventListener('input', () => {
                         markAsUnsaved();
+                        checkForDataInCurrentLanguage();
                     });
                 }
             });
         }
 
+        function checkForDataInCurrentLanguage() {
+            const translatableFields = document.querySelectorAll('[data-translatable="true"]');
+            let hasData = false;
+            
+            translatableFields.forEach(field => {
+                if (field.value && field.value.trim() !== '') {
+                    hasData = true;
+                }
+            });
+            
+            hasDataInLanguage[currentLang] = hasData;
+            updateLanguageIndicators();
+        }
+
+        function updateLanguageIndicators() {
+            const frIndicator = document.getElementById('frIndicator');
+            const enIndicator = document.getElementById('enIndicator');
+            
+            if (frIndicator) {
+                frIndicator.style.display = hasDataInLanguage.fr ? 'flex' : 'none';
+            }
+            if (enIndicator) {
+                enIndicator.style.display = hasDataInLanguage.en ? 'flex' : 'none';
+            }
+        }
+
         function markAsUnsaved() {
             hasUnsavedChanges = true;
-            document.getElementById('unsavedChanges').classList.add('show');
         }
 
         function markAsSaved() {
             hasUnsavedChanges = false;
-            document.getElementById('unsavedChanges').classList.remove('show');
         }
 
         // Gestion des étapes
@@ -1010,17 +1110,26 @@
                 });
             });
 
-            // Switch de langue avec confirmation si changements
+            // Switch de langue avec sauvegarde et réinitialisation
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const lang = this.dataset.lang;
                     
-                    if (hasUnsavedChanges && lang !== currentLang) {
-                        if (confirm('Vous avez des modifications non sauvegardées. Changer de langue réinitialisera le formulaire. Continuer ?')) {
-                            switchLanguage(lang);
-                        }
-                    } else {
+                    if (lang !== currentLang) {
+                        // Sauvegarder les données actuelles si elles existent
+                        saveCurrentTranslation();
+                        
+                        // Réinitialiser les champs translatables
+                        resetTranslatableFields();
+                        
+                        // Changer de langue
                         switchLanguage(lang);
+                        
+                        // Charger les données de la nouvelle langue si elles existent
+                        loadTranslationForLanguage(lang);
+                        
+                        // Afficher l'avertissement
+                        showLanguageResetWarning();
                     }
                 });
             });
@@ -1037,22 +1146,43 @@
             });
         }
 
-        function switchLanguage(lang) {
-            if (lang === currentLang) return;
+        function saveCurrentTranslation() {
+            const translatableFields = document.querySelectorAll('[data-translatable="true"]');
+            const translation = {};
             
-            // Réinitialiser les champs translatables
+            translatableFields.forEach(field => {
+                const name = field.name.replace(/.*\[(\w+)\]$/, '$1');
+                translation[name] = field.value;
+            });
+            
+            savedTranslations[currentLang] = translation;
+        }
+
+        function loadTranslationForLanguage(lang) {
+            const translation = savedTranslations[lang];
+            if (translation) {
+                Object.keys(translation).forEach(key => {
+                    const field = document.querySelector(`[data-translatable="true"][name*="[${key}]"]`);
+                    if (field) {
+                        field.value = translation[key] || '';
+                    }
+                });
+            }
+        }
+
+        function resetTranslatableFields() {
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             translatableFields.forEach(field => {
                 field.value = '';
             });
+        }
+
+        function switchLanguage(lang) {
+            if (lang === currentLang) return;
             
             setLanguage(lang);
-            markAsUnsaved();
-            
-            // Charger la traduction existante si elle existe
-            if (window.projectId) {
-                loadTranslation(lang);
-            }
+            updateLanguageDisplay();
+            checkForDataInCurrentLanguage();
         }
 
         function setLanguage(lang) {
@@ -1064,30 +1194,18 @@
             });
         }
 
-        function loadTranslation(locale) {
-            const projectId = window.projectId;
-            if (!projectId) return;
+        function showLanguageResetWarning() {
+            const warning = document.getElementById('languageResetWarning');
+            warning.classList.add('show');
             
-            fetch(`{{ path('admin_project_get_translation') }}?project_id=${projectId}&locale=${locale}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Remplir les champs de traduction
-                    const nameField = document.querySelector('[name="project[translation][name]"]');
-                    const descField = document.querySelector('[name="project[translation][description]"]');
-                    
-                    if (nameField) nameField.value = data.name || '';
-                    if (descField) descField.value = data.description || '';
-                })
-                .catch(error => {
-                    console.error('Erreur lors du chargement de la traduction:', error);
-                });
+            setTimeout(() => {
+                warning.classList.remove('show');
+            }, 4000);
         }
 
         // Gestion des collections
         function addMember() {
             const collection = document.getElementById('membersCollection');
-            const prototype = collection.dataset.prototype;
-            const newForm = prototype.replace(/__member_name__/g, memberIndex);
             
             const wrapper = document.createElement('div');
             wrapper.className = 'collection-item';
@@ -1098,15 +1216,15 @@
                 <div class="row">
                     <div class="col-md-4">
                         <label class="form-label">Nom complet</label>
-                        <input type="text" class="form-control" name="project[members][${memberIndex}][name]">
+                        <input type="text" class="form-control" name="members[${memberIndex}][name]">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="project[members][${memberIndex}][email]">
+                        <input type="email" class="form-control" name="members[${memberIndex}][email]">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Rôle</label>
-                        <select class="form-select" name="project[members][${memberIndex}][role]">
+                        <select class="form-select" name="members[${memberIndex}][role]">
                             <option value="">Sélectionnez un rôle</option>
                             <option value="developer">Développeur</option>
                             <option value="designer">Designer</option>
@@ -1122,8 +1240,6 @@
             collection.appendChild(wrapper);
             memberIndex++;
             markAsUnsaved();
-            
-            // Réattacher les event listeners pour les changements
             trackFormChanges();
         }
 
@@ -1144,15 +1260,15 @@
                 <div class="row">
                     <div class="col-md-4">
                         <label class="form-label">Titre du lien</label>
-                        <input type="text" class="form-control" name="project[links][${linkIndex}][title]">
+                        <input type="text" class="form-control" name="links[${linkIndex}][title]">
                     </div>
                     <div class="col-md-5">
                         <label class="form-label">URL</label>
-                        <input type="url" class="form-control" name="project[links][${linkIndex}][url]" placeholder="https://">
+                        <input type="url" class="form-control" name="links[${linkIndex}][url]" placeholder="https://">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Type</label>
-                        <select class="form-select" name="project[links][${linkIndex}][type]">
+                        <select class="form-select" name="links[${linkIndex}][type]">
                             <option value="">Type de lien</option>
                             <option value="documentation">Documentation</option>
                             <option value="repository">Repository</option>
@@ -1167,8 +1283,6 @@
             collection.appendChild(wrapper);
             linkIndex++;
             markAsUnsaved();
-            
-            // Réattacher les event listeners pour les changements
             trackFormChanges();
         }
 
@@ -1270,20 +1384,25 @@
         function handleFormSubmit(e) {
             e.preventDefault();
             
+            // Sauvegarder la traduction actuelle
+            saveCurrentTranslation();
+            
             // Validation de base
             if (!validateForm()) {
                 return false;
             }
             
-            // Ajouter la langue actuelle
-            const localeInput = document.createElement('input');
-            localeInput.type = 'hidden';
-            localeInput.name = 'locale';
-            localeInput.value = currentLang;
-            e.target.appendChild(localeInput);
+            // Ajouter la langue actuelle et les données de traduction
+            const formData = new FormData(e.target);
+            formData.append('locale', currentLang);
+            
+            // Ajouter les données de traduction
+            const translation = savedTranslations[currentLang];
+            Object.keys(translation).forEach(key => {
+                formData.append(`translation[${key}]`, translation[key] || '');
+            });
 
             // Ajouter les fichiers
-            const formData = new FormData(e.target);
             uploadedFiles.forEach(file => {
                 formData.append('files[]', file);
             });
@@ -1291,15 +1410,15 @@
             markAsSaved();
             showNotification('Enregistrement en cours...', 'info');
             
-            // Soumettre avec FormData pour gérer les fichiers
+            // Soumettre avec FormData
             fetch(e.target.action, {
                 method: 'POST',
                 body: formData
             }).then(response => {
                 if (response.ok) {
-                    showNotification('Projet enregistré avec succès!', 'success');
+                    showNotification('Projet créé avec succès!', 'success');
                     setTimeout(() => {
-                        window.location.href = response.url || '{{ path("admin_project_index") }}';
+                        window.location.href = '{{ path("admin_project_index") }}';
                     }, 1500);
                 } else {
                     throw new Error('Erreur de sauvegarde');
@@ -1338,6 +1457,13 @@
             return isValid;
         }
 
+        function confirmCancel() {
+            if (hasUnsavedChanges) {
+                return confirm('Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir annuler ?');
+            }
+            return true;
+        }
+
         function showNotification(message, type = 'info') {
             const alertClass = type === 'error' ? 'danger' : type;
             const alertHtml = `
@@ -1359,13 +1485,11 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Projet MK BA initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('%c🚀 Formulaire Projet MK BA avec gestion multilingue initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
         console.log(`✅ Langue actuelle: ${currentLang}`);
-        console.log('✅ Gestion des traductions i18n');
-        console.log('✅ Suivi des changements non sauvegardés');
-        console.log('✅ Upload de fichiers');
-        console.log('✅ Collections dynamiques');
+        console.log('✅ Gestion des traductions multiples');
+        console.log('✅ Réinitialisation lors du changement de langue');
+        console.log('✅ Sauvegarde des données par langue');
+        console.log('✅ Indicateurs visuels de traduction');
     </script>
-
-
 {% endblock %}
