@@ -276,164 +276,44 @@
         .mkba-actions-group {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 5px;
             justify-content: center;
+            flex-wrap: nowrap;
         }
 
-        .btn-details {
-            background: var(--secondary-color);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 500;
+        .mkba-actions-group .btn {
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            border-radius: 4px;
             transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .btn-details:hover {
-            background: #2980b9;
-            color: white;
-            transform: translateY(-1px);
-        }
-
-        .dropdown-actions {
-            position: relative;
-            display: inline-block;
-        }
-
-        .btn-three-dots {
-            background: transparent;
-            color: var(--primary-color);
-            border: 1px solid rgba(44, 62, 80, 0.2);
-            padding: 8px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-            position: relative;
-            z-index: 5;
-            min-width: 36px;
+            min-width: 32px;
             height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .btn-three-dots:hover {
-            background: rgba(44, 62, 80, 0.1);
-            border-color: rgba(44, 62, 80, 0.4);
+        .mkba-actions-group .btn:hover {
             transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        .btn-three-dots.active {
-            background: #6D5192;
+        .mkba-actions-group .btn-outline-info:hover {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
             color: white;
-            border-color: var(--primary-color);
         }
 
-        .dropdown-menu-actions {
-            display: none;
-            position: fixed;
-            background: white;
-            min-width: 140px;
-            box-shadow: 
-                0 10px 25px rgba(0,0,0,0.15),
-                0 4px 10px rgba(0,0,0,0.1),
-                0 0 0 1px rgba(0,0,0,0.05);
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            z-index: 9999;
-            padding: 6px 0;
-            backdrop-filter: blur(10px);
+        .mkba-actions-group .btn-outline-warning:hover {
+            background-color: #ffc107;
+            border-color: #ffc107;
+            color: #212529;
         }
 
-        .dropdown-menu-actions.show {
-            display: block;
-            animation: fadeInScale 0.2s ease-out;
-        }
-
-        .dropdown-menu-actions.show-above {
-            transform-origin: bottom center;
-        }
-
-        .dropdown-menu-actions.show-below {
-            transform-origin: top center;
-        }
-
-        @keyframes fadeInScale {
-            from {
-                opacity: 0;
-                transform: scale(0.95) translateY(-5px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .dropdown-menu-actions a {
-            display: block;
-            padding: 10px 16px;
-            color: var(--primary-color);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-            border-radius: 4px;
-            margin: 2px 6px;
-            cursor: pointer;
-        }
-
-        .dropdown-menu-actions a:hover {
-            background-color: rgba(44, 62, 80, 0.08);
-            color: var(--primary-color);
-            transform: translateX(3px);
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .dropdown-menu-actions a i {
-            width: 16px;
-            margin-right: 10px;
-            font-size: 14px;
-        }
-
-        .dropdown-menu-actions .dropdown-divider {
-            height: 1px;
-            background: rgba(0,0,0,0.1);
-            margin: 6px 0;
-            border: none;
-        }
-
-        .dropdown-menu-actions a.action-view:hover {
-            background-color: rgba(52, 152, 219, 0.1);
-            color: var(--secondary-color);
-        }
-
-        .dropdown-menu-actions a.action-edit:hover {
-            background-color: rgba(243, 156, 18, 0.1);
-            color: var(--warning-color);
-        }
-
-        .dropdown-menu-actions a.action-delete:hover {
-            background-color: rgba(231, 76, 60, 0.1);
-            color: var(--accent-color);
-        }
-
-        .dropdown-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 9998;
-            display: none;
-        }
-
-        .dropdown-overlay.show {
-            display: block;
+        .mkba-actions-group .btn-outline-danger:hover {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
         }
 
         /* ========== MODAL FILTRES AVANCÉS ========== */
@@ -614,9 +494,6 @@
 {% endblock %}
 
 {% block body %}
-    <!-- Overlay pour fermer les menus dropdown -->
-    <div class="dropdown-overlay" id="dropdownOverlay"></div>
-
     <!-- Modale Filtres Avancés -->
     <div class="modal fade" id="advancedFiltersModal" tabindex="-1" aria-labelledby="advancedFiltersModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -833,27 +710,22 @@
                         <td data-sort="{{ project.createdAt|date('Y-m-d H:i:s') }}">{{ project.createdAt|date('d/m/Y H:i') }}</td>
                         <td>
                             <div class="mkba-actions-group">
-                                <div class="dropdown-actions">
-                                    <button class="btn-three-dots" 
-                                            data-project-id="{{ project.id }}" 
-                                            title="Actions">
-                                        <i class="fas fa-ellipsis-h"></i>
-                                    </button>
-                                    <div class="dropdown-menu-actions" id="actionMenu{{ project.id }}">
-                                        <a href="{{ path('admin_project_show', {id: project.id}) }}" class="action-view">
-                                            <i class="fas fa-eye text-info"></i>Détails
-                                        </a>
-                                        <a href="{{ path('admin_project_edit', {id: project.id}) }}" class="action-edit">
-                                            <i class="fas fa-edit text-warning"></i>Modifier
-                                        </a>
-                                        <div class="dropdown-divider"></div>
-                                        <a href="javascript:void(0)" 
-                                           class="action-delete" 
-                                           data-project-id="{{ project.id }}">
-                                            <i class="fas fa-trash text-danger"></i>Supprimer
-                                        </a>
-                                    </div>
-                                </div>
+                                <a href="{{ path('admin_project_show', {id: project.id}) }}" 
+                                   class="btn btn-sm btn-outline-info" 
+                                   title="Voir les détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('admin_project_edit', {id: project.id}) }}" 
+                                   class="btn btn-sm btn-outline-warning" 
+                                   title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteProject({{ project.id }})"
+                                        title="Supprimer">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -923,16 +795,145 @@
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 Initialisation du module Project...');
             initializeProjectModule();
         });
 
         function initializeProjectModule() {
-            console.log('📋 Initialisation du module Project...');
             initializeEventListeners();
             initializeDropdownHandlers();
             setupSortingEventListeners();
             updateStats();
             console.log('✅ Module Project initialisé avec succès!');
+        }
+
+        // ========== SYSTÈME DROPDOWN CORRIGÉ ========== 
+        function toggleActionMenu(event, projectId) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            console.log('🔧 Toggle menu pour projet ID:', projectId);
+            
+            const menu = document.getElementById(`actionMenu${projectId}`);
+            const overlay = document.getElementById('dropdownOverlay');
+            
+            if (!menu) {
+                console.error('❌ Menu non trouvé pour ID:', projectId);
+                return;
+            }
+            
+            // Fermer tous les autres menus
+            closeAllDropdowns();
+            
+            if (!menu.classList.contains('show')) {
+                // Récupérer le bouton qui a déclenché l'événement
+                const button = event.target.closest('.btn-three-dots');
+                if (!button) {
+                    console.error('❌ Bouton non trouvé');
+                    return;
+                }
+                
+                // Ouvrir le menu
+                openDropdownMenu(button, menu, projectId);
+                
+                if (overlay) {
+                    overlay.classList.add('show');
+                }
+                
+                currentOpenDropdown = projectId;
+                console.log('✅ Menu ouvert pour projet ID:', projectId);
+            }
+        }
+
+        function openDropdownMenu(button, menu, projectId) {
+            console.log('🎯 Début openDropdownMenu pour projet', projectId);
+            
+            // Calculer la position du bouton
+            const buttonRect = button.getBoundingClientRect();
+            const menuWidth = 140;
+            const menuHeight = 120;
+            
+            console.log('📏 ButtonRect:', buttonRect);
+            console.log('🖥️ Window size:', { width: window.innerWidth, height: window.innerHeight });
+            
+            // Position simple : juste en dessous du bouton, aligné à droite
+            let top = buttonRect.bottom + 8;
+            let left = buttonRect.right - menuWidth;
+            
+            // Ajustements pour rester dans l'écran
+            if (left < 20) {
+                left = buttonRect.left;
+            }
+            if (left + menuWidth > window.innerWidth - 20) {
+                left = window.innerWidth - menuWidth - 20;
+            }
+            if (top + menuHeight > window.innerHeight - 20) {
+                top = buttonRect.top - menuHeight - 8;
+            }
+            
+            console.log('📍 Position finale:', { top, left });
+            
+            // Application des styles avec force maximale
+            menu.style.cssText = `
+                position: fixed !important;
+                top: ${top}px !important;
+                left: ${left}px !important;
+                z-index: 99999 !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                min-width: ${menuWidth}px !important;
+                background: white !important;
+                border: 1px solid #dee2e6 !important;
+                border-radius: 8px !important;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+                padding: 6px 0 !important;
+            `;
+            
+            // Ajouter les classes
+            menu.classList.add('show');
+            button.classList.add('active');
+            
+            console.log('✅ Menu stylé et affiché');
+            console.log('🔍 Menu computed style:', window.getComputedStyle(menu).display);
+        }
+
+        function closeAllDropdowns() {
+            const dropdowns = document.querySelectorAll('.dropdown-menu-actions.show');
+            const buttons = document.querySelectorAll('.btn-three-dots.active');
+            const overlay = document.getElementById('dropdownOverlay');
+            
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.remove('show', 'show-above', 'show-below');
+            });
+            
+            buttons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+            
+            currentOpenDropdown = null;
+        }
+
+        function initializeDropdownHandlers() {
+            const overlay = document.getElementById('dropdownOverlay');
+            if (overlay) {
+                overlay.addEventListener('click', closeAllDropdowns);
+            }
+            
+            // Fermer avec la touche Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAllDropdowns();
+                }
+            });
+            
+            // Fermer lors du scroll
+            window.addEventListener('scroll', closeAllDropdowns);
+            document.querySelector('.mkba-table-container').addEventListener('scroll', closeAllDropdowns);
         }
 
         // ========== TRI DES COLONNES ========== 
@@ -992,7 +993,6 @@
         }
 
         function getSortValue(row, column) {
-            const cell = row.querySelector(`td[data-sort]`);
             if (column === 'code') return row.children[1].getAttribute('data-sort');
             if (column === 'name') return row.children[2].getAttribute('data-sort');
             if (column === 'category') return row.children[3].getAttribute('data-sort');
@@ -1019,34 +1019,6 @@
 
         function initializeEventListeners() {
             console.log('🔧 Initialisation des event listeners...');
-            
-            // Gestion des boutons trois points
-            const threeDotsButtons = document.querySelectorAll('.btn-three-dots');
-            threeDotsButtons.forEach((button) => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const projectId = parseInt(this.dataset.projectId);
-                    if (projectId) {
-                        toggleActionMenu(e, projectId, this);
-                    }
-                });
-            });
-            
-            // Gestion des boutons de suppression
-            const deleteButtons = document.querySelectorAll('.action-delete');
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    const projectId = parseInt(this.dataset.projectId);
-                    if (projectId) {
-                        deleteRecord(projectId);
-                    }
-                });
-            });
             
             // Gestion des checkboxes
             const rowCheckboxes = document.querySelectorAll('.mkba-row-select');
@@ -1093,6 +1065,26 @@
             });
             
             console.log('✅ Event listeners attachés avec succès');
+        }
+
+        // ========== ACTIONS SUR LES PROJETS ========== 
+        function deleteProject(projectId) {
+            closeAllDropdowns();
+            
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = projectUrls.deleteBase + projectId + '/delete';
+                
+                const tokenInput = document.createElement('input');
+                tokenInput.type = 'hidden';
+                tokenInput.name = '_token';
+                tokenInput.value = 'dummy-token'; // Sera remplacé par le vrai token CSRF
+                
+                form.appendChild(tokenInput);
+                document.body.appendChild(form);
+                form.submit();
+            }
         }
 
         // ========== FILTRES ET RECHERCHE ========== 
@@ -1197,102 +1189,6 @@
             }, 800);
         }
 
-        function initializeDropdownHandlers() {
-            const overlay = document.getElementById('dropdownOverlay');
-            if (overlay) {
-                overlay.addEventListener('click', closeAllDropdowns);
-            }
-            
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    closeAllDropdowns();
-                }
-            });
-            
-            window.addEventListener('scroll', closeAllDropdowns);
-        }
-
-        function toggleActionMenu(event, projectId, button) {
-            const menu = document.getElementById(`actionMenu${projectId}`);
-            if (!menu) return;
-            
-            const overlay = document.getElementById('dropdownOverlay');
-            
-            closeAllDropdowns();
-            
-            openDropdownMenu(button, menu, projectId);
-            
-            if (overlay) {
-                overlay.classList.add('show');
-            }
-            
-            currentOpenDropdown = projectId;
-        }
-
-        function openDropdownMenu(button, menu, projectId) {
-            const buttonRect = button.getBoundingClientRect();
-            const menuHeight = 120;
-            const menuWidth = 140;
-            
-            let top = buttonRect.bottom + 5;
-            let left = buttonRect.right - menuWidth;
-            
-            const spaceBelow = window.innerHeight - buttonRect.bottom;
-            const spaceAbove = buttonRect.top;
-            
-            if (spaceBelow < 130) {
-                if (spaceAbove >= menuHeight + 20) {
-                    top = buttonRect.top - menuHeight - 5;
-                    menu.classList.add('show-above');
-                    menu.classList.remove('show-below');
-                } else {
-                    top = buttonRect.top - menuHeight - 5;
-                    menu.classList.add('show-above');
-                    menu.classList.remove('show-below');
-                }
-            } else {
-                menu.classList.add('show-below');
-                menu.classList.remove('show-above');
-            }
-            
-            if (left < 10) {
-                left = buttonRect.left;
-            }
-            if (left + menuWidth > window.innerWidth - 10) {
-                left = window.innerWidth - menuWidth - 10;
-            }
-            if (top < 10) {
-                top = 10;
-            }
-            
-            menu.style.top = `${top}px`;
-            menu.style.left = `${left}px`;
-            menu.style.zIndex = '9999';
-            
-            menu.classList.add('show');
-            button.classList.add('active');
-        }
-
-        function closeAllDropdowns() {
-            const dropdowns = document.querySelectorAll('.dropdown-menu-actions.show');
-            const buttons = document.querySelectorAll('.btn-three-dots.active');
-            const overlay = document.getElementById('dropdownOverlay');
-            
-            dropdowns.forEach(dropdown => {
-                dropdown.classList.remove('show', 'show-above', 'show-below');
-            });
-            
-            buttons.forEach(button => {
-                button.classList.remove('active');
-            });
-            
-            if (overlay) {
-                overlay.classList.remove('show');
-            }
-            
-            currentOpenDropdown = null;
-        }
-
         function handleRowCheckboxChange(checkbox) {
             const projectId = parseInt(checkbox.value);
             const row = checkbox.closest('tr');
@@ -1346,25 +1242,6 @@
             } else {
                 selectAllCheckbox.checked = false;
                 selectAllCheckbox.indeterminate = false;
-            }
-        }
-
-        function deleteRecord(projectId) {
-            closeAllDropdowns();
-            
-            if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = projectUrls.deleteBase + projectId + '/delete';
-                
-                const tokenInput = document.createElement('input');
-                tokenInput.type = 'hidden';
-                tokenInput.name = '_token';
-                tokenInput.value = 'dummy-token';
-                
-                form.appendChild(tokenInput);
-                document.body.appendChild(form);
-                form.submit();
             }
         }
 
@@ -1475,6 +1352,9 @@
             });
         }
 
-        console.log('%c🚀 Module Project MK BA avec tri interactif et filtres avancés!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('%c🚀 Module Project MK BA avec menu dropdown corrigé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Système de dropdown entièrement refondu');
+        console.log('✅ Positionnement intelligent et adaptatif');
+        console.log('✅ Gestion robuste des événements');
     </script>
 {% endblock %}
