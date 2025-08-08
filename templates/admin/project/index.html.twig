@@ -690,7 +690,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="clearAdvancedFilters()">
-                        <i class="fas fa-trash me-2"></i>Effacer
+                        <i class="fas fa-times me-2"></i>Effacer
                     </button>
                     <button type="button" class="btn btn-secondary" onclick="closeAdvancedFiltersModal()">
                         <i class="fas fa-times me-2"></i>Fermer
@@ -1020,38 +1020,40 @@
         function initializeEventListeners() {
             console.log('🔧 Initialisation des event listeners...');
             
-            // Gestion des boutons trois points avec délégation d'événements
-            document.getElementById('tableBody').addEventListener('click', function(e) {
-                const button = e.target.closest('.btn-three-dots');
-                if (button) {
+            // Gestion des boutons trois points
+            const threeDotsButtons = document.querySelectorAll('.btn-three-dots');
+            threeDotsButtons.forEach((button) => {
+                button.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    const projectId = parseInt(button.dataset.projectId);
-                    console.log('🎯 Clic détecté sur bouton projet:', projectId);
-                    
+                    const projectId = parseInt(this.dataset.projectId);
                     if (projectId) {
-                        toggleActionMenu(e, projectId, button);
+                        toggleActionMenu(e, projectId, this);
                     }
-                }
-                
-                // Gestion des boutons de suppression
-                const deleteBtn = e.target.closest('.action-delete');
-                if (deleteBtn) {
+                });
+            });
+            
+            // Gestion des boutons de suppression
+            const deleteButtons = document.querySelectorAll('.action-delete');
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
                     
-                    const projectId = parseInt(deleteBtn.dataset.projectId);
+                    const projectId = parseInt(this.dataset.projectId);
                     if (projectId) {
                         deleteRecord(projectId);
                     }
-                }
-                
-                // Gestion des checkboxes
-                const checkbox = e.target.closest('.mkba-row-select');
-                if (checkbox) {
-                    handleRowCheckboxChange(checkbox);
-                }
+                });
+            });
+            
+            // Gestion des checkboxes
+            const rowCheckboxes = document.querySelectorAll('.mkba-row-select');
+            rowCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    handleRowCheckboxChange(this);
+                });
             });
             
             // Sélection globale
@@ -1211,72 +1213,26 @@
         }
 
         function toggleActionMenu(event, projectId, button) {
-            console.log(`🎯 Toggle menu pour projet ${projectId}`);
+            const menu = document.getElementById(`actionMenu${projectId}`);
+            if (!menu) return;
             
-            // Chercher le menu dans la même ligne
-            const row = button.closest('tr');
-            const menu = row.querySelector('.dropdown-menu-actions');
+            const overlay = document.getElementById('dropdownOverlay');
             
-            if (!menu) {
-                console.error(`❌ Menu introuvable dans la ligne pour projet ${projectId}`);
-                // Lister tous les menus disponibles pour debug
-                const allMenus = document.querySelectorAll('.dropdown-menu-actions');
-                console.log('📋 Menus disponibles:', Array.from(allMenus).map(m => m.id));
-                return;
-            }
-            
-            console.log(`✅ Menu trouvé dans la ligne`);
-            
-            // Fermer tous les autres menus
             closeAllDropdowns();
             
-            // Calculer la position
-            const buttonRect = button.getBoundingClientRect();
-            const menuHeight = 140;
-            const menuWidth = 160;
+            openDropdownMenu(button, menu, projectId);
             
-            let top = buttonRect.bottom + 8;
-            let left = buttonRect.right - menuWidth;
-            
-            // Ajustements pour rester dans la fenêtre
-            if (top + menuHeight > window.innerHeight) {
-                top = buttonRect.top - menuHeight - 8;
-            }
-            if (left < 10) {
-                left = buttonRect.left;
-            }
-            
-            // Appliquer les styles
-            menu.style.position = 'fixed';
-            menu.style.top = `${top}px`;
-            menu.style.left = `${left}px`;
-            menu.style.zIndex = '9999';
-            menu.style.display = 'block';
-            menu.style.opacity = '1';
-            menu.style.visibility = 'visible';
-            
-            // Ajouter les classes
-            menu.classList.add('show');
-            button.classList.add('active');
-            
-            // Afficher l'overlay
-            const overlay = document.getElementById('dropdownOverlay');
             if (overlay) {
                 overlay.classList.add('show');
             }
             
             currentOpenDropdown = projectId;
-            console.log(`✅ Menu affiché pour projet ${projectId} à (${left}, ${top})`);
         }
 
         function openDropdownMenu(button, menu, projectId) {
-            console.log(`📍 Positionnement du menu pour projet ${projectId}`);
-            
             const buttonRect = button.getBoundingClientRect();
             const menuHeight = 120;
             const menuWidth = 140;
-            
-            console.log('Position du bouton:', buttonRect);
             
             let top = buttonRect.bottom + 5;
             let left = buttonRect.right - menuWidth;
@@ -1309,31 +1265,20 @@
                 top = 10;
             }
             
-            console.log(`Position finale: top=${top}px, left=${left}px`);
-            
-            // Appliquer les styles de position
-            menu.style.position = 'fixed';
             menu.style.top = `${top}px`;
             menu.style.left = `${left}px`;
             menu.style.zIndex = '9999';
-            menu.style.display = 'block';
             
-            // Afficher le menu avec animation
             menu.classList.add('show');
             button.classList.add('active');
-            
-            console.log(`✅ Menu affiché pour projet ${projectId}`);
         }
 
         function closeAllDropdowns() {
-            const dropdowns = document.querySelectorAll('.dropdown-menu-actions');
+            const dropdowns = document.querySelectorAll('.dropdown-menu-actions.show');
             const buttons = document.querySelectorAll('.btn-three-dots.active');
             const overlay = document.getElementById('dropdownOverlay');
             
             dropdowns.forEach(dropdown => {
-                dropdown.style.display = 'none';
-                dropdown.style.opacity = '0';
-                dropdown.style.visibility = 'hidden';
                 dropdown.classList.remove('show', 'show-above', 'show-below');
             });
             
