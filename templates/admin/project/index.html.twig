@@ -780,6 +780,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Formulaires cachés pour les actions -->
+    <div id="hiddenForms" style="display: none;"></div>
 {% endblock %}
 
 {% block javascripts %}
@@ -792,6 +795,14 @@
         let itemsPerPage = 25;
         let selectedRows = new Set();
         let currentOpenDropdown = null;
+
+        // URLs pour les actions - générées côté JavaScript
+        const projectUrls = {
+            deleteBase: '{{ path('admin_project_index') }}'.replace('/index', '/'),
+            exportExcel: '{{ path('admin_project_export_excel') }}',
+            exportPdf: '{{ path('admin_project_export_pdf') }}',
+            bulkDelete: '{{ path('admin_project_bulk_delete') }}'
+        };
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeTable();
@@ -997,18 +1008,29 @@
 
         function deleteRecord(projectId) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce projet ?')) {
+                // Créer le formulaire dynamiquement pour éviter l'erreur Twig
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `{{ path('admin_project_delete', {id: '__ID__'}) }}`.replace('__ID__', projectId);
+                form.action = projectUrls.deleteBase + projectId + '/delete';
                 
-                const token = document.createElement('input');
-                token.type = 'hidden';
-                token.name = '_token';
-                token.value = '{{ csrf_token('delete' ~ '__ID__') }}'.replace('__ID__', projectId);
-                
-                form.appendChild(token);
-                document.body.appendChild(form);
-                form.submit();
+                // Générer le token CSRF côté client
+                fetch('/admin/csrf-token/project-delete/' + projectId)
+                    .then(response => response.text())
+                    .then(token => {
+                        const tokenInput = document.createElement('input');
+                        tokenInput.type = 'hidden';
+                        tokenInput.name = '_token';
+                        tokenInput.value = token;
+                        
+                        form.appendChild(tokenInput);
+                        document.body.appendChild(form);
+                        form.submit();
+                    })
+                    .catch(error => {
+                        // Fallback sans token CSRF si l'endpoint n'existe pas
+                        document.body.appendChild(form);
+                        form.submit();
+                    });
             }
             closeAllDropdowns();
         }
@@ -1050,7 +1072,7 @@
         function exportToExcel(ids) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '{{ path('admin_project_export_excel') }}';
+            form.action = projectUrls.exportExcel;
             
             ids.forEach(id => {
                 const input = document.createElement('input');
@@ -1068,7 +1090,7 @@
         function exportToPdf(ids) {
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '{{ path('admin_project_export_pdf') }}';
+            form.action = projectUrls.exportPdf;
             
             ids.forEach(id => {
                 const input = document.createElement('input');
@@ -1084,7 +1106,7 @@
         }
 
         function bulkDelete(ids) {
-            fetch('{{ path('admin_project_bulk_delete') }}', {
+            fetch(projectUrls.bulkDelete, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

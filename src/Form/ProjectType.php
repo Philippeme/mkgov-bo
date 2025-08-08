@@ -296,4 +296,5 @@ class LinkType extends AbstractType
                 'mapped' => false
             ]);
     }
+
 }
