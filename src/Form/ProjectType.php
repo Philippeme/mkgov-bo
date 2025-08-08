@@ -137,10 +137,11 @@ class ProjectType extends AbstractType
                 'attr' => ['class' => 'form-check-input']
             ])
             
-            // Sous-formulaire pour la traduction
+            // CORRECTION: Champ translation non mappé à l'entité
             ->add('translation', TranslationType::class, [
                 'label' => false,
-                'current_locale' => $currentLocale
+                'current_locale' => $currentLocale,
+                'mapped' => false  // Correction principale: le champ n'est pas mappé à l'entité
             ])
             
             // Collection des membres
@@ -152,7 +153,8 @@ class ProjectType extends AbstractType
                 'label' => false,
                 'prototype' => true,
                 'prototype_name' => '__member_name__',
-                'attr' => ['class' => 'members-collection']
+                'attr' => ['class' => 'members-collection'],
+                'mapped' => false  // Non mappé car géré manuellement dans le contrôleur
             ])
             
             // Collection des liens
@@ -164,7 +166,8 @@ class ProjectType extends AbstractType
                 'label' => false,
                 'prototype' => true,
                 'prototype_name' => '__link_name__',
-                'attr' => ['class' => 'links-collection']
+                'attr' => ['class' => 'links-collection'],
+                'mapped' => false  // Non mappé car géré manuellement dans le contrôleur
             ]);
     }
 
@@ -190,7 +193,7 @@ class TranslationType extends AbstractType
                     'placeholder' => 'Nom du projet',
                     'data-translatable' => 'true'
                 ],
-                'mapped' => false
+                'mapped' => false  // Non mappé car géré manuellement
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
@@ -201,14 +204,15 @@ class TranslationType extends AbstractType
                     'placeholder' => 'Description du projet',
                     'data-translatable' => 'true'
                 ],
-                'mapped' => false
+                'mapped' => false  // Non mappé car géré manuellement
             ]);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
-            'current_locale' => 'fr'
+            'current_locale' => 'fr',
+            'data_class' => null  // Pas de classe de données car non mappé
         ]);
     }
 }
@@ -254,6 +258,13 @@ class MemberType extends AbstractType
                 'mapped' => false
             ]);
     }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => null  // Pas de classe de données car non mappé
+        ]);
+    }
 }
 
 // Sous-formulaire pour les liens
@@ -297,4 +308,10 @@ class LinkType extends AbstractType
             ]);
     }
 
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'data_class' => null  // Pas de classe de données car non mappé
+        ]);
+    }
 }

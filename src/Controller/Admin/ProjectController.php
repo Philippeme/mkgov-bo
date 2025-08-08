@@ -65,7 +65,7 @@ class ProjectController extends AbstractController
     public function new(Request $request): Response
     {
         $project = new Project();
-        $currentLocale = $request->get('locale', 'fr');
+        $currentLocale = $request->get('locale', $request->getLocale() ?: 'fr');
         
         $form = $this->createForm(ProjectType::class, $project, [
             'current_locale' => $currentLocale
@@ -83,58 +83,77 @@ class ProjectController extends AbstractController
                 ]);
             }
 
-            // Traiter la traduction principale
-            $translationData = $form->get('translation')->getData();
-            if ($translationData['name']) {
-                $translation = new ProjectTranslation();
-                $translation->setProject($project)
-                          ->setLocale($currentLocale)
-                          ->setName($translationData['name'])
-                          ->setDescription($translationData['description']);
+            // CORRECTION: Traitement de la traduction avec vérification
+            if ($form->has('translation') && $form->get('translation')->isSubmitted()) {
+                $translationData = $form->get('translation')->getData();
                 
-                $project->addTranslation($translation);
-            }
-
-            // Traiter les membres
-            $membersData = $form->get('members')->getData();
-            foreach ($membersData as $memberData) {
-                if ($memberData['name']) {
-                    $member = new ProjectMember();
-                    $member->setProject($project)
-                          ->setName($memberData['name'])
-                          ->setEmail($memberData['email'])
-                          ->setRole($memberData['role']);
+                // Vérification que les données de traduction existent
+                if (is_array($translationData) && !empty($translationData['name'])) {
+                    $translation = new ProjectTranslation();
+                    $translation->setProject($project)
+                              ->setLocale($currentLocale)
+                              ->setName($translationData['name'])
+                              ->setDescription($translationData['description'] ?? '');
                     
-                    $project->addMember($member);
+                    $project->addTranslation($translation);
                 }
             }
 
-            // Traiter les liens
-            $linksData = $form->get('links')->getData();
-            foreach ($linksData as $linkData) {
-                if ($linkData['title'] && $linkData['url']) {
-                    $link = new ProjectLink();
-                    $link->setProject($project)
-                         ->setTitle($linkData['title'])
-                         ->setUrl($linkData['url'])
-                         ->setType($linkData['type']);
-                    
-                    $project->addLink($link);
+            // CORRECTION: Traitement des membres avec vérification
+            if ($form->has('members') && $form->get('members')->isSubmitted()) {
+                $membersData = $form->get('members')->getData();
+                
+                if (is_array($membersData)) {
+                    foreach ($membersData as $memberData) {
+                        if (is_array($memberData) && !empty($memberData['name'])) {
+                            $member = new ProjectMember();
+                            $member->setProject($project)
+                                  ->setName($memberData['name'])
+                                  ->setEmail($memberData['email'] ?? null)
+                                  ->setRole($memberData['role'] ?? null);
+                            
+                            $project->addMember($member);
+                        }
+                    }
                 }
             }
 
-            // Traiter les fichiers
+            // CORRECTION: Traitement des liens avec vérification
+            if ($form->has('links') && $form->get('links')->isSubmitted()) {
+                $linksData = $form->get('links')->getData();
+                
+                if (is_array($linksData)) {
+                    foreach ($linksData as $linkData) {
+                        if (is_array($linkData) && !empty($linkData['title']) && !empty($linkData['url'])) {
+                            $link = new ProjectLink();
+                            $link->setProject($project)
+                                 ->setTitle($linkData['title'])
+                                 ->setUrl($linkData['url'])
+                                 ->setType($linkData['type'] ?? null);
+                            
+                            $project->addLink($link);
+                        }
+                    }
+                }
+            }
+
+            // Traitement des fichiers uploadés
             $uploadedFiles = $request->files->get('files', []);
             if (!empty($uploadedFiles)) {
                 $this->handleFileUploads($project, $uploadedFiles);
             }
 
-            $this->entityManager->persist($project);
-            $this->entityManager->flush();
+            try {
+                $this->entityManager->persist($project);
+                $this->entityManager->flush();
 
-            $this->addFlash('success', 'Projet créé avec succès.');
+                $this->addFlash('success', 'Projet créé avec succès.');
 
-            return $this->redirectToRoute('admin_project_show', ['id' => $project->getId()]);
+                return $this->redirectToRoute('admin_project_show', ['id' => $project->getId()]);
+                
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la création du projet : ' . $e->getMessage());
+            }
         }
 
         return $this->render('admin/project/new.html.twig', [
@@ -159,12 +178,44 @@ class ProjectController extends AbstractController
     #[Route('/{id}/edit', name: 'admin_project_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(Request $request, Project $project): Response
     {
-        $currentLocale = $request->get('locale', 'fr');
+        $currentLocale = $request->get('locale', $request->getLocale() ?: 'fr');
         $project = $this->projectRepository->findOneWithAllRelations($project->getId());
         
         $form = $this->createForm(ProjectType::class, $project, [
             'current_locale' => $currentLocale
         ]);
+
+        // Pré-remplir les données de traduction pour le formulaire
+        $existingTranslation = $project->getTranslation($currentLocale);
+        if ($existingTranslation) {
+            $form->get('translation')->setData([
+                'name' => $existingTranslation->getName(),
+                'description' => $existingTranslation->getDescription()
+            ]);
+        }
+
+        // Pré-remplir les données des membres
+        $membersData = [];
+        foreach ($project->getMembers() as $member) {
+            $membersData[] = [
+                'name' => $member->getName(),
+                'email' => $member->getEmail(),
+                'role' => $member->getRole()
+            ];
+        }
+        $form->get('members')->setData($membersData);
+
+        // Pré-remplir les données des liens
+        $linksData = [];
+        foreach ($project->getLinks() as $link) {
+            $linksData[] = [
+                'title' => $link->getTitle(),
+                'url' => $link->getUrl(),
+                'type' => $link->getType()
+            ];
+        }
+        $form->get('links')->setData($linksData);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -178,22 +229,24 @@ class ProjectController extends AbstractController
                 ]);
             }
 
-            // Traiter la traduction
-            $translationData = $form->get('translation')->getData();
-            $existingTranslation = $project->getTranslation($currentLocale);
-            
-            if ($translationData['name']) {
-                if ($existingTranslation) {
-                    $existingTranslation->setName($translationData['name'])
-                                      ->setDescription($translationData['description']);
-                } else {
-                    $translation = new ProjectTranslation();
-                    $translation->setProject($project)
-                              ->setLocale($currentLocale)
-                              ->setName($translationData['name'])
-                              ->setDescription($translationData['description']);
-                    
-                    $project->addTranslation($translation);
+            // Traitement de la traduction
+            if ($form->has('translation') && $form->get('translation')->isSubmitted()) {
+                $translationData = $form->get('translation')->getData();
+                $existingTranslation = $project->getTranslation($currentLocale);
+                
+                if (is_array($translationData) && !empty($translationData['name'])) {
+                    if ($existingTranslation) {
+                        $existingTranslation->setName($translationData['name'])
+                                          ->setDescription($translationData['description'] ?? '');
+                    } else {
+                        $translation = new ProjectTranslation();
+                        $translation->setProject($project)
+                                  ->setLocale($currentLocale)
+                                  ->setName($translationData['name'])
+                                  ->setDescription($translationData['description'] ?? '');
+                        
+                        $project->addTranslation($translation);
+                    }
                 }
             }
 
@@ -203,16 +256,21 @@ class ProjectController extends AbstractController
                 $this->entityManager->remove($member);
             }
             
-            $membersData = $form->get('members')->getData();
-            foreach ($membersData as $memberData) {
-                if ($memberData['name']) {
-                    $member = new ProjectMember();
-                    $member->setProject($project)
-                          ->setName($memberData['name'])
-                          ->setEmail($memberData['email'])
-                          ->setRole($memberData['role']);
-                    
-                    $project->addMember($member);
+            if ($form->has('members') && $form->get('members')->isSubmitted()) {
+                $membersData = $form->get('members')->getData();
+                
+                if (is_array($membersData)) {
+                    foreach ($membersData as $memberData) {
+                        if (is_array($memberData) && !empty($memberData['name'])) {
+                            $member = new ProjectMember();
+                            $member->setProject($project)
+                                  ->setName($memberData['name'])
+                                  ->setEmail($memberData['email'] ?? null)
+                                  ->setRole($memberData['role'] ?? null);
+                            
+                            $project->addMember($member);
+                        }
+                    }
                 }
             }
 
@@ -222,16 +280,21 @@ class ProjectController extends AbstractController
                 $this->entityManager->remove($link);
             }
             
-            $linksData = $form->get('links')->getData();
-            foreach ($linksData as $linkData) {
-                if ($linkData['title'] && $linkData['url']) {
-                    $link = new ProjectLink();
-                    $link->setProject($project)
-                         ->setTitle($linkData['title'])
-                         ->setUrl($linkData['url'])
-                         ->setType($linkData['type']);
-                    
-                    $project->addLink($link);
+            if ($form->has('links') && $form->get('links')->isSubmitted()) {
+                $linksData = $form->get('links')->getData();
+                
+                if (is_array($linksData)) {
+                    foreach ($linksData as $linkData) {
+                        if (is_array($linkData) && !empty($linkData['title']) && !empty($linkData['url'])) {
+                            $link = new ProjectLink();
+                            $link->setProject($project)
+                                 ->setTitle($linkData['title'])
+                                 ->setUrl($linkData['url'])
+                                 ->setType($linkData['type'] ?? null);
+                            
+                            $project->addLink($link);
+                        }
+                    }
                 }
             }
 
@@ -241,11 +304,30 @@ class ProjectController extends AbstractController
                 $this->handleFileUploads($project, $uploadedFiles);
             }
 
-            $this->entityManager->flush();
+            // Traiter les fichiers supprimés
+            $removedAttachments = $request->request->get('removed_attachments');
+            if ($removedAttachments) {
+                $removedIds = json_decode($removedAttachments, true);
+                if (is_array($removedIds)) {
+                    foreach ($removedIds as $attachmentId) {
+                        $attachment = $this->entityManager->getRepository(ProjectAttachment::class)->find($attachmentId);
+                        if ($attachment && $attachment->getProject() === $project) {
+                            $project->removeAttachment($attachment);
+                            $this->entityManager->remove($attachment);
+                        }
+                    }
+                }
+            }
 
-            $this->addFlash('success', 'Projet modifié avec succès.');
+            try {
+                $this->entityManager->flush();
+                $this->addFlash('success', 'Projet modifié avec succès.');
 
-            return $this->redirectToRoute('admin_project_show', ['id' => $project->getId()]);
+                return $this->redirectToRoute('admin_project_show', ['id' => $project->getId()]);
+                
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors de la modification du projet : ' . $e->getMessage());
+            }
         }
 
         return $this->render('admin/project/edit.html.twig', [
@@ -280,13 +362,20 @@ class ProjectController extends AbstractController
             return new JsonResponse(['success' => false, 'message' => 'Aucun projet sélectionné']);
         }
 
-        $count = $this->projectRepository->softDeleteByIds($ids);
-        $this->entityManager->flush();
+        try {
+            $count = $this->projectRepository->softDeleteByIds($ids);
+            $this->entityManager->flush();
 
-        return new JsonResponse([
-            'success' => true, 
-            'message' => sprintf('%d projet(s) supprimé(s) avec succès', $count)
-        ]);
+            return new JsonResponse([
+                'success' => true, 
+                'message' => sprintf('%d projet(s) supprimé(s) avec succès', $count)
+            ]);
+        } catch (\Exception $e) {
+            return new JsonResponse([
+                'success' => false, 
+                'message' => 'Erreur lors de la suppression : ' . $e->getMessage()
+            ]);
+        }
     }
 
     #[Route('/export/excel', name: 'admin_project_export_excel', methods: ['POST'])]
@@ -425,7 +514,7 @@ class ProjectController extends AbstractController
         }
 
         foreach ($files as $file) {
-            if ($file) {
+            if ($file && $file->isValid()) {
                 $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $this->slugger->slug($originalFilename);
                 $newFilename = $safeFilename.'-'.uniqid().'.'.$file->guessExtension();
@@ -448,5 +537,4 @@ class ProjectController extends AbstractController
             }
         }
     }
-
 }
