@@ -171,6 +171,7 @@
             font-size: 12px;
             transition: all 0.3s ease;
             color: var(--mk-gray);
+            position: relative;
         }
 
         .lang-btn.active {
@@ -192,10 +193,14 @@
             width: 16px;
             height: 16px;
             font-size: 10px;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: center;
             font-weight: bold;
+        }
+
+        .language-indicator.show {
+            display: flex;
         }
 
         .form-steps-container {
@@ -293,6 +298,37 @@
         .translation-notice .notice-description {
             margin-bottom: 0;
             opacity: 0.9;
+        }
+
+        .language-reset-warning {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--mk-warning);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 9999;
+            display: none;
+            animation: slideInRight 0.3s ease;
+            max-width: 350px;
+        }
+
+        .language-reset-warning.show {
+            display: block;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .form-section {
@@ -567,37 +603,6 @@
             transform: translateY(-2px);
         }
 
-        .language-reset-warning {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--mk-warning);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 9999;
-            display: none;
-            animation: slideInRight 0.3s ease;
-            max-width: 350px;
-        }
-
-        .language-reset-warning.show {
-            display: block;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
         .is-invalid {
             border-color: var(--mk-danger);
             box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
@@ -666,8 +671,8 @@
     <div style="display: flex; align-items: center; gap: 10px;">
         <i class="fas fa-exclamation-triangle"></i>
         <div>
-            <strong>Formulaire réinitialisé</strong><br>
-            <small>Les champs translatables ont été vidés pour permettre la saisie dans la nouvelle langue.</small>
+            <strong>Champs réinitialisés</strong><br>
+            <small>Les champs translatables ont été vidés pour permettre la saisie en {{ currentLocale == 'fr' ? 'français' : 'anglais' }}.</small>
         </div>
     </div>
 </div>
@@ -681,7 +686,7 @@
                     <i class="bi-folder-plus me-3"></i>
                     Nouveau Projet
                 </h1>
-                <p class="mb-0">Créez un nouveau projet en suivant les étapes</p>
+                <p class="mb-0">Créez un nouveau projet</p>
             </div>
             <div class="col-md-4 text-end">
                 <a href="{{ path('admin_project_index') }}" class="btn btn-outline-light">
@@ -740,20 +745,20 @@
 
     <!-- Bouton de langue repositionné à droite de la navigation -->
     <div class="language-switcher">
-        <button class="lang-btn active" data-lang="fr" type="button">
+        <button class="lang-btn {{ currentLocale == 'fr' ? 'active' : '' }}" data-lang="fr" type="button">
             FR
-            <span class="language-indicator" id="frIndicator" style="display: none;">✓</span>
+            <span class="language-indicator" id="frIndicator">✓</span>
         </button>
-        <button class="lang-btn" data-lang="en" type="button">
+        <button class="lang-btn {{ currentLocale == 'en' ? 'active' : '' }}" data-lang="en" type="button">
             EN
-            <span class="language-indicator" id="enIndicator" style="display: none;">✓</span>
+            <span class="language-indicator" id="enIndicator">✓</span>
         </button>
     </div>
 </div>
 
 <div class="container-fluid main-content-wrapper">
     {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate'}}) }}
-        <div class="form-steps-container">
+        <div class="form-steps-container">  
             
             <!-- ÉTAPE 1: IDENTIFICATION -->
             <div class="form-step active" data-step-content="1">
@@ -762,7 +767,7 @@
                     Identification du projet
                 </h2>
                 <p class="step-description">
-                    Renseignez les informations principales de votre projet
+                    Renseignez les informations principales de votre projet dans la langue souhaitée
                 </p>
 
                 <div class="form-section">
@@ -771,16 +776,17 @@
                             <div class="mb-3 translatable-field">
                                 {{ form_label(form.translation.name, 'Nom du projet', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                                 <span class="required-indicator">*</span>
-                                {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true'}}) }}
+                                <i class="fas fa-language translatable-indicator" title="Champ traduisible"></i>
+                                {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'placeholder': 'Saisissez le nom'}}) }}
                                 {{ form_help(form.translation.name) }}
                                 <div class="invalid-feedback"></div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form_label(form.code) }}
+                                {{ form_label(form.code, 'Code du projet (unique)', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                                 <span class="required-indicator">*</span>
-                                {{ form_widget(form.code, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_widget(form.code, {'attr': {'class': 'form-control', 'placeholder': 'Ex: PROJ-2024'}}) }}
                                 {{ form_help(form.code) }}
                                 <div class="invalid-feedback"></div>
                             </div>
@@ -807,7 +813,8 @@
                     <div class="mb-3 translatable-field">
                         {{ form_label(form.translation.description, 'Description', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
                         <span class="required-indicator">*</span>
-                        {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true'}}) }}
+                        <i class="fas fa-language translatable-indicator" title="Champ traduisible"></i>
+                        {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'placeholder': 'Décrivez le projet'}}) }}
                         {{ form_help(form.translation.description) }}
                         <div class="invalid-feedback"></div>
                     </div>
@@ -880,7 +887,7 @@
                     Membres du projet
                 </h2>
                 <p class="step-description">
-                    Ajoutez les membres qui participeront au projet
+                    Ajoutez les membres qui participeront au projet (optionnel)
                 </p>
 
                 <div class="form-section">
@@ -901,7 +908,7 @@
 
                     <div class="alert alert-info">
                         <i class="bi-info-circle me-2"></i>
-                        Cette étape est optionnelle. Vous pourrez ajouter des membres plus tard.
+                        Cette étape est optionnelle. Vous pourrez ajouter des membres plus tard depuis la page de modification.
                     </div>
                 </div>
             </div>
@@ -913,7 +920,7 @@
                     Liens et ressources
                 </h2>
                 <p class="step-description">
-                    Ajoutez des liens vers des ressources externes liées au projet
+                    Ajoutez des liens vers des ressources externes liées au projet (optionnel)
                 </p>
 
                 <div class="form-section">
@@ -946,7 +953,7 @@
                     Pièces jointes
                 </h2>
                 <p class="step-description">
-                    Ajoutez des documents et fichiers relatifs au projet
+                    Ajoutez des documents et fichiers relatifs au projet (optionnel)
                 </p>
 
                 <div class="form-section">
@@ -978,7 +985,7 @@
             </a>
             <button type="submit" class="btn-save-project" id="btnSaveProject">
                 <i class="bi-save"></i>
-                Enregistrer le projet
+                Enregistrer le projet en {{ currentLocale|upper }}
             </button>
         </div>
 
@@ -1007,7 +1014,7 @@
         let linkIndex = 0;
         let uploadedFiles = [];
         let hasUnsavedChanges = false;
-        let savedTranslations = { fr: {}, en: {} }; // Stockage des traductions
+        let formDataByLanguage = { fr: {}, en: {} }; // Stockage des données par langue
         let hasDataInLanguage = { fr: false, en: false };
 
         // Initialisation
@@ -1018,41 +1025,26 @@
             initializeSearchableSelects();
             trackFormChanges();
             updateLanguageIndicators();
+            
+            // Marquer la langue actuelle comme ayant des données potentielles
+            updateCurrentLanguageData();
         });
 
         function initializeForm() {
-            const savedLang = localStorage.getItem('mkba_project_lang') || currentLang;
-            setLanguage(savedLang);
+            setLanguage(currentLang);
             updateLanguageDisplay();
         }
 
         function updateLanguageDisplay() {
-            const display = document.getElementById('currentLanguageDisplay');
-            if (display) {
+            // Mettre à jour l'affichage de la langue actuelle dans l'interface
+            const currentLangDisplays = document.querySelectorAll('.current-language-display');
+            currentLangDisplays.forEach(display => {
                 display.textContent = currentLang === 'fr' ? 'français' : 'anglais';
-            }
-        }
-
-        function trackFormChanges() {
-            const form = document.getElementById('projectForm');
-            const inputs = form.querySelectorAll('input, textarea, select');
-            
-            inputs.forEach(input => {
-                input.addEventListener('change', () => {
-                    markAsUnsaved();
-                    checkForDataInCurrentLanguage();
-                });
-                
-                if (input.type === 'text' || input.type === 'email' || input.type === 'url' || input.tagName === 'TEXTAREA') {
-                    input.addEventListener('input', () => {
-                        markAsUnsaved();
-                        checkForDataInCurrentLanguage();
-                    });
-                }
             });
         }
 
-        function checkForDataInCurrentLanguage() {
+        function updateCurrentLanguageData() {
+            // Vérifier si des champs ont du contenu dans la langue actuelle
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             let hasData = false;
             
@@ -1071,11 +1063,30 @@
             const enIndicator = document.getElementById('enIndicator');
             
             if (frIndicator) {
-                frIndicator.style.display = hasDataInLanguage.fr ? 'flex' : 'none';
+                frIndicator.classList.toggle('show', hasDataInLanguage.fr || currentLang === 'fr');
             }
             if (enIndicator) {
-                enIndicator.style.display = hasDataInLanguage.en ? 'flex' : 'none';
+                enIndicator.classList.toggle('show', hasDataInLanguage.en || currentLang === 'en');
             }
+        }
+
+        function trackFormChanges() {
+            const form = document.getElementById('projectForm');
+            const inputs = form.querySelectorAll('input, textarea, select');
+            
+            inputs.forEach(input => {
+                input.addEventListener('change', () => {
+                    markAsUnsaved();
+                    updateCurrentLanguageData();
+                });
+                
+                if (input.type === 'text' || input.type === 'email' || input.type === 'url' || input.tagName === 'TEXTAREA') {
+                    input.addEventListener('input', () => {
+                        markAsUnsaved();
+                        updateCurrentLanguageData();
+                    });
+                }
+            });
         }
 
         function markAsUnsaved() {
@@ -1110,26 +1121,33 @@
                 });
             });
 
-            // Switch de langue avec sauvegarde et réinitialisation
+            // Switch de langue avec confirmation et réinitialisation
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const lang = this.dataset.lang;
                     
                     if (lang !== currentLang) {
-                        // Sauvegarder les données actuelles si elles existent
-                        saveCurrentTranslation();
+                        // Confirmer si il y a des données non sauvegardées
+                        if (hasUnsavedChanges) {
+                            if (!confirm('Attention ! Changer de langue va réinitialiser tous les champs de saisie. Les données saisies seront perdues. Continuer ?')) {
+                                return;
+                            }
+                        }
                         
-                        // Réinitialiser les champs translatables
+                        // Sauvegarder les données actuelles avant de changer
+                        saveCurrentFormData();
+                        
+                        // Réinitialiser tous les champs translatables
                         resetTranslatableFields();
                         
                         // Changer de langue
                         switchLanguage(lang);
                         
-                        // Charger les données de la nouvelle langue si elles existent
-                        loadTranslationForLanguage(lang);
-                        
                         // Afficher l'avertissement
                         showLanguageResetWarning();
+                        
+                        // Réinitialiser l'état de modification
+                        hasUnsavedChanges = false;
                     }
                 });
             });
@@ -1146,43 +1164,43 @@
             });
         }
 
-        function saveCurrentTranslation() {
+        function saveCurrentFormData() {
+            // Sauvegarder les données actuelles du formulaire
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
-            const translation = {};
+            const data = {};
             
             translatableFields.forEach(field => {
                 const name = field.name.replace(/.*\[(\w+)\]$/, '$1');
-                translation[name] = field.value;
+                data[name] = field.value;
             });
             
-            savedTranslations[currentLang] = translation;
-        }
-
-        function loadTranslationForLanguage(lang) {
-            const translation = savedTranslations[lang];
-            if (translation) {
-                Object.keys(translation).forEach(key => {
-                    const field = document.querySelector(`[data-translatable="true"][name*="[${key}]"]`);
-                    if (field) {
-                        field.value = translation[key] || '';
-                    }
-                });
-            }
+            formDataByLanguage[currentLang] = data;
         }
 
         function resetTranslatableFields() {
+            // Vider tous les champs translatables
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             translatableFields.forEach(field => {
                 field.value = '';
             });
+            
+            // Réinitialiser les indicateurs
+            hasDataInLanguage[currentLang] = false;
         }
 
         function switchLanguage(lang) {
             if (lang === currentLang) return;
             
+            // Changer la langue
             setLanguage(lang);
             updateLanguageDisplay();
-            checkForDataInCurrentLanguage();
+            updateCurrentLanguageData();
+            
+            // Mettre à jour le bouton de sauvegarde
+            const saveBtn = document.getElementById('btnSaveProject');
+            if (saveBtn) {
+                saveBtn.innerHTML = `<i class="bi-save"></i> Enregistrer le projet en ${lang.toUpperCase()}`;
+            }
         }
 
         function setLanguage(lang) {
@@ -1200,7 +1218,7 @@
             
             setTimeout(() => {
                 warning.classList.remove('show');
-            }, 4000);
+            }, 5000);
         }
 
         // Gestion des collections
@@ -1216,11 +1234,11 @@
                 <div class="row">
                     <div class="col-md-4">
                         <label class="form-label">Nom complet</label>
-                        <input type="text" class="form-control" name="members[${memberIndex}][name]">
+                        <input type="text" class="form-control" name="members[${memberIndex}][name]" placeholder="Nom du membre">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="members[${memberIndex}][email]">
+                        <input type="email" class="form-control" name="members[${memberIndex}][email]" placeholder="email@example.com">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Rôle</label>
@@ -1260,11 +1278,11 @@
                 <div class="row">
                     <div class="col-md-4">
                         <label class="form-label">Titre du lien</label>
-                        <input type="text" class="form-control" name="links[${linkIndex}][title]">
+                        <input type="text" class="form-control" name="links[${linkIndex}][title]" placeholder="Titre du lien">
                     </div>
                     <div class="col-md-5">
                         <label class="form-label">URL</label>
-                        <input type="url" class="form-control" name="links[${linkIndex}][url]" placeholder="https://">
+                        <input type="url" class="form-control" name="links[${linkIndex}][url]" placeholder="https://example.com">
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Type</label>
@@ -1384,9 +1402,6 @@
         function handleFormSubmit(e) {
             e.preventDefault();
             
-            // Sauvegarder la traduction actuelle
-            saveCurrentTranslation();
-            
             // Validation de base
             if (!validateForm()) {
                 return false;
@@ -1396,11 +1411,12 @@
             const formData = new FormData(e.target);
             formData.append('locale', currentLang);
             
-            // Ajouter les données de traduction
-            const translation = savedTranslations[currentLang];
-            Object.keys(translation).forEach(key => {
-                formData.append(`translation[${key}]`, translation[key] || '');
-            });
+            // Ajouter les données de traduction pour la langue actuelle
+            const nameField = document.querySelector('[name="project[translation][name]"]');
+            const descField = document.querySelector('[name="project[translation][description]"]');
+            
+            formData.append('translation[name]', nameField ? nameField.value : '');
+            formData.append('translation[description]', descField ? descField.value : '');
 
             // Ajouter les fichiers
             uploadedFiles.forEach(file => {
@@ -1408,7 +1424,7 @@
             });
 
             markAsSaved();
-            showNotification('Enregistrement en cours...', 'info');
+            showNotification(`Enregistrement du projet en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
             
             // Soumettre avec FormData
             fetch(e.target.action, {
@@ -1416,7 +1432,7 @@
                 body: formData
             }).then(response => {
                 if (response.ok) {
-                    showNotification('Projet créé avec succès!', 'success');
+                    showNotification(`Projet créé avec succès en ${currentLang === 'fr' ? 'français' : 'anglais'}!`, 'success');
                     setTimeout(() => {
                         window.location.href = '{{ path("admin_project_index") }}';
                     }, 1500);
@@ -1485,11 +1501,11 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Projet MK BA avec gestion multilingue initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('%c🚀 Formulaire Projet MK BA avec gestion multilingue stricte initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
         console.log(`✅ Langue actuelle: ${currentLang}`);
-        console.log('✅ Gestion des traductions multiples');
-        console.log('✅ Réinitialisation lors du changement de langue');
-        console.log('✅ Sauvegarde des données par langue');
-        console.log('✅ Indicateurs visuels de traduction');
+        console.log('✅ Réinitialisation complète lors du changement de langue');
+        console.log('✅ Validation séparée par langue');
+        console.log('✅ Enregistrement sur une seule entrée avec traduction');
+        console.log('✅ Indicateurs visuels de saisie par langue');
     </script>
 {% endblock %}

@@ -86,59 +86,28 @@ class ProjectController extends AbstractController
             // Traitement de la traduction pour la langue courante
             $translationData = $request->request->all('translation');
             if (!empty($translationData['name'])) {
-                $translation = new ProjectTranslation();
-                $translation->setProject($project)
-                          ->setLocale($currentLocale)
-                          ->setName($translationData['name'])
-                          ->setDescription($translationData['description'] ?? '');
-                
-                $project->addTranslation($translation);
+                $this->saveTranslationForLocale($project, $currentLocale, $translationData);
             }
 
-            // Traitement des membres
-            $membersData = $request->request->all('members');
-            if (is_array($membersData)) {
-                foreach ($membersData as $memberData) {
-                    if (!empty($memberData['name'])) {
-                        $member = new ProjectMember();
-                        $member->setProject($project)
-                              ->setName($memberData['name'])
-                              ->setEmail($memberData['email'] ?? null)
-                              ->setRole($memberData['role'] ?? null);
-                        
-                        $project->addMember($member);
-                    }
-                }
-            }
-
-            // Traitement des liens
-            $linksData = $request->request->all('links');
-            if (is_array($linksData)) {
-                foreach ($linksData as $linkData) {
-                    if (!empty($linkData['title']) && !empty($linkData['url'])) {
-                        $link = new ProjectLink();
-                        $link->setProject($project)
-                             ->setTitle($linkData['title'])
-                             ->setUrl($linkData['url'])
-                             ->setType($linkData['type'] ?? null);
-                        
-                        $project->addLink($link);
-                    }
-                }
-            }
+            // Traitement des relations
+            $this->processProjectRelations($project, $request);
 
             // Traitement des fichiers uploadés
-            $uploadedFiles = $request->files->get('files', []);
-            if (!empty($uploadedFiles)) {
-                $this->handleFileUploads($project, $uploadedFiles);
-            }
+            $this->processFileUploads($project, $request);
 
             try {
                 $this->entityManager->persist($project);
                 $this->entityManager->flush();
 
-                $this->addFlash('success', 'Projet créé avec succès.');
-                return $this->redirectToRoute('admin_project_show', ['id' => $project->getId()]);
+                $this->addFlash('success', sprintf(
+                    'Projet créé avec succès en %s.', 
+                    $currentLocale === 'fr' ? 'français' : 'anglais'
+                ));
+                
+                return $this->redirectToRoute('admin_project_show', [
+                    'id' => $project->getId(),
+                    'locale' => $currentLocale
+                ]);
                 
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Erreur lors de la création du projet : ' . $e->getMessage());
@@ -158,17 +127,9 @@ class ProjectController extends AbstractController
         $locale = $request->query->get('locale', $request->getLocale() ?: 'fr');
         $project = $this->projectRepository->findOneWithAllRelations($project->getId());
 
-        // Vérifier si des traductions existent pour chaque langue
-        $availableTranslations = [];
+        // Vérifier les traductions disponibles pour chaque langue
+        $availableTranslations = $this->getAvailableTranslations($project);
         $supportedLocales = ['fr', 'en'];
-        
-        foreach ($supportedLocales as $supportedLocale) {
-            $translation = $project->getTranslation($supportedLocale);
-            $availableTranslations[$supportedLocale] = [
-                'exists' => $translation !== null && !empty($translation->getName()),
-                'translation' => $translation
-            ];
-        }
 
         return $this->render('admin/project/show.html.twig', [
             'project' => $project,
@@ -203,90 +164,28 @@ class ProjectController extends AbstractController
             // Traitement de la traduction pour la langue courante
             $translationData = $request->request->all('translation');
             if (!empty($translationData['name'])) {
-                $existingTranslation = $project->getTranslation($currentLocale);
-                
-                if ($existingTranslation) {
-                    $existingTranslation->setName($translationData['name'])
-                                      ->setDescription($translationData['description'] ?? '');
-                } else {
-                    $translation = new ProjectTranslation();
-                    $translation->setProject($project)
-                              ->setLocale($currentLocale)
-                              ->setName($translationData['name'])
-                              ->setDescription($translationData['description'] ?? '');
-                    
-                    $project->addTranslation($translation);
-                }
+                $this->saveTranslationForLocale($project, $currentLocale, $translationData);
             }
 
-            // Réinjecter les membres
-            foreach ($project->getMembers() as $member) {
-                $project->removeMember($member);
-                $this->entityManager->remove($member);
-            }
-            
-            $membersData = $request->request->all('members');
-            if (is_array($membersData)) {
-                foreach ($membersData as $memberData) {
-                    if (!empty($memberData['name'])) {
-                        $member = new ProjectMember();
-                        $member->setProject($project)
-                              ->setName($memberData['name'])
-                              ->setEmail($memberData['email'] ?? null)
-                              ->setRole($memberData['role'] ?? null);
-                        
-                        $project->addMember($member);
-                    }
-                }
-            }
+            // Traitement des relations
+            $this->processProjectRelations($project, $request);
 
-            // Réinjecter les liens
-            foreach ($project->getLinks() as $link) {
-                $project->removeLink($link);
-                $this->entityManager->remove($link);
-            }
-            
-            $linksData = $request->request->all('links');
-            if (is_array($linksData)) {
-                foreach ($linksData as $linkData) {
-                    if (!empty($linkData['title']) && !empty($linkData['url'])) {
-                        $link = new ProjectLink();
-                        $link->setProject($project)
-                             ->setTitle($linkData['title'])
-                             ->setUrl($linkData['url'])
-                             ->setType($linkData['type'] ?? null);
-                        
-                        $project->addLink($link);
-                    }
-                }
-            }
-
-            // Traiter les nouveaux fichiers
-            $uploadedFiles = $request->files->get('files', []);
-            if (!empty($uploadedFiles)) {
-                $this->handleFileUploads($project, $uploadedFiles);
-            }
-
-            // Traiter les fichiers supprimés
-            $removedAttachments = $request->request->get('removed_attachments');
-            if ($removedAttachments) {
-                $removedIds = json_decode($removedAttachments, true);
-                if (is_array($removedIds)) {
-                    foreach ($removedIds as $attachmentId) {
-                        $attachment = $this->entityManager->getRepository(ProjectAttachment::class)->find($attachmentId);
-                        if ($attachment && $attachment->getProject() === $project) {
-                            $project->removeAttachment($attachment);
-                            $this->entityManager->remove($attachment);
-                        }
-                    }
-                }
-            }
+            // Traitement des fichiers
+            $this->processFileUploads($project, $request);
+            $this->processRemovedAttachments($project, $request);
 
             try {
                 $this->entityManager->flush();
-                $this->addFlash('success', 'Projet modifié avec succès.');
+                
+                $this->addFlash('success', sprintf(
+                    'Projet modifié avec succès en %s.', 
+                    $currentLocale === 'fr' ? 'français' : 'anglais'
+                ));
 
-                return $this->redirectToRoute('admin_project_show', ['id' => $project->getId()]);
+                return $this->redirectToRoute('admin_project_show', [
+                    'id' => $project->getId(),
+                    'locale' => $currentLocale
+                ]);
                 
             } catch (\Exception $e) {
                 $this->addFlash('error', 'Erreur lors de la modification du projet : ' . $e->getMessage());
@@ -296,53 +195,25 @@ class ProjectController extends AbstractController
         return $this->render('admin/project/edit.html.twig', [
             'project' => $project,
             'form' => $form->createView(),
-            'currentLocale' => $currentLocale
+            'currentLocale' => $currentLocale,
+            'availableTranslations' => $this->getAvailableTranslations($project)
         ]);
     }
 
-    #[Route('/save-translation', name: 'admin_project_save_translation', methods: ['POST'])]
-    public function saveTranslation(Request $request): JsonResponse
+    #[Route('/{id}/delete', name: 'admin_project_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function delete(Request $request, Project $project): Response
     {
-        try {
-            $data = json_decode($request->getContent(), true);
-            
-            $projectId = $data['project_id'] ?? null;
-            $locale = $data['locale'] ?? null;
-            $name = $data['name'] ?? '';
-            $description = $data['description'] ?? '';
-
-            if (!$projectId || !$locale) {
-                return new JsonResponse(['success' => false, 'message' => 'Paramètres manquants'], 400);
-            }
-
-            $project = $this->projectRepository->find($projectId);
-            if (!$project) {
-                return new JsonResponse(['success' => false, 'message' => 'Projet non trouvé'], 404);
-            }
-
-            // Chercher ou créer la traduction
-            $translation = $project->getTranslation($locale);
-            if (!$translation) {
-                $translation = new ProjectTranslation();
-                $translation->setProject($project)->setLocale($locale);
-                $project->addTranslation($translation);
-            }
-
-            $translation->setName($name)->setDescription($description);
-
+        if ($this->isCsrfTokenValid('delete'.$project->getId(), $request->request->get('_token'))) {
+            // Soft delete : désactiver au lieu de supprimer
+            $project->setIsActive(false);
             $this->entityManager->flush();
 
-            return new JsonResponse([
-                'success' => true,
-                'message' => 'Traduction sauvegardée avec succès'
-            ]);
-
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Erreur lors de la sauvegarde : ' . $e->getMessage()
-            ], 500);
+            $this->addFlash('success', 'Projet supprimé avec succès.');
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
         }
+
+        return $this->redirectToRoute('admin_project_index');
     }
 
     #[Route('/get-translation', name: 'admin_project_get_translation', methods: ['GET'])]
@@ -377,22 +248,6 @@ class ProjectController extends AbstractController
                 'type' => $l->getType()
             ])->toArray()
         ]);
-    }
-
-    #[Route('/{id}/delete', name: 'admin_project_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
-    public function delete(Request $request, Project $project): Response
-    {
-        if ($this->isCsrfTokenValid('delete'.$project->getId(), $request->request->get('_token'))) {
-            // Soft delete : désactiver au lieu de supprimer
-            $project->setIsActive(false);
-            $this->entityManager->flush();
-
-            $this->addFlash('success', 'Projet supprimé avec succès.');
-        } else {
-            $this->addFlash('error', 'Token CSRF invalide.');
-        }
-
-        return $this->redirectToRoute('admin_project_index');
     }
 
     #[Route('/bulk-delete', name: 'admin_project_bulk_delete', methods: ['POST'])]
@@ -514,6 +369,131 @@ class ProjectController extends AbstractController
         );
     }
 
+    /**
+     * Sauvegarder une traduction pour une locale spécifique
+     */
+    private function saveTranslationForLocale(Project $project, string $locale, array $translationData): void
+    {
+        $existingTranslation = $project->getTranslation($locale);
+        
+        if ($existingTranslation) {
+            // Mettre à jour la traduction existante
+            $existingTranslation->setName($translationData['name'])
+                              ->setDescription($translationData['description'] ?? '');
+        } else {
+            // Créer une nouvelle traduction
+            $translation = new ProjectTranslation();
+            $translation->setProject($project)
+                      ->setLocale($locale)
+                      ->setName($translationData['name'])
+                      ->setDescription($translationData['description'] ?? '');
+            
+            $project->addTranslation($translation);
+        }
+    }
+
+    /**
+     * Traiter les relations du projet (membres et liens)
+     */
+    private function processProjectRelations(Project $project, Request $request): void
+    {
+        // Gérer les membres
+        $this->processMembers($project, $request);
+        
+        // Gérer les liens
+        $this->processLinks($project, $request);
+    }
+
+    /**
+     * Traiter les membres du projet
+     */
+    private function processMembers(Project $project, Request $request): void
+    {
+        // Supprimer tous les membres existants
+        foreach ($project->getMembers() as $member) {
+            $project->removeMember($member);
+            $this->entityManager->remove($member);
+        }
+        
+        // Ajouter les nouveaux membres
+        $membersData = $request->request->all('members');
+        if (is_array($membersData)) {
+            foreach ($membersData as $memberData) {
+                if (!empty($memberData['name'])) {
+                    $member = new ProjectMember();
+                    $member->setProject($project)
+                          ->setName($memberData['name'])
+                          ->setEmail($memberData['email'] ?? null)
+                          ->setRole($memberData['role'] ?? null);
+                    
+                    $project->addMember($member);
+                }
+            }
+        }
+    }
+
+    /**
+     * Traiter les liens du projet
+     */
+    private function processLinks(Project $project, Request $request): void
+    {
+        // Supprimer tous les liens existants
+        foreach ($project->getLinks() as $link) {
+            $project->removeLink($link);
+            $this->entityManager->remove($link);
+        }
+        
+        // Ajouter les nouveaux liens
+        $linksData = $request->request->all('links');
+        if (is_array($linksData)) {
+            foreach ($linksData as $linkData) {
+                if (!empty($linkData['title']) && !empty($linkData['url'])) {
+                    $link = new ProjectLink();
+                    $link->setProject($project)
+                         ->setTitle($linkData['title'])
+                         ->setUrl($linkData['url'])
+                         ->setType($linkData['type'] ?? null);
+                    
+                    $project->addLink($link);
+                }
+            }
+        }
+    }
+
+    /**
+     * Traiter les fichiers uploadés
+     */
+    private function processFileUploads(Project $project, Request $request): void
+    {
+        $uploadedFiles = $request->files->get('files', []);
+        if (!empty($uploadedFiles)) {
+            $this->handleFileUploads($project, $uploadedFiles);
+        }
+    }
+
+    /**
+     * Traiter les fichiers supprimés
+     */
+    private function processRemovedAttachments(Project $project, Request $request): void
+    {
+        $removedAttachments = $request->request->get('removed_attachments');
+        if ($removedAttachments) {
+            $removedIds = json_decode($removedAttachments, true);
+            if (is_array($removedIds)) {
+                foreach ($removedIds as $attachmentId) {
+                    $attachment = $this->entityManager->getRepository(ProjectAttachment::class)->find($attachmentId);
+                    if ($attachment && $attachment->getProject() === $project) {
+                        $project->removeAttachment($attachment);
+                        $this->entityManager->remove($attachment);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Gérer l'upload des fichiers
+     */
     private function handleFileUploads(Project $project, array $files): void
     {
         $uploadDir = $this->getParameter('projects_directory');
@@ -545,5 +525,24 @@ class ProjectController extends AbstractController
                 }
             }
         }
+    }
+
+    /**
+     * Obtenir les traductions disponibles pour un projet
+     */
+    private function getAvailableTranslations(Project $project): array
+    {
+        $availableTranslations = [];
+        $supportedLocales = ['fr', 'en'];
+        
+        foreach ($supportedLocales as $locale) {
+            $translation = $project->getTranslation($locale);
+            $availableTranslations[$locale] = [
+                'exists' => $translation !== null && !empty($translation->getName()),
+                'translation' => $translation
+            ];
+        }
+
+        return $availableTranslations;
     }
 }
