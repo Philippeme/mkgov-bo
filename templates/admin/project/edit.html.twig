@@ -379,6 +379,14 @@
             gap: 6px;
         }
 
+        /* CORRECTION: Éviter que l'indicateur * passe à la ligne */
+        .form-label .required-indicator {
+            color: var(--mk-danger);
+            font-weight: bold;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
         .form-control, .form-select {
             border: 2px solid #e5e7eb;
             border-radius: 10px;
@@ -391,11 +399,6 @@
             border-color: var(--mk-primary);
             box-shadow: 0 0 0 0.2rem rgba(109, 81, 146, 0.15);
             outline: none;
-        }
-
-        .required-indicator {
-            color: var(--mk-danger);
-            font-weight: bold;
         }
 
         .help-text {
@@ -932,8 +935,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3 translatable-field">
-                                {{ form_label(form.translation.name, 'Nom du projet', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
-                                <span class="required-indicator">*</span>
+                                <label class="form-label">
+                                    Nom du projet
+                                    <span class="required-indicator">*</span>
+                                </label>
                                 <i class="fas fa-language translatable-indicator" title="Champ traduisible"></i>
                                 <i class="fas fa-circle field-status" id="nameStatus"></i>
                                 {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'value': currentTranslation ? currentTranslation.name : '', 'placeholder': 'Nom du projet '}}) }}
@@ -943,8 +948,10 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form_label(form.code, 'Code du projet (unique)', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
-                                <span class="required-indicator">*</span>
+                                <label class="form-label">
+                                    Code du projet (unique)
+                                    <span class="required-indicator">*</span>
+                                </label>
                                 {{ form_widget(form.code, {'attr': {'class': 'form-control'}}) }}
                                 {{ form_help(form.code) }}
                                 <div class="invalid-feedback"></div>
@@ -970,8 +977,10 @@
                     </div>
 
                     <div class="mb-3 translatable-field">
-                        {{ form_label(form.translation.description, 'Description', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
-                        <span class="required-indicator">*</span>
+                        <label class="form-label">
+                            Description
+                            <span class="required-indicator">*</span>
+                        </label>
                         <i class="fas fa-language translatable-indicator" title="Champ traduisible"></i>
                         <i class="fas fa-circle field-status" id="descriptionStatus"></i>
                         {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'value': currentTranslation ? currentTranslation.description : '', 'placeholder': 'Décrivez le projet'}}) }}
@@ -1283,8 +1292,6 @@
             initializeSearchableSelects();
             trackFormChanges();
             updateFieldStatus();
-            
-            // Pré-remplir les champs avec les données de la langue actuelle
             loadTranslationForCurrentLanguage();
         });
 
@@ -1295,7 +1302,6 @@
         function loadTranslationForCurrentLanguage() {
             const translation = projectTranslations[currentLang];
             
-            // Remplir les champs de traduction
             const nameField = document.querySelector('[name="project[translation][name]"]');
             const descField = document.querySelector('[name="project[translation][description]"]');
             
@@ -1752,14 +1758,12 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Modification Projet MK BA avec gestion multilingue stricte initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log(`✅ Langue actuelle: ${currentLang}`);
+        console.log('%c🚀 Formulaire Modification Projet MK BA avec indicateurs corrigés!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Indicateurs * corrigés pour éviter le passage à la ligne');
         console.log('✅ Gestion des traductions existantes par langue');
         console.log('✅ Copie entre langues disponible');
         console.log('✅ Suivi des changements non sauvegardés');
         console.log('✅ Gestion des fichiers existants et nouveaux');
-        console.log('✅ Collections dynamiques pré-remplies');
-        console.log('✅ Validation séparée par langue');
     </script>
 
 {% endblock %}

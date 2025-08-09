@@ -300,35 +300,133 @@
             opacity: 0.9;
         }
 
-        .language-reset-warning {
+        /* MODAL PERSONNALISÉ POUR CHANGEMENT DE LANGUE */
+        .language-modal-overlay {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--mk-warning);
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 9999;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
             display: none;
-            animation: slideInRight 0.3s ease;
-            max-width: 350px;
+            animation: fadeInOverlay 0.3s ease;
         }
 
-        .language-reset-warning.show {
-            display: block;
+        .language-modal-overlay.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        @keyframes slideInRight {
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .language-modal {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            margin: 20px;
+            overflow: hidden;
+            transform: scale(0.9);
+            animation: modalSlideIn 0.3s ease forwards;
+        }
+
+        @keyframes modalSlideIn {
             from {
-                transform: translateX(100%);
+                transform: scale(0.9) translateY(-20px);
                 opacity: 0;
             }
             to {
-                transform: translateX(0);
+                transform: scale(1) translateY(0);
                 opacity: 1;
             }
+        }
+
+        .language-modal-header {
+            background: var(--mk-gradient-primary);
+            color: white;
+            padding: 20px 25px;
+            text-align: center;
+        }
+
+        .language-modal-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .language-modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .language-modal-body {
+            padding: 30px 25px;
+            text-align: center;
+        }
+
+        .language-modal-message {
+            font-size: 1.1rem;
+            color: var(--mk-dark);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .language-modal-warning {
+            background: linear-gradient(45deg, #fff3cd, #ffeaa7);
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #856404;
+        }
+
+        .language-modal-warning i {
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+
+        .language-modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .language-modal-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .language-modal-btn-cancel {
+            background: #6c757d;
+            color: white;
+        }
+
+        .language-modal-btn-cancel:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        .language-modal-btn-confirm {
+            background: var(--mk-warning);
+            color: white;
+        }
+
+        .language-modal-btn-confirm:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
         }
 
         .form-section {
@@ -359,6 +457,14 @@
             gap: 6px;
         }
 
+        /* CORRECTION: Éviter que l'indicateur * passe à la ligne */
+        .form-label .required-indicator {
+            color: var(--mk-danger);
+            font-weight: bold;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
         .form-control, .form-select {
             border: 2px solid #e5e7eb;
             border-radius: 10px;
@@ -371,11 +477,6 @@
             border-color: var(--mk-primary);
             box-shadow: 0 0 0 0.2rem rgba(109, 81, 146, 0.15);
             outline: none;
-        }
-
-        .required-indicator {
-            color: var(--mk-danger);
-            font-weight: bold;
         }
 
         .help-text {
@@ -654,25 +755,52 @@
                 flex-direction: column;
             }
 
-            .language-reset-warning {
-                position: relative;
-                top: auto;
-                right: auto;
-                margin-bottom: 20px;
-                max-width: none;
+            .language-modal {
+                width: 95%;
+                margin: 10px;
+            }
+
+            .language-modal-body {
+                padding: 25px 20px;
+            }
+
+            .language-modal-actions {
+                flex-direction: column;
+            }
+
+            .language-modal-btn {
+                width: 100%;
             }
         }
     </style>
 {% endblock %}
 
 {% block body %}
-<!-- Avertissement de réinitialisation de langue -->
-<div class="language-reset-warning" id="languageResetWarning">
-    <div style="display: flex; align-items: center; gap: 10px;">
-        <i class="fas fa-exclamation-triangle"></i>
-        <div>
-            <strong>Champs réinitialisés</strong><br>
-            <small>Les champs translatables ont été vidés pour permettre la saisie en {{ currentLocale == 'fr' ? 'français' : 'anglais' }}.</small>
+<!-- Modal personnalisé pour changement de langue -->
+<div class="language-modal-overlay" id="languageModal">
+    <div class="language-modal">
+        <div class="language-modal-header">
+            <i class="fas fa-exclamation-triangle language-modal-icon"></i>
+            <h3 class="language-modal-title">Changement de langue</h3>
+        </div>
+        <div class="language-modal-body">
+            <div class="language-modal-message">
+                Vous êtes sur le point de changer de langue de saisie.
+            </div>
+            <div class="language-modal-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Attention !</strong> Changer de langue va réinitialiser tous les champs de saisie. Les données saisies seront perdues.
+            </div>
+            <div class="language-modal-actions">
+                <button class="language-modal-btn language-modal-btn-cancel" onclick="cancelLanguageChange()">
+                    <i class="fas fa-times me-2"></i>
+                    Annuler
+                </button>
+                <button class="language-modal-btn language-modal-btn-confirm" onclick="confirmLanguageChange()">
+                    <i class="fas fa-check me-2"></i>
+                    Continuer
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -774,8 +902,10 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3 translatable-field">
-                                {{ form_label(form.translation.name, 'Nom du projet', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
-                                <span class="required-indicator">*</span>
+                                <label class="form-label">
+                                    Nom du projet
+                                    <span class="required-indicator">*</span>
+                                </label>
                                 <i class="fas fa-language translatable-indicator" title="Champ traduisible"></i>
                                 {{ form_widget(form.translation.name, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'placeholder': 'Saisissez le nom'}}) }}
                                 {{ form_help(form.translation.name) }}
@@ -784,8 +914,10 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                {{ form_label(form.code, 'Code du projet (unique)', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
-                                <span class="required-indicator">*</span>
+                                <label class="form-label">
+                                    Code du projet (unique)
+                                    <span class="required-indicator">*</span>
+                                </label>
                                 {{ form_widget(form.code, {'attr': {'class': 'form-control', 'placeholder': 'Ex: PROJ-2024'}}) }}
                                 {{ form_help(form.code) }}
                                 <div class="invalid-feedback"></div>
@@ -811,8 +943,10 @@
                     </div>
 
                     <div class="mb-3 translatable-field">
-                        {{ form_label(form.translation.description, 'Description', {'label_attr': {'class': 'form-label'}, 'required': true}) }}
-                        <span class="required-indicator">*</span>
+                        <label class="form-label">
+                            Description
+                            <span class="required-indicator">*</span>
+                        </label>
                         <i class="fas fa-language translatable-indicator" title="Champ traduisible"></i>
                         {{ form_widget(form.translation.description, {'attr': {'class': 'form-control', 'data-translatable': 'true', 'placeholder': 'Décrivez le projet'}}) }}
                         {{ form_help(form.translation.description) }}
@@ -1014,8 +1148,9 @@
         let linkIndex = 0;
         let uploadedFiles = [];
         let hasUnsavedChanges = false;
-        let formDataByLanguage = { fr: {}, en: {} }; // Stockage des données par langue
+        let formDataByLanguage = { fr: {}, en: {} };
         let hasDataInLanguage = { fr: false, en: false };
+        let pendingLanguageChange = null; // Pour stocker la langue en attente
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -1025,8 +1160,6 @@
             initializeSearchableSelects();
             trackFormChanges();
             updateLanguageIndicators();
-            
-            // Marquer la langue actuelle comme ayant des données potentielles
             updateCurrentLanguageData();
         });
 
@@ -1036,7 +1169,6 @@
         }
 
         function updateLanguageDisplay() {
-            // Mettre à jour l'affichage de la langue actuelle dans l'interface
             const currentLangDisplays = document.querySelectorAll('.current-language-display');
             currentLangDisplays.forEach(display => {
                 display.textContent = currentLang === 'fr' ? 'français' : 'anglais';
@@ -1044,7 +1176,6 @@
         }
 
         function updateCurrentLanguageData() {
-            // Vérifier si des champs ont du contenu dans la langue actuelle
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             let hasData = false;
             
@@ -1121,33 +1252,14 @@
                 });
             });
 
-            // Switch de langue avec confirmation et réinitialisation
+            // Switch de langue avec modal personnalisé
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const lang = this.dataset.lang;
                     
                     if (lang !== currentLang) {
-                        // Confirmer si il y a des données non sauvegardées
-                        if (hasUnsavedChanges) {
-                            if (!confirm('Attention ! Changer de langue va réinitialiser tous les champs de saisie. Les données saisies seront perdues. Continuer ?')) {
-                                return;
-                            }
-                        }
-                        
-                        // Sauvegarder les données actuelles avant de changer
-                        saveCurrentFormData();
-                        
-                        // Réinitialiser tous les champs translatables
-                        resetTranslatableFields();
-                        
-                        // Changer de langue
-                        switchLanguage(lang);
-                        
-                        // Afficher l'avertissement
-                        showLanguageResetWarning();
-                        
-                        // Réinitialiser l'état de modification
-                        hasUnsavedChanges = false;
+                        pendingLanguageChange = lang;
+                        showLanguageModal();
                     }
                 });
             });
@@ -1164,8 +1276,50 @@
             });
         }
 
+        // Gestion du modal de changement de langue
+        function showLanguageModal() {
+            const modal = document.getElementById('languageModal');
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function hideLanguageModal() {
+            const modal = document.getElementById('languageModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+            pendingLanguageChange = null;
+        }
+
+        function cancelLanguageChange() {
+            hideLanguageModal();
+        }
+
+        function confirmLanguageChange() {
+            if (pendingLanguageChange) {
+                // Sauvegarder les données actuelles avant de changer
+                saveCurrentFormData();
+                
+                // Réinitialiser tous les champs translatables
+                resetTranslatableFields();
+                
+                // Changer de langue
+                switchLanguage(pendingLanguageChange);
+                
+                // Réinitialiser l'état de modification
+                hasUnsavedChanges = false;
+                
+                hideLanguageModal();
+            }
+        }
+
+        // Fermer le modal en cliquant sur l'overlay
+        document.getElementById('languageModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cancelLanguageChange();
+            }
+        });
+
         function saveCurrentFormData() {
-            // Sauvegarder les données actuelles du formulaire
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             const data = {};
             
@@ -1178,25 +1332,21 @@
         }
 
         function resetTranslatableFields() {
-            // Vider tous les champs translatables
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             translatableFields.forEach(field => {
                 field.value = '';
             });
             
-            // Réinitialiser les indicateurs
             hasDataInLanguage[currentLang] = false;
         }
 
         function switchLanguage(lang) {
             if (lang === currentLang) return;
             
-            // Changer la langue
             setLanguage(lang);
             updateLanguageDisplay();
             updateCurrentLanguageData();
             
-            // Mettre à jour le bouton de sauvegarde
             const saveBtn = document.getElementById('btnSaveProject');
             if (saveBtn) {
                 saveBtn.innerHTML = `<i class="bi-save"></i> Enregistrer le projet en ${lang.toUpperCase()}`;
@@ -1212,16 +1362,7 @@
             });
         }
 
-        function showLanguageResetWarning() {
-            const warning = document.getElementById('languageResetWarning');
-            warning.classList.add('show');
-            
-            setTimeout(() => {
-                warning.classList.remove('show');
-            }, 5000);
-        }
-
-        // Gestion des collections
+        // Gestion des collections (reste identique)
         function addMember() {
             const collection = document.getElementById('membersCollection');
             
@@ -1309,7 +1450,7 @@
             markAsUnsaved();
         }
 
-        // Gestion des fichiers
+        // Gestion des fichiers (reste identique)
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1402,23 +1543,19 @@
         function handleFormSubmit(e) {
             e.preventDefault();
             
-            // Validation de base
             if (!validateForm()) {
                 return false;
             }
             
-            // Ajouter la langue actuelle et les données de traduction
             const formData = new FormData(e.target);
             formData.append('locale', currentLang);
             
-            // Ajouter les données de traduction pour la langue actuelle
             const nameField = document.querySelector('[name="project[translation][name]"]');
             const descField = document.querySelector('[name="project[translation][description]"]');
             
             formData.append('translation[name]', nameField ? nameField.value : '');
             formData.append('translation[description]', descField ? descField.value : '');
 
-            // Ajouter les fichiers
             uploadedFiles.forEach(file => {
                 formData.append('files[]', file);
             });
@@ -1426,7 +1563,6 @@
             markAsSaved();
             showNotification(`Enregistrement du projet en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
             
-            // Soumettre avec FormData
             fetch(e.target.action, {
                 method: 'POST',
                 body: formData
@@ -1501,11 +1637,9 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Projet MK BA avec gestion multilingue stricte initialisé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log(`✅ Langue actuelle: ${currentLang}`);
-        console.log('✅ Réinitialisation complète lors du changement de langue');
-        console.log('✅ Validation séparée par langue');
-        console.log('✅ Enregistrement sur une seule entrée avec traduction');
-        console.log('✅ Indicateurs visuels de saisie par langue');
+        console.log('%c🚀 Formulaire Projet MK BA avec modal personnalisé et indicateurs corrigés!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Modal personnalisé pour changement de langue');
+        console.log('✅ Indicateurs * corrigés pour éviter le passage à la ligne');
+        console.log('✅ Gestion multilingue stricte maintenue');
     </script>
 {% endblock %}

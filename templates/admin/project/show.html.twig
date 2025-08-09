@@ -76,6 +76,7 @@
             display: flex;
             gap: 10px;
             flex-wrap: wrap;
+            align-items: flex-start;
         }
 
         .btn-header-action {
@@ -108,39 +109,76 @@
             border-color: var(--mk-danger);
         }
 
-        .language-switcher {
+        /* CORRECTION: Bouton de langue plus fin et repositionné en bas à droite */
+        .language-switcher-header {
+            position: absolute;
+            bottom: 15px;
+            right: 20px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            padding: 6px;
+            border-radius: 6px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+            padding: 4px;
             display: flex;
-            gap: 4px;
+            gap: 2px;
             border: 1px solid rgba(109, 81, 146, 0.2);
-            margin-bottom: 20px;
-            align-self: flex-end;
+            z-index: 10;
         }
 
-        .lang-btn {
+        .lang-btn-header {
             background: transparent;
             border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 5px 8px;
+            border-radius: 4px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 14px;
+            font-size: 11px;
             transition: all 0.3s ease;
             color: var(--mk-gray);
             position: relative;
+            min-width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .lang-btn.active {
+        .lang-btn-header.active {
             background: var(--mk-primary);
             color: white;
         }
 
-        .lang-btn:hover:not(.active) {
+        .lang-btn-header:hover:not(.active) {
             background: var(--mk-light);
+        }
+
+        .translation-status-indicator-header {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 1px solid white;
+            font-size: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .translation-complete {
+            background: var(--mk-success);
+            color: white;
+        }
+
+        .translation-incomplete {
+            background: var(--mk-warning);
+            color: white;
+        }
+
+        .translation-missing {
+            background: var(--mk-danger);
+            color: white;
         }
 
         .translation-alert {
@@ -601,16 +639,6 @@
             margin-left: 8px;
         }
 
-        .translation-complete {
-            background: rgba(39, 174, 96, 0.1);
-            color: #27ae60;
-        }
-
-        .translation-missing {
-            background: rgba(231, 76, 60, 0.1);
-            color: #e74c3c;
-        }
-
         .translation-summary {
             background: var(--mk-light);
             border: 1px solid #dee2e6;
@@ -682,11 +710,18 @@
             .actions-header {
                 width: 100%;
                 justify-content: stretch;
+                margin-bottom: 15px;
             }
 
             .btn-header-action {
                 flex: 1;
                 justify-content: center;
+            }
+
+            .language-switcher-header {
+                position: static;
+                margin-top: 15px;
+                align-self: flex-end;
             }
 
             .info-section {
@@ -697,11 +732,6 @@
             .info-grid {
                 grid-template-columns: 1fr;
                 gap: 15px;
-            }
-
-            .language-switcher {
-                margin: 0 0 20px 0;
-                align-self: stretch;
             }
 
             .translation-alert .alert-content {
@@ -731,7 +761,7 @@
     <!-- En-tête du projet -->
     <div class="project-header">
         <div class="container-fluid project-header-content">
-            <div class="row align-items-center">
+            <div class="row align-items-start">
                 <div class="col-md-8">
                     <h1 class="project-title">
                         <i class="fas fa-folder-open me-3"></i>
@@ -748,7 +778,7 @@
                     <div class="project-subtitle">
                         Code: {{ project.code }} • {{ project.categoryLabel }}
                         {% if not availableTranslations[currentLocale].exists %}
-                            <br><small class="text-dark">
+                            <br><small class="text-light">
                                 <i class="fas fa-info-circle me-1"></i>
                                 Affichage partiel - Traduction {{ currentLocale|upper }} requise pour le contenu complet
                             </small>
@@ -796,27 +826,27 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Bouton de langue repositionné en bas à droite -->
+            <div class="language-switcher-header">
+                {% for locale in supportedLocales %}
+                    <button class="lang-btn-header {{ currentLocale == locale ? 'active' : '' }}" 
+                            data-lang="{{ locale }}" 
+                            type="button">
+                        {{ locale|upper }}
+                        {% if availableTranslations[locale].exists %}
+                            <span class="translation-status-indicator-header translation-complete">
+                                <i class="fas fa-check"></i>
+                            </span>
+                        {% else %}
+                            <span class="translation-status-indicator-header translation-missing">
+                                <i class="fas fa-exclamation"></i>
+                            </span>
+                        {% endif %}
+                    </button>
+                {% endfor %}
+            </div>
         </div>
-    </div>
-
-    <!-- Bouton de langue avec statut des traductions -->
-    <div class="language-switcher">
-        {% for locale in supportedLocales %}
-            <button class="lang-btn {{ currentLocale == locale ? 'active' : '' }}" 
-                    data-lang="{{ locale }}" 
-                    type="button">
-                {{ locale|upper }}
-                {% if availableTranslations[locale].exists %}
-                    <span class="translation-status-badge translation-complete">
-                        <i class="fas fa-check"></i>
-                    </span>
-                {% else %}
-                    <span class="translation-status-badge translation-missing">
-                        <i class="fas fa-exclamation"></i>
-                    </span>
-                {% endif %}
-            </button>
-        {% endfor %}
     </div>
 
     <!-- Informations principales -->
@@ -1188,7 +1218,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Gestion du switch de langue
-            document.querySelectorAll('.lang-btn').forEach(btn => {
+            document.querySelectorAll('.lang-btn-header').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const lang = this.dataset.lang;
                     switchLanguage(lang);
@@ -1233,11 +1263,10 @@
         // Initialiser les animations
         animateOnScroll();
 
-        console.log('%c🚀 Page détails projet MK BA avec gestion multilingue stricte initialisée!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('%c🚀 Page détails projet MK BA avec bouton de langue repositionné!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Bouton de langue plus fin et repositionné en bas à droite');
         console.log('✅ Affichage séparé par langue avec états vides');
         console.log('✅ Switch de langue avec validation des traductions');
-        console.log('✅ Alertes pour traductions manquantes avec actions');
         console.log('✅ Interface claire pour distinguer contenu traduit/non traduit');
-        console.log('✅ Gestion complète des états d\'affichage par langue');
     </script>
 {% endblock %}
