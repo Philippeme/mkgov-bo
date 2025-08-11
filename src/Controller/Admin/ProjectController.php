@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Dompdf\Dompdf;
@@ -30,7 +31,8 @@ class ProjectController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private ProjectRepository $projectRepository,
-        private SluggerInterface $slugger
+        private SluggerInterface $slugger,
+        private CsrfTokenManagerInterface $csrfTokenManager
     ) {}
 
     #[Route('/', name: 'admin_project_index', methods: ['GET'])]
@@ -52,12 +54,19 @@ class ProjectController extends AbstractController
         $statusCounts = $this->projectRepository->countByStatus();
         $categoryCounts = $this->projectRepository->countByCategory();
 
+        // CORRECTION: Générer les tokens CSRF pour chaque projet
+        $csrfTokens = [];
+        foreach ($projects as $project) {
+            $csrfTokens[$project->getId()] = $this->csrfTokenManager->getToken('delete' . $project->getId())->getValue();
+        }
+
         return $this->render('admin/project/index.html.twig', [
             'projects' => $projects,
             'stats' => $stats,
             'statusCounts' => $statusCounts,
             'categoryCounts' => $categoryCounts,
-            'currentLocale' => $locale
+            'currentLocale' => $locale,
+            'csrfTokens' => $csrfTokens // Passer les tokens au template
         ]);
     }
 
@@ -75,12 +84,10 @@ class ProjectController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Vérifier l'unicité du code
             if (!$this->projectRepository->isCodeUnique($project->getCode())) {
-                $this->addFlash('error', 'Ce code projet existe déjà.');
-                return $this->render('admin/project/new.html.twig', [
-                    'project' => $project,
-                    'form' => $form->createView(),
-                    'currentLocale' => $currentLocale
-                ]);
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Ce code projet existe déjà.'
+                ], 400);
             }
 
             // Traitement de la traduction pour la langue courante
@@ -93,24 +100,34 @@ class ProjectController extends AbstractController
             $this->processProjectRelations($project, $request);
 
             // CORRECTION: Traitement amélioré des fichiers uploadés
-            $this->processFileUploads($project, $request);
+            try {
+                $this->processFileUploads($project, $request);
+            } catch (\Exception $e) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Erreur lors du traitement des fichiers : ' . $e->getMessage()
+                ], 1000);
+            }
 
             try {
                 $this->entityManager->persist($project);
                 $this->entityManager->flush();
 
-                $this->addFlash('success', sprintf(
-                    'Projet créé avec succès en %s.', 
-                    $currentLocale === 'fr' ? 'français' : 'anglais'
-                ));
-                
-                return $this->redirectToRoute('admin_project_show', [
-                    'id' => $project->getId(),
-                    'locale' => $currentLocale
+                // CORRECTION: Nouveau comportement - rester sur la page et retourner les infos
+                return new JsonResponse([
+                    'success' => true,
+                    'message' => sprintf('Projet créé avec succès en %s.', $currentLocale === 'fr' ? 'français' : 'anglais'),
+                    'projectId' => $project->getId(),
+                    'currentLocale' => $currentLocale,
+                    'nextLocale' => $currentLocale === 'fr' ? 'en' : 'fr',
+                    'stay_on_page' => true
                 ]);
                 
             } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la création du projet : ' . $e->getMessage());
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Erreur lors de la création du projet : ' . $e->getMessage()
+                ], 500);
             }
         }
 
@@ -153,12 +170,10 @@ class ProjectController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Vérifier l'unicité du code (exclure le projet actuel)
             if (!$this->projectRepository->isCodeUnique($project->getCode(), $project->getId())) {
-                $this->addFlash('error', 'Ce code projet existe déjà.');
-                return $this->render('admin/project/edit.html.twig', [
-                    'project' => $project,
-                    'form' => $form->createView(),
-                    'currentLocale' => $currentLocale
-                ]);
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Ce code projet existe déjà.'
+                ], 400);
             }
 
             // Traitement de la traduction pour la langue courante
@@ -171,24 +186,30 @@ class ProjectController extends AbstractController
             $this->processProjectRelations($project, $request);
 
             // CORRECTION: Traitement amélioré des fichiers
-            $this->processFileUploads($project, $request);
-            $this->processRemovedAttachments($project, $request);
+            try {
+                $this->processFileUploads($project, $request);
+                $this->processRemovedAttachments($project, $request);
+            } catch (\Exception $e) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Erreur lors du traitement des fichiers : ' . $e->getMessage()
+                ], 400);
+            }
 
             try {
                 $this->entityManager->flush();
                 
-                $this->addFlash('success', sprintf(
-                    'Projet modifié avec succès en %s.', 
-                    $currentLocale === 'fr' ? 'français' : 'anglais'
-                ));
-
-                return $this->redirectToRoute('admin_project_show', [
-                    'id' => $project->getId(),
-                    'locale' => $currentLocale
+                return new JsonResponse([
+                    'success' => true,
+                    'message' => sprintf('Projet modifié avec succès en %s.', $currentLocale === 'fr' ? 'français' : 'anglais'),
+                    'redirect_url' => $this->generateUrl('admin_project_show', ['id' => $project->getId(), 'locale' => $currentLocale])
                 ]);
                 
             } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la modification du projet : ' . $e->getMessage());
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Erreur lors de la modification du projet : ' . $e->getMessage()
+                ], 500);
             }
         }
 
@@ -203,17 +224,26 @@ class ProjectController extends AbstractController
     #[Route('/{id}/delete', name: 'admin_project_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, Project $project): Response
     {
-        // CORRECTION: Vérification CSRF améliorée
-        if ($this->isCsrfTokenValid('delete'.$project->getId(), $request->request->get('_token'))) {
-            // CORRECTION: Soft delete confirmé - désactiver au lieu de supprimer
+        // CORRECTION: Vérification CSRF améliorée avec le bon token
+        $submittedToken = $request->request->get('_token');
+        
+        if (!$this->csrfTokenManager->isTokenValid(
+            new \Symfony\Component\Security\Csrf\CsrfToken('delete' . $project->getId(), $submittedToken)
+        )) {
+            $this->addFlash('error', 'Token CSRF invalide - Opération non autorisée.');
+            return $this->redirectToRoute('admin_project_index');
+        }
+
+        try {
+            // Soft delete confirmé - désactiver au lieu de supprimer
             $project->setIsActive(false);
             $project->setUpdatedAt(new \DateTime());
             
             $this->entityManager->flush();
 
             $this->addFlash('success', 'Projet supprimé avec succès (désactivé).');
-        } else {
-            $this->addFlash('error', 'Token CSRF invalide - Opération non autorisée.');
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression : ' . $e->getMessage());
         }
 
         return $this->redirectToRoute('admin_project_index');
@@ -464,18 +494,36 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * CORRECTION: Traitement amélioré des fichiers uploadés
+     * CORRECTION: Traitement amélioré des fichiers uploadés avec gestion d'erreurs robuste
      */
     private function processFileUploads(Project $project, Request $request): void
     {
-        // Récupérer les fichiers depuis la requête files
-        $uploadedFiles = $request->files->get('files', []);
+        // Récupérer les fichiers depuis $_FILES directement pour plus de fiabilité
+        $uploadedFiles = [];
         
-        // Si pas de fichiers dans files, vérifier dans le form
-        if (empty($uploadedFiles)) {
-            $formFiles = $request->files->get('project');
-            if ($formFiles && isset($formFiles['files'])) {
-                $uploadedFiles = is_array($formFiles['files']) ? $formFiles['files'] : [$formFiles['files']];
+        // Vérifier différentes sources possibles de fichiers
+        if (isset($_FILES['files']) && !empty($_FILES['files']['name'][0])) {
+            // Fichiers uploadés via le champ files[]
+            for ($i = 0; $i < count($_FILES['files']['name']); $i++) {
+                if ($_FILES['files']['error'][$i] === UPLOAD_ERR_OK) {
+                    $uploadedFiles[] = [
+                        'name' => $_FILES['files']['name'][$i],
+                        'tmp_name' => $_FILES['files']['tmp_name'][$i],
+                        'size' => $_FILES['files']['size'][$i],
+                        'type' => $_FILES['files']['type'][$i],
+                        'error' => $_FILES['files']['error'][$i]
+                    ];
+                }
+            }
+        }
+        
+        // Alternative : récupérer depuis la requête
+        $requestFiles = $request->files->get('files', []);
+        if (!empty($requestFiles)) {
+            foreach ($requestFiles as $file) {
+                if ($file && $file->isValid()) {
+                    $uploadedFiles[] = $file;
+                }
             }
         }
 
@@ -512,54 +560,112 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * CORRECTION: Gérer l'upload des fichiers avec validation améliorée
+     * CORRECTION: Gérer l'upload des fichiers avec validation améliorée et gestion d'erreurs robuste
      */
     private function handleFileUploads(Project $project, array $files): void
     {
         $uploadDir = $this->getParameter('projects_directory');
         
+        // Créer le répertoire s'il n'existe pas
         if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
+            if (!mkdir($uploadDir, 0755, true)) {
+                throw new \Exception("Impossible de créer le répertoire d'upload : " . $uploadDir);
+            }
+        }
+
+        // Vérifier les permissions d'écriture
+        if (!is_writable($uploadDir)) {
+            throw new \Exception("Le répertoire d'upload n'est pas accessible en écriture : " . $uploadDir);
         }
 
         foreach ($files as $file) {
-            if ($file && $file->isValid()) {
-                // Validation de la taille (max 10MB)
-                if ($file->getSize() > 10 * 1024 * 1024) {
-                    $this->addFlash('warning', 'Le fichier ' . $file->getClientOriginalName() . ' dépasse 10MB et a été ignoré.');
-                    continue;
+            try {
+                // Gestion des deux formats possibles (array ou UploadedFile)
+                if (is_array($file)) {
+                    // Format array depuis $_FILES
+                    $this->processArrayFile($project, $file, $uploadDir);
+                } else {
+                    // Format UploadedFile depuis Request
+                    $this->processUploadedFile($project, $file, $uploadDir);
                 }
-
-                // Validation de l'extension
-                $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
-                $extension = strtolower($file->getClientOriginalExtension());
-                
-                if (!in_array($extension, $allowedExtensions)) {
-                    $this->addFlash('warning', 'Le fichier ' . $file->getClientOriginalName() . ' n\'est pas dans un format autorisé.');
-                    continue;
-                }
-
-                $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $this->slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$file->guessExtension();
-
-                try {
-                    $file->move($uploadDir, $newFilename);
-
-                    $attachment = new ProjectAttachment();
-                    $attachment->setProject($project)
-                             ->setFileName($newFilename)
-                             ->setOriginalName($file->getClientOriginalName())
-                             ->setMimeType($file->getMimeType())
-                             ->setFileSize($file->getSize());
-
-                    $project->addAttachment($attachment);
-
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors de l\'upload du fichier : ' . $file->getClientOriginalName());
-                }
+            } catch (\Exception $e) {
+                // Log de l'erreur mais continue avec les autres fichiers
+                error_log("Erreur upload fichier : " . $e->getMessage());
+                throw new \Exception("Erreur lors de l'upload du fichier : " . $e->getMessage());
             }
         }
+    }
+
+    private function processArrayFile(Project $project, array $fileData, string $uploadDir): void
+    {
+        // Validation de la taille (max 10MB)
+        if ($fileData['size'] > 10 * 1024 * 1024) {
+            throw new \Exception('Le fichier ' . $fileData['name'] . ' dépasse 10MB');
+        }
+
+        // Validation de l'extension
+        $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
+        $extension = strtolower(pathinfo($fileData['name'], PATHINFO_EXTENSION));
+        
+        if (!in_array($extension, $allowedExtensions)) {
+            throw new \Exception('Le fichier ' . $fileData['name'] . ' n\'est pas dans un format autorisé');
+        }
+
+        // Génération du nom de fichier sécurisé
+        $originalFilename = pathinfo($fileData['name'], PATHINFO_FILENAME);
+        $safeFilename = $this->slugger->slug($originalFilename);
+        $newFilename = $safeFilename . '-' . uniqid() . '.' . $extension;
+
+        // Déplacer le fichier
+        if (!move_uploaded_file($fileData['tmp_name'], $uploadDir . '/' . $newFilename)) {
+            throw new \Exception('Impossible de déplacer le fichier uploadé');
+        }
+
+        // Créer l'entité attachment
+        $attachment = new ProjectAttachment();
+        $attachment->setProject($project)
+                 ->setFileName($newFilename)
+                 ->setOriginalName($fileData['name'])
+                 ->setMimeType($fileData['type'])
+                 ->setFileSize($fileData['size']);
+
+        $project->addAttachment($attachment);
+    }
+
+    private function processUploadedFile(Project $project, $file, string $uploadDir): void
+    {
+        if (!$file->isValid()) {
+            throw new \Exception('Fichier invalide : ' . $file->getClientOriginalName());
+        }
+
+        // Validation de la taille (max 10MB)
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            throw new \Exception('Le fichier ' . $file->getClientOriginalName() . ' dépasse 10MB');
+        }
+
+        // Validation de l'extension
+        $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
+        $extension = strtolower($file->getClientOriginalExtension());
+        
+        if (!in_array($extension, $allowedExtensions)) {
+            throw new \Exception('Le fichier ' . $file->getClientOriginalName() . ' n\'est pas dans un format autorisé');
+        }
+
+        $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $safeFilename = $this->slugger->slug($originalFilename);
+        $newFilename = $safeFilename . '-' . uniqid() . '.' . $file->guessExtension();
+
+        // Déplacer le fichier
+        $file->move($uploadDir, $newFilename);
+
+        $attachment = new ProjectAttachment();
+        $attachment->setProject($project)
+                 ->setFileName($newFilename)
+                 ->setOriginalName($file->getClientOriginalName())
+                 ->setMimeType($file->getMimeType())
+                 ->setFileSize($file->getSize());
+
+        $project->addAttachment($attachment);
     }
 
     /**
