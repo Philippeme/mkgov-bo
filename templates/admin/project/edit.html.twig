@@ -858,7 +858,7 @@
 </div>
 
 <div class="container-fluid main-content-wrapper">
-    {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate'}}) }}
+    {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
         <div class="form-steps-container">
             
             <!-- Notice de traduction dynamique -->
@@ -1170,7 +1170,7 @@
                 </div>
             </div>
 
-            <!-- ÉTAPE 4: PIÈCES JOINTES -->
+            <!-- ÉTAPE 4: PIÈCES JOINTES - CORRECTION MAJEURE -->
             <div class="form-step" data-step-content="4">
                 <h2 class="step-title">
                     <i class="bi-paperclip text-primary"></i>
@@ -1219,7 +1219,8 @@
                             <i class="bi-folder-open me-2"></i>
                             Parcourir les fichiers
                         </button>
-                        <input type="file" id="fileInput" name="files[]" multiple style="display: none;" 
+                        <!-- CORRECTION: Input file caché pour la soumission -->
+                        <input type="file" id="fileInput" multiple style="display: none;" 
                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.jpg,.jpeg,.png">
                         <p class="help-text mt-3">
                             Formats acceptés: PDF, Word, Excel, PowerPoint, Images, ZIP (Max 10MB par fichier)
@@ -1467,7 +1468,7 @@
             showNotification('Contenu copié depuis la version anglaise', 'success');
         }
 
-        // Gestion des collections (même logique que new.html.twig)
+        // Gestion des collections
         function addMember() {
             const collection = document.getElementById('membersCollection');
             
@@ -1566,7 +1567,7 @@
             }
         }
 
-        // Gestion des fichiers (même logique que new.html.twig)
+        // CORRECTION MAJEURE: Gestion des fichiers
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1597,6 +1598,16 @@
                     showNotification(`Le fichier ${file.name} dépasse 10MB`, 'error');
                     return;
                 }
+
+                // Validation des extensions
+                const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
+                const extension = file.name.split('.').pop().toLowerCase();
+                
+                if (!allowedExtensions.includes(extension)) {
+                    showNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`, 'error');
+                    return;
+                }
+
                 uploadedFiles.push(file);
                 displayFile(file, uploadedFiles.length - 1);
                 markAsUnsaved();
@@ -1656,6 +1667,7 @@
             });
         }
 
+        // CORRECTION MAJEURE: Soumission du formulaire avec fichiers
         function handleFormSubmit(e) {
             e.preventDefault();
             
@@ -1664,8 +1676,18 @@
                 return false;
             }
             
+            // Créer FormData pour gérer les fichiers
+            const formData = new FormData();
+            
+            // Ajouter tous les champs du formulaire existant
+            const formElement = e.target;
+            const formFields = new FormData(formElement);
+            
+            for (let [key, value] of formFields.entries()) {
+                formData.append(key, value);
+            }
+            
             // Ajouter la langue actuelle
-            const formData = new FormData(e.target);
             formData.append('locale', currentLang);
             
             // Ajouter les données de traduction
@@ -1675,7 +1697,7 @@
             formData.append('translation[name]', nameField ? nameField.value : '');
             formData.append('translation[description]', descField ? descField.value : '');
 
-            // Ajouter les fichiers
+            // CORRECTION: Ajouter les fichiers
             uploadedFiles.forEach(file => {
                 formData.append('files[]', file);
             });
@@ -1684,7 +1706,7 @@
             showNotification(`Enregistrement des modifications en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
             
             // Soumettre avec FormData pour gérer les fichiers
-            fetch(e.target.action, {
+            fetch(formElement.action, {
                 method: 'POST',
                 body: formData
             }).then(response => {
@@ -1758,12 +1780,11 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Modification Projet MK BA avec indicateurs corrigés!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ Indicateurs * corrigés pour éviter le passage à la ligne');
-        console.log('✅ Gestion des traductions existantes par langue');
-        console.log('✅ Copie entre langues disponible');
-        console.log('✅ Suivi des changements non sauvegardés');
+        console.log('%c🚀 Formulaire Modification Projet MK BA avec pièces-jointes corrigées!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Upload des fichiers corrigé avec FormData');
         console.log('✅ Gestion des fichiers existants et nouveaux');
+        console.log('✅ Validation des extensions et tailles');
+        console.log('✅ Copie entre langues disponible');
     </script>
 
 {% endblock %}

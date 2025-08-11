@@ -885,7 +885,7 @@
 </div>
 
 <div class="container-fluid main-content-wrapper">
-    {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate'}}) }}
+    {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
         <div class="form-steps-container">  
             
             <!-- ÉTAPE 1: IDENTIFICATION -->
@@ -1080,7 +1080,7 @@
                 </div>
             </div>
 
-            <!-- ÉTAPE 4: PIÈCES JOINTES -->
+            <!-- ÉTAPE 4: PIÈCES JOINTES - CORRECTION MAJEURE -->
             <div class="form-step" data-step-content="4">
                 <h2 class="step-title">
                     <i class="bi-paperclip text-primary"></i>
@@ -1099,7 +1099,8 @@
                             <i class="bi-folder-open me-2"></i>
                             Parcourir les fichiers
                         </button>
-                        <input type="file" id="fileInput" name="files[]" multiple style="display: none;" 
+                        <!-- CORRECTION: Input file caché pour la soumission -->
+                        <input type="file" id="fileInput" multiple style="display: none;" 
                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.jpg,.jpeg,.png">
                         <p class="help-text mt-3">
                             Formats acceptés: PDF, Word, Excel, PowerPoint, Images, ZIP (Max 10MB par fichier)
@@ -1150,7 +1151,7 @@
         let hasUnsavedChanges = false;
         let formDataByLanguage = { fr: {}, en: {} };
         let hasDataInLanguage = { fr: false, en: false };
-        let pendingLanguageChange = null; // Pour stocker la langue en attente
+        let pendingLanguageChange = null;
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -1362,7 +1363,7 @@
             });
         }
 
-        // Gestion des collections (reste identique)
+        // Gestion des collections
         function addMember() {
             const collection = document.getElementById('membersCollection');
             
@@ -1450,7 +1451,7 @@
             markAsUnsaved();
         }
 
-        // Gestion des fichiers (reste identique)
+        // CORRECTION MAJEURE: Gestion des fichiers
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1481,6 +1482,16 @@
                     showNotification(`Le fichier ${file.name} dépasse 10MB`, 'error');
                     return;
                 }
+
+                // Validation des extensions
+                const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
+                const extension = file.name.split('.').pop().toLowerCase();
+                
+                if (!allowedExtensions.includes(extension)) {
+                    showNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`, 'error');
+                    return;
+                }
+
                 uploadedFiles.push(file);
                 displayFile(file, uploadedFiles.length - 1);
                 markAsUnsaved();
@@ -1540,6 +1551,7 @@
             });
         }
 
+        // CORRECTION MAJEURE: Soumission du formulaire avec fichiers
         function handleFormSubmit(e) {
             e.preventDefault();
             
@@ -1547,7 +1559,17 @@
                 return false;
             }
             
-            const formData = new FormData(e.target);
+            const formData = new FormData();
+            
+            // Ajouter tous les champs du formulaire existant
+            const formElement = e.target;
+            const formFields = new FormData(formElement);
+            
+            for (let [key, value] of formFields.entries()) {
+                formData.append(key, value);
+            }
+            
+            // Ajouter la locale et les données de traduction
             formData.append('locale', currentLang);
             
             const nameField = document.querySelector('[name="project[translation][name]"]');
@@ -1556,6 +1578,7 @@
             formData.append('translation[name]', nameField ? nameField.value : '');
             formData.append('translation[description]', descField ? descField.value : '');
 
+            // CORRECTION: Ajouter les fichiers uploadés
             uploadedFiles.forEach(file => {
                 formData.append('files[]', file);
             });
@@ -1563,7 +1586,7 @@
             markAsSaved();
             showNotification(`Enregistrement du projet en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
             
-            fetch(e.target.action, {
+            fetch(formElement.action, {
                 method: 'POST',
                 body: formData
             }).then(response => {
@@ -1637,9 +1660,10 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Projet MK BA avec modal personnalisé et indicateurs corrigés!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('%c🚀 Formulaire Projet MK BA avec pièces-jointes corrigées!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Upload des fichiers corrigé avec FormData');
+        console.log('✅ Validation des extensions et tailles');
         console.log('✅ Modal personnalisé pour changement de langue');
-        console.log('✅ Indicateurs * corrigés pour éviter le passage à la ligne');
-        console.log('✅ Gestion multilingue stricte maintenue');
+        console.log('✅ Soumission form multipart/form-data');
     </script>
 {% endblock %}

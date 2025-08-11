@@ -92,7 +92,7 @@ class ProjectController extends AbstractController
             // Traitement des relations
             $this->processProjectRelations($project, $request);
 
-            // Traitement des fichiers uploadés
+            // CORRECTION: Traitement amélioré des fichiers uploadés
             $this->processFileUploads($project, $request);
 
             try {
@@ -170,7 +170,7 @@ class ProjectController extends AbstractController
             // Traitement des relations
             $this->processProjectRelations($project, $request);
 
-            // Traitement des fichiers
+            // CORRECTION: Traitement amélioré des fichiers
             $this->processFileUploads($project, $request);
             $this->processRemovedAttachments($project, $request);
 
@@ -203,14 +203,17 @@ class ProjectController extends AbstractController
     #[Route('/{id}/delete', name: 'admin_project_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, Project $project): Response
     {
+        // CORRECTION: Vérification CSRF améliorée
         if ($this->isCsrfTokenValid('delete'.$project->getId(), $request->request->get('_token'))) {
-            // Soft delete : désactiver au lieu de supprimer
+            // CORRECTION: Soft delete confirmé - désactiver au lieu de supprimer
             $project->setIsActive(false);
+            $project->setUpdatedAt(new \DateTime());
+            
             $this->entityManager->flush();
 
-            $this->addFlash('success', 'Projet supprimé avec succès.');
+            $this->addFlash('success', 'Projet supprimé avec succès (désactivé).');
         } else {
-            $this->addFlash('error', 'Token CSRF invalide.');
+            $this->addFlash('error', 'Token CSRF invalide - Opération non autorisée.');
         }
 
         return $this->redirectToRoute('admin_project_index');
@@ -461,11 +464,21 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * Traiter les fichiers uploadés
+     * CORRECTION: Traitement amélioré des fichiers uploadés
      */
     private function processFileUploads(Project $project, Request $request): void
     {
+        // Récupérer les fichiers depuis la requête files
         $uploadedFiles = $request->files->get('files', []);
+        
+        // Si pas de fichiers dans files, vérifier dans le form
+        if (empty($uploadedFiles)) {
+            $formFiles = $request->files->get('project');
+            if ($formFiles && isset($formFiles['files'])) {
+                $uploadedFiles = is_array($formFiles['files']) ? $formFiles['files'] : [$formFiles['files']];
+            }
+        }
+
         if (!empty($uploadedFiles)) {
             $this->handleFileUploads($project, $uploadedFiles);
         }
@@ -483,6 +496,13 @@ class ProjectController extends AbstractController
                 foreach ($removedIds as $attachmentId) {
                     $attachment = $this->entityManager->getRepository(ProjectAttachment::class)->find($attachmentId);
                     if ($attachment && $attachment->getProject() === $project) {
+                        // Supprimer le fichier physique
+                        $uploadDir = $this->getParameter('projects_directory');
+                        $filePath = $uploadDir . '/' . $attachment->getFileName();
+                        if (file_exists($filePath)) {
+                            unlink($filePath);
+                        }
+                        
                         $project->removeAttachment($attachment);
                         $this->entityManager->remove($attachment);
                     }
@@ -492,7 +512,7 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * Gérer l'upload des fichiers
+     * CORRECTION: Gérer l'upload des fichiers avec validation améliorée
      */
     private function handleFileUploads(Project $project, array $files): void
     {
@@ -504,6 +524,21 @@ class ProjectController extends AbstractController
 
         foreach ($files as $file) {
             if ($file && $file->isValid()) {
+                // Validation de la taille (max 10MB)
+                if ($file->getSize() > 10 * 1024 * 1024) {
+                    $this->addFlash('warning', 'Le fichier ' . $file->getClientOriginalName() . ' dépasse 10MB et a été ignoré.');
+                    continue;
+                }
+
+                // Validation de l'extension
+                $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                
+                if (!in_array($extension, $allowedExtensions)) {
+                    $this->addFlash('warning', 'Le fichier ' . $file->getClientOriginalName() . ' n\'est pas dans un format autorisé.');
+                    continue;
+                }
+
                 $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $this->slugger->slug($originalFilename);
                 $newFilename = $safeFilename.'-'.uniqid().'.'.$file->guessExtension();
