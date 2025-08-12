@@ -21,7 +21,6 @@
             --mk-light: #f8f9fa;
             --mk-lighter: #ffffff;
             --mk-gradient-primary: linear-gradient(135deg, #f18221 0%, #0071BC 100%);
-            --mkba-notification-bg: #f59e0b;
         }
 
         .project-form-header {
@@ -184,17 +183,6 @@
             background: var(--mk-light);
         }
 
-        /* CORRECTION: Indicateur pour langue validée */
-        .lang-btn.validated {
-            background: var(--mk-success);
-            color: white;
-        }
-
-        .lang-btn.validated:hover {
-            background: var(--mk-success);
-            color: white;
-        }
-
         .language-indicator {
             position: absolute;
             top: -5px;
@@ -223,13 +211,6 @@
             margin: 30px 0;
             min-height: 400px;
             position: relative;
-        }
-
-        /* CORRECTION: Style pour formulaire désactivé */
-        .form-steps-container.disabled {
-            opacity: 0.6;
-            pointer-events: none;
-            background: #f8f9fa;
         }
 
         .main-content-wrapper {
@@ -317,17 +298,6 @@
         .translation-notice .notice-description {
             margin-bottom: 0;
             opacity: 0.9;
-        }
-
-        /* CORRECTION: Notice pour langue validée */
-        .translation-notice.validated {
-            background: linear-gradient(45deg, #d4edda, #c3e6cb);
-            border-color: var(--mk-success);
-            color: #155724;
-        }
-
-        .translation-notice.validated::before {
-            background: var(--mk-success);
         }
 
         /* MODAL PERSONNALISÉ POUR CHANGEMENT DE LANGUE */
@@ -713,14 +683,6 @@
             color: white;
         }
 
-        /* CORRECTION: Style pour bouton désactivé */
-        .btn-save-project:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
         .btn-cancel {
             background: #6c757d;
             color: white;
@@ -751,86 +713,6 @@
             color: var(--mk-danger);
             font-size: 13px;
             margin-top: 5px;
-        }
-
-        /* CORRECTION: Notification uniforme */
-        .mkba-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--mkba-notification-bg);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 500;
-            z-index: 9999;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: none;
-            animation: slideInRight 0.3s ease;
-        }
-
-        .mkba-notification.show {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* CORRECTION: Message de statut de la page */
-        .page-status-message {
-            background: linear-gradient(45deg, #d4edda, #c3e6cb);
-            border: 1px solid var(--mk-success);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            color: #155724;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .page-status-message::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--mk-success);
-        }
-
-        .page-status-message .status-icon {
-            font-size: 1.5rem;
-            margin-right: 15px;
-        }
-
-        .page-status-message .status-content {
-            display: flex;
-            align-items: center;
-        }
-
-        .page-status-message .status-text {
-            flex: 1;
-        }
-
-        .page-status-message .status-title {
-            font-weight: 700;
-            margin-bottom: 5px;
-            font-size: 1.1rem;
-        }
-
-        .page-status-message .status-description {
-            margin-bottom: 0;
-            opacity: 0.9;
         }
 
         @media (max-width: 768px) {
@@ -894,12 +776,6 @@
 {% endblock %}
 
 {% block body %}
-<!-- Notification uniforme -->
-<div class="mkba-notification" id="mkbaNotification">
-    <i class="fas fa-info-circle"></i>
-    <span id="notificationMessage"></span>
-</div>
-
 <!-- Modal personnalisé pour changement de langue -->
 <div class="language-modal-overlay" id="languageModal">
     <div class="language-modal">
@@ -938,7 +814,7 @@
                     <i class="bi-folder-plus me-3"></i>
                     Nouveau Projet
                 </h1>
-                <p class="mb-0">Créez un nouveau projet multilingue</p>
+                <p class="mb-0">Créez un nouveau projet</p>
             </div>
             <div class="col-md-4 text-end">
                 <a href="{{ path('admin_project_index') }}" class="btn btn-outline-light">
@@ -1009,19 +885,8 @@
 </div>
 
 <div class="container-fluid main-content-wrapper">
-    <!-- CORRECTION: Message de statut si projet en cours de création multilingue -->
-    <div class="page-status-message" id="pageStatusMessage" style="display: none;">
-        <div class="status-content">
-            <i class="fas fa-check-circle status-icon"></i>
-            <div class="status-text">
-                <div class="status-title" id="statusTitle"></div>
-                <div class="status-description" id="statusDescription"></div>
-            </div>
-        </div>
-    </div>
-
     {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
-        <div class="form-steps-container" id="formStepsContainer">  
+        <div class="form-steps-container">  
             
             <!-- ÉTAPE 1: IDENTIFICATION -->
             <div class="form-step active" data-step-content="1">
@@ -1251,7 +1116,7 @@
         <div class="save-button-container">
             <a href="{{ path('admin_project_index') }}" class="btn-cancel" onclick="return confirmCancel()">
                 <i class="bi-x-circle"></i>
-                Retour
+                Annuler
             </a>
             <button type="submit" class="btn-save-project" id="btnSaveProject">
                 <i class="bi-save"></i>
@@ -1287,11 +1152,6 @@
         let formDataByLanguage = { fr: {}, en: {} };
         let hasDataInLanguage = { fr: false, en: false };
         let pendingLanguageChange = null;
-        
-        // CORRECTION: Variables pour le comportement multilingue
-        let validatedLanguages = new Set();
-        let currentProjectId = null;
-        let isLanguageSwitchingMode = false;
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
@@ -1316,8 +1176,7 @@
             });
         }
 
-        // CORRECTION: Vérification des champs traduisibles remplis
-        function hasTranslatableFieldsFilled() {
+        function updateCurrentLanguageData() {
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             let hasData = false;
             
@@ -1327,11 +1186,6 @@
                 }
             });
             
-            return hasData;
-        }
-
-        function updateCurrentLanguageData() {
-            const hasData = hasTranslatableFieldsFilled();
             hasDataInLanguage[currentLang] = hasData;
             updateLanguageIndicators();
         }
@@ -1339,40 +1193,12 @@
         function updateLanguageIndicators() {
             const frIndicator = document.getElementById('frIndicator');
             const enIndicator = document.getElementById('enIndicator');
-            const frBtn = document.querySelector('[data-lang="fr"]');
-            const enBtn = document.querySelector('[data-lang="en"]');
             
-            // Mettre à jour les indicateurs
             if (frIndicator) {
-                frIndicator.classList.toggle('show', validatedLanguages.has('fr'));
+                frIndicator.classList.toggle('show', hasDataInLanguage.fr || currentLang === 'fr');
             }
             if (enIndicator) {
-                enIndicator.classList.toggle('show', validatedLanguages.has('en'));
-            }
-
-            // Mettre à jour les styles des boutons
-            if (frBtn) {
-                if (validatedLanguages.has('fr')) {
-                    frBtn.classList.add('validated');
-                    frBtn.classList.remove('active');
-                } else if (currentLang === 'fr') {
-                    frBtn.classList.add('active');
-                    frBtn.classList.remove('validated');
-                } else {
-                    frBtn.classList.remove('active', 'validated');
-                }
-            }
-
-            if (enBtn) {
-                if (validatedLanguages.has('en')) {
-                    enBtn.classList.add('validated');
-                    enBtn.classList.remove('active');
-                } else if (currentLang === 'en') {
-                    enBtn.classList.add('active');
-                    enBtn.classList.remove('validated');
-                } else {
-                    enBtn.classList.remove('active', 'validated');
-                }
+                enIndicator.classList.toggle('show', hasDataInLanguage.en || currentLang === 'en');
             }
         }
 
@@ -1427,20 +1253,14 @@
                 });
             });
 
-            // CORRECTION: Switch de langue avec vérification intelligente
+            // Switch de langue avec modal personnalisé
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const lang = this.dataset.lang;
                     
                     if (lang !== currentLang) {
-                        // CORRECTION: Ne déclencher le modal que si des champs traduisibles sont remplis
-                        if (hasTranslatableFieldsFilled()) {
-                            pendingLanguageChange = lang;
-                            showLanguageModal();
-                        } else {
-                            // Switch direct si aucun champ traduit rempli
-                            switchLanguage(lang);
-                        }
+                        pendingLanguageChange = lang;
+                        showLanguageModal();
                     }
                 });
             });
@@ -1537,59 +1357,10 @@
         function setLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('mkba_project_lang', lang);
-            updateLanguageIndicators();
-        }
 
-        // CORRECTION: Gestion du statut de la page après validation
-        function updatePageStatus(projectId, validatedLang, nextLang) {
-            currentProjectId = projectId;
-            isLanguageSwitchingMode = true;
-            
-            const statusMessage = document.getElementById('pageStatusMessage');
-            const statusTitle = document.getElementById('statusTitle');
-            const statusDescription = document.getElementById('statusDescription');
-            
-            statusTitle.textContent = `Projet créé en ${validatedLang.toUpperCase()}`;
-            statusDescription.textContent = `Le projet a été enregistré avec succès. Vous pouvez maintenant ajouter la traduction ${nextLang.toUpperCase()} ou retourner à la liste.`;
-            
-            statusMessage.style.display = 'block';
-            
-            // Marquer la langue comme validée
-            validatedLanguages.add(validatedLang);
-            updateLanguageIndicators();
-            
-            // CORRECTION: Désactiver le formulaire pour la langue validée
-            if (currentLang === validatedLang) {
-                disableFormForValidatedLanguage();
-            }
-            
-            // Switcher automatiquement vers l'autre langue
-            setTimeout(() => {
-                switchLanguage(nextLang);
-                enableFormForNewLanguage();
-            }, 1000);
-        }
-
-        // CORRECTION: Désactiver le formulaire pour une langue validée
-        function disableFormForValidatedLanguage() {
-            const formContainer = document.getElementById('formStepsContainer');
-            const saveBtn = document.getElementById('btnSaveProject');
-            
-            formContainer.classList.add('disabled');
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-check"></i> Déjà enregistré en ' + currentLang.toUpperCase();
-        }
-
-        // CORRECTION: Réactiver le formulaire pour une nouvelle langue
-        function enableFormForNewLanguage() {
-            const formContainer = document.getElementById('formStepsContainer');
-            const saveBtn = document.getElementById('btnSaveProject');
-            
-            if (!validatedLanguages.has(currentLang)) {
-                formContainer.classList.remove('disabled');
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = `<i class="bi-save"></i> Enregistrer le projet en ${currentLang.toUpperCase()}`;
-            }
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
         }
 
         // Gestion des collections
@@ -1708,7 +1479,7 @@
         function handleFiles(files) {
             Array.from(files).forEach(file => {
                 if (file.size > 10 * 1024 * 1024) {
-                    showMkbaNotification(`Le fichier ${file.name} dépasse 10MB`);
+                    showNotification(`Le fichier ${file.name} dépasse 10MB`, 'error');
                     return;
                 }
 
@@ -1717,7 +1488,7 @@
                 const extension = file.name.split('.').pop().toLowerCase();
                 
                 if (!allowedExtensions.includes(extension)) {
-                    showMkbaNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`);
+                    showNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`, 'error');
                     return;
                 }
 
@@ -1780,15 +1551,9 @@
             });
         }
 
-        // CORRECTION MAJEURE: Soumission du formulaire avec nouveau comportement
+        // CORRECTION MAJEURE: Soumission du formulaire avec fichiers
         function handleFormSubmit(e) {
             e.preventDefault();
-            
-            // Vérifier si la langue est déjà validée
-            if (validatedLanguages.has(currentLang)) {
-                showMkbaNotification(`Ce projet est déjà enregistré en ${currentLang.toUpperCase()}`);
-                return false;
-            }
             
             if (!validateForm()) {
                 return false;
@@ -1819,32 +1584,22 @@
             });
 
             markAsSaved();
-            showMkbaNotification(`Enregistrement du projet en ${currentLang === 'fr' ? 'français' : 'anglais'}...`);
+            showNotification(`Enregistrement du projet en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
             
             fetch(formElement.action, {
                 method: 'POST',
                 body: formData
-            }).then(response => response.json()).then(data => {
-                if (data.success) {
-                    showMkbaNotification(data.message);
-                    
-                    // CORRECTION: Nouveau comportement - rester sur la page
-                    if (data.stay_on_page) {
-                        updatePageStatus(data.projectId, data.currentLocale, data.nextLocale);
-                        
-                        // Si les deux langues sont validées, rediriger vers l'index
-                        if (validatedLanguages.size >= 2) {
-                            setTimeout(() => {
-                                window.location.href = '{{ path("admin_project_index") }}';
-                            }, 2000);
-                        }
-                    }
+            }).then(response => {
+                if (response.ok) {
+                    showNotification(`Projet créé avec succès en ${currentLang === 'fr' ? 'français' : 'anglais'}!`, 'success');
+                    setTimeout(() => {
+                        window.location.href = '{{ path("admin_project_index") }}';
+                    }, 1500);
                 } else {
-                    showMkbaNotification(data.message);
-                    markAsUnsaved();
+                    throw new Error('Erreur de sauvegarde');
                 }
             }).catch(error => {
-                showMkbaNotification('Erreur lors de la sauvegarde');
+                showNotification('Erreur lors de la sauvegarde', 'error');
                 markAsUnsaved();
             });
         }
@@ -1866,7 +1621,7 @@
             });
 
             if (!isValid) {
-                showMkbaNotification('Veuillez remplir tous les champs obligatoires');
+                showNotification('Veuillez remplir tous les champs obligatoires', 'error');
                 const firstInvalid = document.querySelector('.is-invalid');
                 if (firstInvalid) {
                     firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1877,39 +1632,38 @@
             return isValid;
         }
 
-        // CORRECTION: Fonction de confirmation modifiée
         function confirmCancel() {
             if (hasUnsavedChanges) {
-                return confirm('Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir retourner à la liste ?');
+                return confirm('Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir annuler ?');
             }
-            
-            // Si en mode switching et au moins une langue validée, confirmer
-            if (validatedLanguages.size > 0) {
-                return confirm('Le projet a été créé partiellement. Êtes-vous sûr de vouloir retourner à la liste sans compléter toutes les traductions ?');
-            }
-            
             return true;
         }
 
-        // CORRECTION: Fonction de notification uniforme avec durée de 1 seconde
-        function showMkbaNotification(message, type = 'info') {
-            const notification = document.getElementById('mkbaNotification');
-            const messageElement = document.getElementById('notificationMessage');
+        function showNotification(message, type = 'info') {
+            const alertClass = type === 'error' ? 'danger' : type;
+            const alertHtml = `
+                <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" 
+                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+                    <i class="bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
             
-            messageElement.textContent = message;
-            notification.classList.add('show');
+            document.body.insertAdjacentHTML('beforeend', alertHtml);
             
-            // Disparaître après 1 seconde
             setTimeout(() => {
-                notification.classList.remove('show');
-            }, 1000);
+                const alert = document.querySelector('.alert:last-of-type');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Projet MK BA avec comportement multilingue corrigé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ Switch de langue intelligent selon remplissage des champs');
-        console.log('✅ Rester sur la page après validation d\'une langue');
-        console.log('✅ Désactivation du formulaire pour langue validée');
-        console.log('✅ Switch automatique vers l\'autre langue');
-        console.log('✅ Notifications uniformes avec durée de 1 seconde');
+        console.log('%c🚀 Formulaire Projet MK BA avec pièces-jointes corrigées!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Upload des fichiers corrigé avec FormData');
+        console.log('✅ Validation des extensions et tailles');
+        console.log('✅ Modal personnalisé pour changement de langue');
+        console.log('✅ Soumission form multipart/form-data');
     </script>
 {% endblock %}

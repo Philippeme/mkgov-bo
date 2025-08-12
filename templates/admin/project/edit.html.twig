@@ -21,7 +21,6 @@
             --mk-light: #f8f9fa;
             --mk-lighter: #ffffff;
             --mk-gradient-primary: linear-gradient(135deg, #f18221 0%, #0071BC 100%);
-            --mkba-notification-bg: #f59e0b;
         }
 
         .project-form-header {
@@ -671,45 +670,11 @@
             transform: translateY(-2px);
         }
 
-        /* CORRECTION: Notification uniforme - même couleur que "Modifications non sauvegardées" */
-        .mkba-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--mkba-notification-bg);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-weight: 500;
-            z-index: 9999;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            display: none;
-            animation: slideInRight 0.3s ease;
-        }
-
-        .mkba-notification.show {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        /* CORRECTION: Indicateur de changements non sauvegardés - même couleur */
         .unsaved-changes {
             position: fixed;
             top: 20px;
             right: 20px;
-            background: var(--mkba-notification-bg);
+            background: var(--mk-warning);
             color: white;
             padding: 10px 15px;
             border-radius: 8px;
@@ -722,6 +687,17 @@
 
         .unsaved-changes.show {
             display: block;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         .is-invalid {
@@ -791,12 +767,6 @@
 {% endblock %}
 
 {% block body %}
-<!-- CORRECTION: Notification uniforme pour toutes les actions -->
-<div class="mkba-notification" id="mkbaNotification">
-    <i class="fas fa-info-circle"></i>
-    <span id="notificationMessage"></span>
-</div>
-
 <!-- Indicateur de changements non sauvegardés -->
 <div class="unsaved-changes" id="unsavedChanges">
     <i class="fas fa-exclamation-triangle me-2"></i>
@@ -1477,7 +1447,7 @@
             
             updateFieldStatus();
             markAsUnsaved();
-            showMkbaNotification('Contenu copié depuis la version française');
+            showNotification('Contenu copié depuis la version française', 'success');
         }
 
         function copyFromEnglish() {
@@ -1495,7 +1465,7 @@
             
             updateFieldStatus();
             markAsUnsaved();
-            showMkbaNotification('Contenu copié depuis la version anglaise');
+            showNotification('Contenu copié depuis la version anglaise', 'success');
         }
 
         // Gestion des collections
@@ -1597,7 +1567,7 @@
             }
         }
 
-        // CORRECTION MAJEURE: Gestion des fichiers
+   
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1625,7 +1595,7 @@
         function handleFiles(files) {
             Array.from(files).forEach(file => {
                 if (file.size > 10 * 1024 * 1024) {
-                    showMkbaNotification(`Le fichier ${file.name} dépasse 10MB`);
+                    showNotification(`Le fichier ${file.name} dépasse 10MB`, 'error');
                     return;
                 }
 
@@ -1634,7 +1604,7 @@
                 const extension = file.name.split('.').pop().toLowerCase();
                 
                 if (!allowedExtensions.includes(extension)) {
-                    showMkbaNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`);
+                    showNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`, 'error');
                     return;
                 }
 
@@ -1733,26 +1703,23 @@
             });
 
             markAsSaved();
-            showMkbaNotification(`Enregistrement des modifications en ${currentLang === 'fr' ? 'français' : 'anglais'}...`);
+            showNotification(`Enregistrement des modifications en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
             
             // Soumettre avec FormData pour gérer les fichiers
             fetch(formElement.action, {
                 method: 'POST',
                 body: formData
-            }).then(response => response.json()).then(data => {
-                if (data.success) {
-                    showMkbaNotification(data.message);
-                    if (data.redirect_url) {
-                        setTimeout(() => {
-                            window.location.href = data.redirect_url;
-                        }, 1000);
-                    }
+            }).then(response => {
+                if (response.ok) {
+                    showNotification(`Modifications enregistrées avec succès en ${currentLang === 'fr' ? 'français' : 'anglais'}!`, 'success');
+                    setTimeout(() => {
+                        window.location.href = '{{ path("admin_project_show", {id: project.id}) }}?locale=' + currentLang;
+                    }, 1500);
                 } else {
-                    showMkbaNotification(data.message);
-                    markAsUnsaved();
+                    throw new Error('Erreur de sauvegarde');
                 }
             }).catch(error => {
-                showMkbaNotification('Erreur lors de la sauvegarde');
+                showNotification('Erreur lors de la sauvegarde', 'error');
                 markAsUnsaved();
             });
         }
@@ -1774,7 +1741,7 @@
             });
 
             if (!isValid) {
-                showMkbaNotification('Veuillez remplir tous les champs obligatoires');
+                showNotification('Veuillez remplir tous les champs obligatoires', 'error');
                 const firstInvalid = document.querySelector('.is-invalid');
                 if (firstInvalid) {
                     firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1792,25 +1759,31 @@
             return true;
         }
 
-        // CORRECTION: Fonction de notification uniforme avec couleur et durée standardisées
-        function showMkbaNotification(message, type = 'info') {
-            const notification = document.getElementById('mkbaNotification');
-            const messageElement = document.getElementById('notificationMessage');
+        function showNotification(message, type = 'info') {
+            const alertClass = type === 'error' ? 'danger' : type;
+            const alertHtml = `
+                <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" 
+                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
+                    <i class="bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
             
-            messageElement.textContent = message;
-            notification.classList.add('show');
+            document.body.insertAdjacentHTML('beforeend', alertHtml);
             
-            // CORRECTION: Disparaître après 1 seconde comme spécifié
             setTimeout(() => {
-                notification.classList.remove('show');
-            }, 1000);
+                const alert = document.querySelector('.alert:last-of-type');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Modification Projet MK BA avec notifications uniformes!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ Notifications uniformes avec couleur --mkba-notification-bg');
-        console.log('✅ Durée de 1 seconde pour toutes les notifications');
+        console.log('%c🚀 Formulaire Modification Projet MK BA avec pièces-jointes corrigées!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
         console.log('✅ Upload des fichiers corrigé avec FormData');
         console.log('✅ Gestion des fichiers existants et nouveaux');
+        console.log('✅ Validation des extensions et tailles');
         console.log('✅ Copie entre langues disponible');
     </script>
 
