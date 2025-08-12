@@ -457,7 +457,6 @@
             gap: 6px;
         }
 
-        /* CORRECTION: Éviter que l'indicateur * passe à la ligne */
         .form-label .required-indicator {
             color: var(--mk-danger);
             font-weight: bold;
@@ -1080,7 +1079,7 @@
                 </div>
             </div>
 
-            <!-- ÉTAPE 4: PIÈCES JOINTES - CORRECTION MAJEURE -->
+            <!-- ÉTAPE 4: PIÈCES JOINTES - CORRECTION 2 -->
             <div class="form-step" data-step-content="4">
                 <h2 class="step-title">
                     <i class="bi-paperclip text-primary"></i>
@@ -1099,8 +1098,8 @@
                             <i class="bi-folder-open me-2"></i>
                             Parcourir les fichiers
                         </button>
-                        <!-- CORRECTION: Input file caché pour la soumission -->
-                        <input type="file" id="fileInput" multiple style="display: none;" 
+                        <!-- CORRECTION 2: Input file correctement nommé pour la soumission -->
+                        <input type="file" id="fileInput" name="files[]" multiple style="display: none;" 
                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.jpg,.jpeg,.png">
                         <p class="help-text mt-3">
                             Formats acceptés: PDF, Word, Excel, PowerPoint, Images, ZIP (Max 10MB par fichier)
@@ -1253,14 +1252,23 @@
                 });
             });
 
-            // Switch de langue avec modal personnalisé
+            // CORRECTION 3: Switch de langue avec vérification du contenu traduisible
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const lang = this.dataset.lang;
                     
                     if (lang !== currentLang) {
-                        pendingLanguageChange = lang;
-                        showLanguageModal();
+                        // Vérifier si des champs traduisibles sont remplis
+                        const hasTranslatableContent = checkTranslatableContent();
+                        
+                        if (hasTranslatableContent) {
+                            // Si du contenu est présent, montrer le modal de confirmation
+                            pendingLanguageChange = lang;
+                            showLanguageModal();
+                        } else {
+                            // Si aucun contenu traduisible, changer directement
+                            switchLanguage(lang);
+                        }
                     }
                 });
             });
@@ -1275,6 +1283,19 @@
                     e.returnValue = '';
                 }
             });
+        }
+
+        // CORRECTION 3: Fonction pour vérifier le contenu traduisible
+        function checkTranslatableContent() {
+            const translatableFields = document.querySelectorAll('[data-translatable="true"]');
+            
+            for (let field of translatableFields) {
+                if (field.value && field.value.trim() !== '') {
+                    return true;
+                }
+            }
+            
+            return false;
         }
 
         // Gestion du modal de changement de langue
@@ -1451,7 +1472,7 @@
             markAsUnsaved();
         }
 
-        // CORRECTION MAJEURE: Gestion des fichiers
+        // CORRECTION 2: Gestion des fichiers corrigée
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1551,57 +1572,42 @@
             });
         }
 
-        // CORRECTION MAJEURE: Soumission du formulaire avec fichiers
+        // CORRECTION 2: Soumission du formulaire avec fichiers directement dans l'input
         function handleFormSubmit(e) {
-            e.preventDefault();
+            // CORRECTION 2: Ne pas empêcher la soumission par défaut pour que l'input file soit pris en compte
             
             if (!validateForm()) {
+                e.preventDefault();
                 return false;
             }
             
-            const formData = new FormData();
-            
-            // Ajouter tous les champs du formulaire existant
-            const formElement = e.target;
-            const formFields = new FormData(formElement);
-            
-            for (let [key, value] of formFields.entries()) {
-                formData.append(key, value);
-            }
-            
-            // Ajouter la locale et les données de traduction
-            formData.append('locale', currentLang);
+            // Ajouter la locale et les données de traduction dans des champs cachés
+            const localeInput = document.createElement('input');
+            localeInput.type = 'hidden';
+            localeInput.name = 'locale';
+            localeInput.value = currentLang;
+            e.target.appendChild(localeInput);
             
             const nameField = document.querySelector('[name="project[translation][name]"]');
             const descField = document.querySelector('[name="project[translation][description]"]');
             
-            formData.append('translation[name]', nameField ? nameField.value : '');
-            formData.append('translation[description]', descField ? descField.value : '');
-
-            // CORRECTION: Ajouter les fichiers uploadés
-            uploadedFiles.forEach(file => {
-                formData.append('files[]', file);
-            });
+            const translationNameInput = document.createElement('input');
+            translationNameInput.type = 'hidden';
+            translationNameInput.name = 'translation[name]';
+            translationNameInput.value = nameField ? nameField.value : '';
+            e.target.appendChild(translationNameInput);
+            
+            const translationDescInput = document.createElement('input');
+            translationDescInput.type = 'hidden';
+            translationDescInput.name = 'translation[description]';
+            translationDescInput.value = descField ? descField.value : '';
+            e.target.appendChild(translationDescInput);
 
             markAsSaved();
             showNotification(`Enregistrement du projet en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
             
-            fetch(formElement.action, {
-                method: 'POST',
-                body: formData
-            }).then(response => {
-                if (response.ok) {
-                    showNotification(`Projet créé avec succès en ${currentLang === 'fr' ? 'français' : 'anglais'}!`, 'success');
-                    setTimeout(() => {
-                        window.location.href = '{{ path("admin_project_index") }}';
-                    }, 1500);
-                } else {
-                    throw new Error('Erreur de sauvegarde');
-                }
-            }).catch(error => {
-                showNotification('Erreur lors de la sauvegarde', 'error');
-                markAsUnsaved();
-            });
+            // Laisser la soumission normale du formulaire se faire
+            return true;
         }
 
         function validateForm() {
@@ -1660,10 +1666,9 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Projet MK BA avec pièces-jointes corrigées!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ Upload des fichiers corrigé avec FormData');
-        console.log('✅ Validation des extensions et tailles');
-        console.log('✅ Modal personnalisé pour changement de langue');
-        console.log('✅ Soumission form multipart/form-data');
+        console.log('%c🚀 Formulaire Projet MK BA avec toutes les corrections!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ CORRECTION 2: Input file correctement nommé');
+        console.log('✅ CORRECTION 3: Modal langue conditionnelle sur contenu traduisible');
+        console.log('✅ Soumission formulaire multipart/form-data');
     </script>
 {% endblock %}

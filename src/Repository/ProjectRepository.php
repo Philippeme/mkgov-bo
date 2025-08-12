@@ -17,13 +17,15 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Trouver tous les projets avec leurs traductions
+     * CORRECTION: Trouver tous les projets ACTIFS avec leurs traductions
      */
     public function findAllWithTranslations(?string $locale = 'fr'): array
     {
         return $this->createQueryBuilder('p')
             ->leftJoin('p.translations', 't', 'WITH', 't.locale = :locale')
             ->addSelect('t')
+            ->where('p.isActive = :active')  // CORRECTION: Filtrer les projets actifs
+            ->setParameter('active', true)
             ->setParameter('locale', $locale)
             ->orderBy('p.displayOrder', 'ASC')
             ->addOrderBy('p.createdAt', 'DESC')
@@ -66,18 +68,16 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Rechercher des projets par terme
+     * CORRECTION: Rechercher des projets ACTIFS par terme
      */
     public function searchProjects(string $searchTerm, ?string $locale = 'fr'): array
     {
         return $this->createQueryBuilder('p')
             ->leftJoin('p.translations', 't', 'WITH', 't.locale = :locale')
             ->addSelect('t')
-            ->where('p.code LIKE :search')
-            ->orWhere('t.name LIKE :search')
-            ->orWhere('t.description LIKE :search')
-            ->orWhere('p.responsible LIKE :search')
-            ->orWhere('p.department LIKE :search')
+            ->where('p.isActive = :active')  // CORRECTION: Filtrer les projets actifs
+            ->andWhere('(p.code LIKE :search OR t.name LIKE :search OR t.description LIKE :search OR p.responsible LIKE :search OR p.department LIKE :search)')
+            ->setParameter('active', true)
             ->setParameter('search', '%' . $searchTerm . '%')
             ->setParameter('locale', $locale)
             ->orderBy('p.displayOrder', 'ASC')
@@ -86,13 +86,15 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Filtrer les projets par critères
+     * CORRECTION: Filtrer les projets ACTIFS par critères
      */
     public function filterProjects(array $criteria = [], ?string $locale = 'fr'): array
     {
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.translations', 't', 'WITH', 't.locale = :locale')
             ->addSelect('t')
+            ->where('p.isActive = :active')  // CORRECTION: Filtrer les projets actifs
+            ->setParameter('active', true)
             ->setParameter('locale', $locale);
 
         if (!empty($criteria['status'])) {
@@ -130,11 +132,6 @@ class ProjectRepository extends ServiceEntityRepository
                ->setParameter('dateEnd', new \DateTime($criteria['dateEnd']));
         }
 
-        if (isset($criteria['active'])) {
-            $qb->andWhere('p.isActive = :active')
-               ->setParameter('active', $criteria['active']);
-        }
-
         return $qb->orderBy('p.displayOrder', 'ASC')
                   ->addOrderBy('p.createdAt', 'DESC')
                   ->getQuery()
@@ -142,7 +139,7 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Compter les projets par statut
+     * Compter les projets par statut (projets actifs uniquement)
      */
     public function countByStatus(): array
     {
@@ -170,7 +167,7 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Compter les projets par catégorie
+     * Compter les projets par catégorie (projets actifs uniquement)
      */
     public function countByCategory(): array
     {
@@ -198,7 +195,7 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Trouver les projets récents
+     * Trouver les projets récents (projets actifs uniquement)
      */
     public function findRecentProjects(int $limit = 10, ?string $locale = 'fr'): array
     {
@@ -215,14 +212,16 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Vérifier l'unicité du code projet
+     * Vérifier l'unicité du code projet (parmi les projets actifs)
      */
     public function isCodeUnique(string $code, ?int $excludeId = null): bool
     {
         $qb = $this->createQueryBuilder('p')
             ->select('COUNT(p.id)')
             ->where('p.code = :code')
-            ->setParameter('code', $code);
+            ->andWhere('p.isActive = :active')  // CORRECTION: Vérifier uniquement parmi les projets actifs
+            ->setParameter('code', $code)
+            ->setParameter('active', true);
 
         if ($excludeId) {
             $qb->andWhere('p.id != :id')
@@ -233,17 +232,37 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Calculer les statistiques globales
+     * Calculer les statistiques globales (projets actifs uniquement)
      */
     public function getGlobalStats(): array
     {
         $qb = $this->createQueryBuilder('p');
         
+        // Total de tous les projets (actifs et inactifs)
+        $total = (int) $qb->select('COUNT(p.id)')->getQuery()->getSingleScalarResult();
+        
+        // Projets actifs uniquement
+        $active = (int) $qb->select('COUNT(p.id)')->where('p.isActive = true')->getQuery()->getSingleScalarResult();
+        
+        // En cours (parmi les actifs)
+        $inProgress = (int) $qb->select('COUNT(p.id)')
+            ->where('p.status = :status')
+            ->andWhere('p.isActive = true')
+            ->setParameter('status', 'in_progress')
+            ->getQuery()->getSingleScalarResult();
+            
+        // Terminés (parmi les actifs)
+        $completed = (int) $qb->select('COUNT(p.id)')
+            ->where('p.status = :status')
+            ->andWhere('p.isActive = true')
+            ->setParameter('status', 'completed')
+            ->getQuery()->getSingleScalarResult();
+        
         return [
-            'total' => (int) $qb->select('COUNT(p.id)')->getQuery()->getSingleScalarResult(),
-            'active' => (int) $qb->select('COUNT(p.id)')->where('p.isActive = true')->getQuery()->getSingleScalarResult(),
-            'in_progress' => (int) $qb->select('COUNT(p.id)')->where('p.status = :status')->setParameter('status', 'in_progress')->getQuery()->getSingleScalarResult(),
-            'completed' => (int) $qb->select('COUNT(p.id)')->where('p.status = :status')->setParameter('status', 'completed')->getQuery()->getSingleScalarResult(),
+            'total' => $total,
+            'active' => $active,
+            'in_progress' => $inProgress,
+            'completed' => $completed,
         ];
     }
 
@@ -265,17 +284,19 @@ class ProjectRepository extends ServiceEntityRepository
     }
 
     /**
-     * Exporter les projets pour Excel/PDF
+     * CORRECTION: Exporter les projets ACTIFS pour Excel/PDF
      */
     public function findForExport(array $ids = [], ?string $locale = 'fr'): array
     {
         $qb = $this->createQueryBuilder('p')
             ->leftJoin('p.translations', 't', 'WITH', 't.locale = :locale')
             ->addSelect('t')
+            ->where('p.isActive = :active')  // CORRECTION: Filtrer les projets actifs
+            ->setParameter('active', true)
             ->setParameter('locale', $locale);
 
         if (!empty($ids)) {
-            $qb->where('p.id IN (:ids)')
+            $qb->andWhere('p.id IN (:ids)')
                ->setParameter('ids', $ids);
         }
 
@@ -283,5 +304,21 @@ class ProjectRepository extends ServiceEntityRepository
                   ->addOrderBy('p.createdAt', 'DESC')
                   ->getQuery()
                   ->getResult();
+    }
+
+    /**
+     * NOUVELLE MÉTHODE: Trouver tous les projets (actifs ET inactifs) pour l'administration
+     */
+    public function findAllWithTranslationsIncludingInactive(?string $locale = 'fr'): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.translations', 't', 'WITH', 't.locale = :locale')
+            ->addSelect('t')
+            ->setParameter('locale', $locale)
+            ->orderBy('p.isActive', 'DESC')  // Actifs en premier
+            ->addOrderBy('p.displayOrder', 'ASC')
+            ->addOrderBy('p.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
     }
 }

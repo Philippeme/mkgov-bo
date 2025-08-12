@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Dompdf\Dompdf;
@@ -30,7 +31,8 @@ class ProjectController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private ProjectRepository $projectRepository,
-        private SluggerInterface $slugger
+        private SluggerInterface $slugger,
+        private CsrfTokenManagerInterface $csrfTokenManager
     ) {}
 
     #[Route('/', name: 'admin_project_index', methods: ['GET'])]
@@ -52,12 +54,19 @@ class ProjectController extends AbstractController
         $statusCounts = $this->projectRepository->countByStatus();
         $categoryCounts = $this->projectRepository->countByCategory();
 
+        // CORRECTION 1: Générer les vrais tokens CSRF pour chaque projet
+        $csrfTokens = [];
+        foreach ($projects as $project) {
+            $csrfTokens[$project->getId()] = $this->csrfTokenManager->getToken('delete' . $project->getId())->getValue();
+        }
+
         return $this->render('admin/project/index.html.twig', [
             'projects' => $projects,
             'stats' => $stats,
             'statusCounts' => $statusCounts,
             'categoryCounts' => $categoryCounts,
-            'currentLocale' => $locale
+            'currentLocale' => $locale,
+            'csrfTokens' => $csrfTokens  // Passer les tokens au template
         ]);
     }
 
@@ -92,7 +101,7 @@ class ProjectController extends AbstractController
             // Traitement des relations
             $this->processProjectRelations($project, $request);
 
-            // CORRECTION: Traitement amélioré des fichiers uploadés
+            // CORRECTION 2: Traitement amélioré des fichiers uploadés
             $this->processFileUploads($project, $request);
 
             try {
@@ -170,7 +179,7 @@ class ProjectController extends AbstractController
             // Traitement des relations
             $this->processProjectRelations($project, $request);
 
-            // CORRECTION: Traitement amélioré des fichiers
+            // CORRECTION 2: Traitement amélioré des fichiers
             $this->processFileUploads($project, $request);
             $this->processRemovedAttachments($project, $request);
 
@@ -203,9 +212,9 @@ class ProjectController extends AbstractController
     #[Route('/{id}/delete', name: 'admin_project_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, Project $project): Response
     {
-        // CORRECTION: Vérification CSRF améliorée
+        // CORRECTION 1: Vérification CSRF avec le bon token
         if ($this->isCsrfTokenValid('delete'.$project->getId(), $request->request->get('_token'))) {
-            // CORRECTION: Soft delete confirmé - désactiver au lieu de supprimer
+            // Soft delete confirmé - désactiver au lieu de supprimer
             $project->setIsActive(false);
             $project->setUpdatedAt(new \DateTime());
             
@@ -464,14 +473,20 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * CORRECTION: Traitement amélioré des fichiers uploadés
+     * CORRECTION 2: Traitement corrigé des fichiers uploadés
      */
     private function processFileUploads(Project $project, Request $request): void
     {
-        // Récupérer les fichiers depuis la requête files
-        $uploadedFiles = $request->files->get('files', []);
+        // Récupérer les fichiers depuis les différentes sources possibles
+        $uploadedFiles = [];
         
-        // Si pas de fichiers dans files, vérifier dans le form
+        // 1. Fichiers depuis le champ 'files' (nouveau formulaire)
+        $filesFromField = $request->files->get('files', []);
+        if ($filesFromField) {
+            $uploadedFiles = is_array($filesFromField) ? $filesFromField : [$filesFromField];
+        }
+        
+        // 2. Si pas de fichiers dans 'files', vérifier dans le formulaire principal
         if (empty($uploadedFiles)) {
             $formFiles = $request->files->get('project');
             if ($formFiles && isset($formFiles['files'])) {
@@ -479,6 +494,7 @@ class ProjectController extends AbstractController
             }
         }
 
+        // 3. Traiter les fichiers trouvés
         if (!empty($uploadedFiles)) {
             $this->handleFileUploads($project, $uploadedFiles);
         }
@@ -512,7 +528,7 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * CORRECTION: Gérer l'upload des fichiers avec validation améliorée
+     * CORRECTION 2: Gérer l'upload des fichiers avec validation améliorée et gestion d'erreur
      */
     private function handleFileUploads(Project $project, array $files): void
     {
@@ -546,17 +562,27 @@ class ProjectController extends AbstractController
                 try {
                     $file->move($uploadDir, $newFilename);
 
+                    // CORRECTION: Utiliser getClientMimeType() au lieu de getMimeType() pour éviter l'erreur de fichier temporaire
+                    $mimeType = $file->getClientMimeType();
+                    
+                    // Fallback si getClientMimeType() retourne null
+                    if (!$mimeType) {
+                        $mimeType = 'application/octet-stream';
+                    }
+
                     $attachment = new ProjectAttachment();
                     $attachment->setProject($project)
                              ->setFileName($newFilename)
                              ->setOriginalName($file->getClientOriginalName())
-                             ->setMimeType($file->getMimeType())
+                             ->setMimeType($mimeType)
                              ->setFileSize($file->getSize());
 
                     $project->addAttachment($attachment);
 
                 } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors de l\'upload du fichier : ' . $file->getClientOriginalName());
+                    $this->addFlash('error', 'Erreur lors de l\'upload du fichier : ' . $file->getClientOriginalName() . ' - ' . $e->getMessage());
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Erreur lors du traitement du fichier : ' . $file->getClientOriginalName() . ' - ' . $e->getMessage());
                 }
             }
         }

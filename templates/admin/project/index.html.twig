@@ -983,6 +983,9 @@
         let selectedRows = new Set();
         let projectToDelete = null; // Pour stocker les infos du projet à supprimer
 
+        // CORRECTION 1: Vrais tokens CSRF reçus du contrôleur
+        const csrfTokens = {{ csrfTokens|json_encode|raw }};
+
         // URLs pour les actions
         const projectUrls = {
             deleteBase: '{{ path('admin_project_index') }}'.replace('/index', '/'),
@@ -991,14 +994,10 @@
             bulkDelete: '{{ path('admin_project_bulk_delete') }}'
         };
 
-        // CORRECTION: Token CSRF pour les suppressions
-        const csrfTokens = {};
-
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('📋 Initialisation du module Project avec modal personnalisé...');
+            console.log('📋 Initialisation du module Project avec tokens CSRF corrects...');
             initializeProjectModule();
-            loadCsrfTokens();
         });
 
         function initializeProjectModule() {
@@ -1008,23 +1007,7 @@
             setupSortingEventListeners();
             updatePagination();
             updateStats();
-            console.log('✅ Module Project initialisé avec succès!');
-        }
-
-        // CORRECTION: Chargement des tokens CSRF
-        function loadCsrfTokens() {
-            // Récupérer les tokens CSRF pour chaque projet
-            document.querySelectorAll('[data-project-id]').forEach(row => {
-                const projectId = row.dataset.projectId;
-                // Simuler la génération du token CSRF côté client
-                // En production, ces tokens devraient être fournis par le serveur
-                csrfTokens[projectId] = generateCsrfToken(projectId);
-            });
-        }
-
-        function generateCsrfToken(projectId) {
-            // Génération simplifiée - en production, utiliser un vrai token du serveur
-            return 'csrf_' + projectId + '_' + Date.now();
+            console.log('✅ Module Project initialisé avec tokens CSRF valides!');
         }
 
         function extractDataFromTable() {
@@ -1114,7 +1097,7 @@
             console.log('✅ Event listeners attachés avec succès');
         }
 
-        // ========== MODAL PERSONNALISÉ DE SUPPRESSION ========== 
+        // ========== MODAL PERSONNALISÉ DE SUPPRESSION AVEC CSRF CORRIGÉ ========== 
         function showDeleteModal(projectId, projectCode, projectName) {
             projectToDelete = {
                 id: projectId,
@@ -1150,8 +1133,14 @@
                 return;
             }
 
-            // CORRECTION: Utilisation du token CSRF approprié
-            const csrfToken = csrfTokens[projectToDelete.id] || 'fallback-token';
+            // CORRECTION 1: Utilisation du vrai token CSRF du serveur
+            const csrfToken = csrfTokens[projectToDelete.id];
+            
+            if (!csrfToken) {
+                console.error('Token CSRF non trouvé pour le projet:', projectToDelete.id);
+                alert('Erreur: Token de sécurité non trouvé. Rechargez la page.');
+                return;
+            }
             
             // Créer et soumettre le formulaire de suppression
             const form = document.createElement('form');
@@ -1279,8 +1268,8 @@
                             });
                         }
 
-                        // CORRECTION: Réattacher les boutons d'action avec modal
-                        const deleteBtn = row.querySelector('[onclick*="deleteProject"]');
+                        // CORRECTION 1: Réattacher les boutons d'action avec modal et tokens corrects
+                        const deleteBtn = row.querySelector('[onclick*="showDeleteModal"]');
                         if (deleteBtn) {
                             deleteBtn.setAttribute('onclick', `showDeleteModal(${item.id}, '${item.code}', '${item.name}')`);
                         }
@@ -1457,7 +1446,7 @@
                 if (filters.category && item.category !== filters.category) visible = false;
                 if (filters.priority && item.priority !== filters.priority) visible = false;
                 
-                // CORRECTION: Implémentation des filtres Département et Budget
+                // Implémentation des filtres Département et Budget
                 if (filters.department) {
                     // Récupérer le département depuis l'élément DOM car pas dans les données extraites
                     const departmentCell = item.element.querySelector('td[data-department]');
@@ -1667,9 +1656,9 @@
             });
         }
 
-        console.log('%c🚀 Module Project MK BA avec modal personnalisé de suppression!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('%c🚀 Module Project MK BA avec tokens CSRF corrects!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ CORRECTION 1: Tokens CSRF du serveur utilisés');
         console.log('✅ Modal personnalisé pour confirmation de suppression');
-        console.log('✅ Tokens CSRF gérés côté client');
         console.log('✅ Pagination complète avec contrôles intuitifs');
         console.log('✅ Actions groupées et exports fonctionnels');
     </script>
