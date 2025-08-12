@@ -54,7 +54,6 @@ class ProjectController extends AbstractController
         $statusCounts = $this->projectRepository->countByStatus();
         $categoryCounts = $this->projectRepository->countByCategory();
 
-        // CORRECTION 1: Générer les vrais tokens CSRF pour chaque projet
         $csrfTokens = [];
         foreach ($projects as $project) {
             $csrfTokens[$project->getId()] = $this->csrfTokenManager->getToken('delete' . $project->getId())->getValue();
@@ -66,7 +65,7 @@ class ProjectController extends AbstractController
             'statusCounts' => $statusCounts,
             'categoryCounts' => $categoryCounts,
             'currentLocale' => $locale,
-            'csrfTokens' => $csrfTokens  // Passer les tokens au template
+            'csrfTokens' => $csrfTokens
         ]);
     }
 
@@ -101,7 +100,7 @@ class ProjectController extends AbstractController
             // Traitement des relations
             $this->processProjectRelations($project, $request);
 
-            // CORRECTION 2: Traitement amélioré des fichiers uploadés
+            // CORRECTION PRINCIPALE : Traitement des fichiers uploadés
             $this->processFileUploads($project, $request);
 
             try {
@@ -136,7 +135,6 @@ class ProjectController extends AbstractController
         $locale = $request->query->get('locale', $request->getLocale() ?: 'fr');
         $project = $this->projectRepository->findOneWithAllRelations($project->getId());
 
-        // Vérifier les traductions disponibles pour chaque langue
         $availableTranslations = $this->getAvailableTranslations($project);
         $supportedLocales = ['fr', 'en'];
 
@@ -179,7 +177,7 @@ class ProjectController extends AbstractController
             // Traitement des relations
             $this->processProjectRelations($project, $request);
 
-            // CORRECTION 2: Traitement amélioré des fichiers
+            // CORRECTION PRINCIPALE : Traitement des fichiers uploadés
             $this->processFileUploads($project, $request);
             $this->processRemovedAttachments($project, $request);
 
@@ -212,9 +210,7 @@ class ProjectController extends AbstractController
     #[Route('/{id}/delete', name: 'admin_project_delete', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function delete(Request $request, Project $project): Response
     {
-        // CORRECTION 1: Vérification CSRF avec le bon token
         if ($this->isCsrfTokenValid('delete'.$project->getId(), $request->request->get('_token'))) {
-            // Soft delete confirmé - désactiver au lieu de supprimer
             $project->setIsActive(false);
             $project->setUpdatedAt(new \DateTime());
             
@@ -389,11 +385,9 @@ class ProjectController extends AbstractController
         $existingTranslation = $project->getTranslation($locale);
         
         if ($existingTranslation) {
-            // Mettre à jour la traduction existante
             $existingTranslation->setName($translationData['name'])
                               ->setDescription($translationData['description'] ?? '');
         } else {
-            // Créer une nouvelle traduction
             $translation = new ProjectTranslation();
             $translation->setProject($project)
                       ->setLocale($locale)
@@ -409,10 +403,7 @@ class ProjectController extends AbstractController
      */
     private function processProjectRelations(Project $project, Request $request): void
     {
-        // Gérer les membres
         $this->processMembers($project, $request);
-        
-        // Gérer les liens
         $this->processLinks($project, $request);
     }
 
@@ -473,30 +464,25 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * CORRECTION 2: Traitement corrigé des fichiers uploadés
+     * CORRECTION PRINCIPALE : Traitement robuste des fichiers uploadés
      */
     private function processFileUploads(Project $project, Request $request): void
     {
-        // Récupérer les fichiers depuis les différentes sources possibles
-        $uploadedFiles = [];
+        // Récupérer les fichiers depuis la requête
+        $uploadedFiles = $request->files->get('files', []);
         
-        // 1. Fichiers depuis le champ 'files' (nouveau formulaire)
-        $filesFromField = $request->files->get('files', []);
-        if ($filesFromField) {
-            $uploadedFiles = is_array($filesFromField) ? $filesFromField : [$filesFromField];
-        }
-        
-        // 2. Si pas de fichiers dans 'files', vérifier dans le formulaire principal
-        if (empty($uploadedFiles)) {
-            $formFiles = $request->files->get('project');
-            if ($formFiles && isset($formFiles['files'])) {
-                $uploadedFiles = is_array($formFiles['files']) ? $formFiles['files'] : [$formFiles['files']];
-            }
+        // Si c'est un seul fichier, le convertir en tableau
+        if (!is_array($uploadedFiles)) {
+            $uploadedFiles = [$uploadedFiles];
         }
 
-        // 3. Traiter les fichiers trouvés
-        if (!empty($uploadedFiles)) {
-            $this->handleFileUploads($project, $uploadedFiles);
+        // Filtrer les fichiers valides
+        $validFiles = array_filter($uploadedFiles, function($file) {
+            return $file !== null && $file->isValid();
+        });
+
+        if (!empty($validFiles)) {
+            $this->handleFileUploads($project, $validFiles);
         }
     }
 
@@ -528,64 +514,104 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * CORRECTION 2: Gérer l'upload des fichiers avec validation améliorée et gestion d'erreur
+     * CORRECTION PRINCIPALE : Gestion robuste de l'upload des fichiers
      */
     private function handleFileUploads(Project $project, array $files): void
     {
         $uploadDir = $this->getParameter('projects_directory');
         
+        // Créer le dossier s'il n'existe pas
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0755, true);
         }
 
         foreach ($files as $file) {
-            if ($file && $file->isValid()) {
+            try {
+                // Vérifications de base
+                if (!$file || !$file->isValid()) {
+                    continue;
+                }
+
+                // CORRECTION : Obtenir la taille du fichier avant traitement
+                $fileSize = $file->getSize();
+                
                 // Validation de la taille (max 10MB)
-                if ($file->getSize() > 10 * 1024 * 1024) {
+                if ($fileSize > 10 * 1024 * 1024) {
                     $this->addFlash('warning', 'Le fichier ' . $file->getClientOriginalName() . ' dépasse 10MB et a été ignoré.');
                     continue;
                 }
 
                 // Validation de l'extension
+                $originalExtension = $file->getClientOriginalExtension();
+                if (!$originalExtension) {
+                    // Essayer de déterminer l'extension depuis le nom
+                    $originalExtension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
+                }
+                
                 $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
-                $extension = strtolower($file->getClientOriginalExtension());
+                $extension = strtolower($originalExtension);
                 
                 if (!in_array($extension, $allowedExtensions)) {
                     $this->addFlash('warning', 'Le fichier ' . $file->getClientOriginalName() . ' n\'est pas dans un format autorisé.');
                     continue;
                 }
 
+                // Générer un nom de fichier sécurisé
                 $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
                 $safeFilename = $this->slugger->slug($originalFilename);
-                $newFilename = $safeFilename.'-'.uniqid().'.'.$file->guessExtension();
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $extension;
 
-                try {
-                    $file->move($uploadDir, $newFilename);
+                // CORRECTION : Déplacer le fichier en premier
+                $file->move($uploadDir, $newFilename);
 
-                    // CORRECTION: Utiliser getClientMimeType() au lieu de getMimeType() pour éviter l'erreur de fichier temporaire
-                    $mimeType = $file->getClientMimeType();
-                    
-                    // Fallback si getClientMimeType() retourne null
-                    if (!$mimeType) {
-                        $mimeType = 'application/octet-stream';
-                    }
-
-                    $attachment = new ProjectAttachment();
-                    $attachment->setProject($project)
-                             ->setFileName($newFilename)
-                             ->setOriginalName($file->getClientOriginalName())
-                             ->setMimeType($mimeType)
-                             ->setFileSize($file->getSize());
-
-                    $project->addAttachment($attachment);
-
-                } catch (FileException $e) {
-                    $this->addFlash('error', 'Erreur lors de l\'upload du fichier : ' . $file->getClientOriginalName() . ' - ' . $e->getMessage());
-                } catch (\Exception $e) {
-                    $this->addFlash('error', 'Erreur lors du traitement du fichier : ' . $file->getClientOriginalName() . ' - ' . $e->getMessage());
+                // CORRECTION : Obtenir le type MIME de manière robuste
+                $mimeType = $file->getClientMimeType();
+                if (!$mimeType) {
+                    // Fallback pour déterminer le type MIME
+                    $mimeType = $this->getMimeTypeFromExtension($extension);
                 }
+
+                // Créer l'entité attachment
+                $attachment = new ProjectAttachment();
+                $attachment->setProject($project)
+                         ->setFileName($newFilename)
+                         ->setOriginalName($file->getClientOriginalName())
+                         ->setMimeType($mimeType)
+                         ->setFileSize($fileSize);
+
+                $project->addAttachment($attachment);
+
+                $this->addFlash('success', 'Fichier ' . $file->getClientOriginalName() . ' ajouté avec succès.');
+
+            } catch (FileException $e) {
+                $this->addFlash('error', 'Erreur lors de l\'upload du fichier : ' . $file->getClientOriginalName() . ' - ' . $e->getMessage());
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur lors du traitement du fichier : ' . $file->getClientOriginalName() . ' - ' . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * CORRECTION : Méthode pour déterminer le type MIME depuis l'extension
+     */
+    private function getMimeTypeFromExtension(string $extension): string
+    {
+        $mimeTypes = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'ppt' => 'application/vnd.ms-powerpoint',
+            'pptx' => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+            'txt' => 'text/plain',
+            'zip' => 'application/zip',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png'
+        ];
+
+        return $mimeTypes[$extension] ?? 'application/octet-stream';
     }
 
     /**

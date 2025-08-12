@@ -212,56 +212,6 @@
             color: white;
         }
 
-        .form-steps-container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            padding: 40px;
-            margin: 30px 0;
-            min-height: 400px;
-            position: relative;
-        }
-
-        .main-content-wrapper {
-            padding-top: 0;
-        }
-
-        .form-step {
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .form-step.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .step-title {
-            color: var(--mk-primary);
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .step-description {
-            color: var(--mk-gray);
-            margin-bottom: 30px;
-            font-size: 15px;
-        }
-
         .translation-notice {
             background: linear-gradient(45deg, #e3f2fd, #bbdefb);
             border: 1px solid #2196f3;
@@ -370,6 +320,56 @@
             gap: 8px;
         }
 
+        .form-steps-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 40px;
+            margin: 30px 0;
+            min-height: 400px;
+            position: relative;
+        }
+
+        .main-content-wrapper {
+            padding-top: 0;
+        }
+
+        .form-step {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-step.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-title {
+            color: var(--mk-primary);
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .step-description {
+            color: var(--mk-gray);
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
         .form-label {
             font-weight: 600;
             color: var(--mk-dark);
@@ -379,7 +379,6 @@
             gap: 6px;
         }
 
-        /* CORRECTION: Éviter que l'indicateur * passe à la ligne */
         .form-label .required-indicator {
             color: var(--mk-danger);
             font-weight: bold;
@@ -495,6 +494,7 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
+        /* CORRECTION: Styles simplifiés pour l'upload de fichiers */
         .file-upload-area {
             border: 3px dashed #e5e7eb;
             border-radius: 12px;
@@ -523,71 +523,12 @@
             margin-bottom: 15px;
         }
 
-        .files-list {
-            margin-top: 20px;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .file-item:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-
-        .file-icon {
-            font-size: 24px;
-            color: var(--mk-primary);
-        }
-
-        .file-details {
-            text-align: left;
-        }
-
-        .file-name {
-            font-weight: 600;
-            color: var(--mk-dark);
-            font-size: 14px;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: var(--mk-gray);
-        }
-
-        .btn-remove-file {
-            background: var(--mk-danger);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .btn-remove-file:hover {
-            background: #dc2626;
-            transform: scale(1.05);
+        .file-input-hidden {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            width: 1px;
+            height: 1px;
         }
 
         .existing-attachments {
@@ -602,11 +543,37 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px;
+            padding: 15px;
             background: white;
             border: 1px solid #e9ecef;
             border-radius: 8px;
             margin-bottom: 10px;
+        }
+
+        .attachment-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .attachment-icon {
+            font-size: 24px;
+            color: var(--mk-primary);
+        }
+
+        .attachment-details {
+            text-align: left;
+        }
+
+        .attachment-name {
+            font-weight: 600;
+            color: var(--mk-dark);
+            font-size: 14px;
+        }
+
+        .attachment-meta {
+            font-size: 12px;
+            color: var(--mk-gray);
         }
 
         .btn-remove-existing {
@@ -614,8 +581,71 @@
             color: white;
             border: none;
             border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-download-existing {
+            background: var(--mk-info);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 6px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-right: 5px;
+        }
+
+        .files-preview {
+            margin-top: 20px;
+        }
+
+        .file-preview-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .file-preview-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-preview-icon {
+            font-size: 24px;
+            color: var(--mk-primary);
+        }
+
+        .file-preview-details {
+            text-align: left;
+        }
+
+        .file-preview-name {
+            font-weight: 600;
+            color: var(--mk-dark);
+            font-size: 14px;
+        }
+
+        .file-preview-size {
+            font-size: 12px;
+            color: var(--mk-gray);
+        }
+
+        .btn-remove-file-preview {
+            background: var(--mk-danger);
+            color: white;
+            border: none;
+            border-radius: 4px;
             padding: 4px 8px;
-            font-size: 11px;
+            font-size: 12px;
             cursor: pointer;
         }
 
@@ -858,6 +888,7 @@
 </div>
 
 <div class="container-fluid main-content-wrapper">
+    <!-- CORRECTION: Formulaire simplifié pour l'upload -->
     {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
         <div class="form-steps-container">
             
@@ -1170,7 +1201,7 @@
                 </div>
             </div>
 
-            <!-- ÉTAPE 4: PIÈCES JOINTES - CORRECTION MAJEURE -->
+            <!-- ÉTAPE 4: PIÈCES JOINTES - CORRECTION PRINCIPALE -->
             <div class="form-step" data-step-content="4">
                 <h2 class="step-title">
                     <i class="bi-paperclip text-primary"></i>
@@ -1187,16 +1218,16 @@
                         <h5><i class="fas fa-folder-open me-2"></i>Fichiers existants</h5>
                         {% for attachment in project.attachments %}
                         <div class="existing-attachment" data-attachment-id="{{ attachment.id }}">
-                            <div class="file-info">
-                                <i class="bi-file-earmark file-icon me-2"></i>
-                                <div class="file-details">
-                                    <div class="file-name">{{ attachment.originalName }}</div>
-                                    <div class="file-size">{{ attachment.formattedFileSize }} • {{ attachment.uploadedAt|date('d/m/Y') }}</div>
+                            <div class="attachment-info">
+                                <i class="bi-file-earmark attachment-icon"></i>
+                                <div class="attachment-details">
+                                    <div class="attachment-name">{{ attachment.originalName }}</div>
+                                    <div class="attachment-meta">{{ attachment.formattedFileSize }} • {{ attachment.uploadedAt|date('d/m/Y') }}</div>
                                 </div>
                             </div>
                             <div class="d-flex gap-2">
                                 <a href="{{ asset('uploads/projects/' ~ attachment.fileName) }}" 
-                                   class="btn btn-sm btn-outline-primary" 
+                                   class="btn-download-existing" 
                                    target="_blank"
                                    download="{{ attachment.originalName }}">
                                     <i class="fas fa-download"></i>
@@ -1210,24 +1241,33 @@
                     </div>
                     {% endif %}
 
-                    <!-- Zone d'upload pour nouveaux fichiers -->
-                    <div class="file-upload-area" id="fileUploadArea">
+                    <!-- CORRECTION: Zone d'upload simplifiée pour nouveaux fichiers -->
+                    <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
                         <i class="bi-cloud-upload file-upload-icon"></i>
                         <h4>Ajouter de nouveaux fichiers</h4>
-                        <p class="text-muted">Glissez-déposez vos fichiers ici ou</p>
-                        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                        <p class="text-muted">Cliquez ici pour parcourir vos fichiers ou glissez-déposez</p>
+                        <button type="button" class="btn btn-outline-primary">
                             <i class="bi-folder-open me-2"></i>
                             Parcourir les fichiers
                         </button>
-                        <!-- CORRECTION: Input file caché pour la soumission -->
-                        <input type="file" id="fileInput" multiple style="display: none;" 
-                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.jpg,.jpeg,.png">
                         <p class="help-text mt-3">
                             Formats acceptés: PDF, Word, Excel, PowerPoint, Images, ZIP (Max 10MB par fichier)
                         </p>
                     </div>
 
-                    <div class="files-list" id="filesList"></div>
+                    <!-- CORRECTION: Input file standard HTML -->
+                    <input type="file" 
+                           id="fileInput" 
+                           name="files[]" 
+                           multiple 
+                           class="file-input-hidden"
+                           accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.jpg,.jpeg,.png">
+
+                    <!-- Prévisualisation des nouveaux fichiers -->
+                    <div class="files-preview" id="filesPreview" style="display: none;">
+                        <h5><i class="fas fa-paperclip me-2"></i>Nouveaux fichiers sélectionnés</h5>
+                        <div id="filesList"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1268,7 +1308,6 @@
         let currentLang = '{{ currentLocale }}';
         let memberIndex = {{ project.members|length }};
         let linkIndex = {{ project.links|length }};
-        let uploadedFiles = [];
         let hasUnsavedChanges = false;
         let removedAttachments = [];
         const projectId = {{ project.id }};
@@ -1290,7 +1329,6 @@
             initializeForm();
             setupEventListeners();
             setupFileUpload();
-            initializeSearchableSelects();
             trackFormChanges();
             updateFieldStatus();
             loadTranslationForCurrentLanguage();
@@ -1386,7 +1424,7 @@
                 });
             });
 
-            // Switch de langue avec confirmation si changements
+            // Switch de langue
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const lang = this.dataset.lang;
@@ -1567,11 +1605,12 @@
             }
         }
 
-   
+        // CORRECTION: Gestion simplifiée des fichiers
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
 
+            // Drag & drop
             fileUploadArea.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 fileUploadArea.classList.add('dragover');
@@ -1584,69 +1623,80 @@
             fileUploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 fileUploadArea.classList.remove('dragover');
-                handleFiles(e.dataTransfer.files);
+                
+                const files = e.dataTransfer.files;
+                handleFileSelection(files);
             });
 
+            // Sélection de fichiers
             fileInput.addEventListener('change', (e) => {
-                handleFiles(e.target.files);
+                handleFileSelection(e.target.files);
             });
         }
 
-        function handleFiles(files) {
-            Array.from(files).forEach(file => {
+        function handleFileSelection(files) {
+            if (files.length === 0) return;
+
+            displayFilePreview(files);
+            markAsUnsaved();
+        }
+
+        function displayFilePreview(files) {
+            const filesPreview = document.getElementById('filesPreview');
+            const filesList = document.getElementById('filesList');
+            
+            // Vider la liste précédente
+            filesList.innerHTML = '';
+            
+            Array.from(files).forEach((file, index) => {
+                // Validation
                 if (file.size > 10 * 1024 * 1024) {
-                    showNotification(`Le fichier ${file.name} dépasse 10MB`, 'error');
+                    showNotification(`Le fichier ${file.name} dépasse 10MB`, 'warning');
                     return;
                 }
 
-                // Validation des extensions
                 const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
                 const extension = file.name.split('.').pop().toLowerCase();
                 
                 if (!allowedExtensions.includes(extension)) {
-                    showNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`, 'error');
+                    showNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`, 'warning');
                     return;
                 }
 
-                uploadedFiles.push(file);
-                displayFile(file, uploadedFiles.length - 1);
-                markAsUnsaved();
-            });
-        }
-
-        function displayFile(file, index) {
-            const filesList = document.getElementById('filesList');
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.dataset.fileIndex = index;
-            fileItem.innerHTML = `
-                <div class="file-info">
-                    <i class="bi-file-earmark file-icon"></i>
-                    <div class="file-details">
-                        <div class="file-name">${file.name}</div>
-                        <div class="file-size">${formatFileSize(file.size)}</div>
+                // Créer l'élément de prévisualisation
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-preview-item';
+                fileItem.innerHTML = `
+                    <div class="file-preview-info">
+                        <i class="bi-file-earmark file-preview-icon"></i>
+                        <div class="file-preview-details">
+                            <div class="file-preview-name">${file.name}</div>
+                            <div class="file-preview-size">${formatFileSize(file.size)}</div>
+                        </div>
                     </div>
-                </div>
-                <button type="button" class="btn-remove-file" onclick="removeFile(this, ${index})">
-                    <i class="bi-trash"></i>
-                    Supprimer
-                </button>
-            `;
-            filesList.appendChild(fileItem);
-        }
-
-        function removeFile(button, index) {
-            uploadedFiles.splice(index, 1);
-            button.closest('.file-item').remove();
-            
-            const remainingItems = document.querySelectorAll('.file-item');
-            remainingItems.forEach((item, newIndex) => {
-                item.dataset.fileIndex = newIndex;
-                const removeBtn = item.querySelector('.btn-remove-file');
-                removeBtn.setAttribute('onclick', `removeFile(this, ${newIndex})`);
+                    <button type="button" class="btn-remove-file-preview" onclick="removeFileFromPreview(this)">
+                        <i class="bi-trash"></i>
+                    </button>
+                `;
+                
+                filesList.appendChild(fileItem);
             });
             
-            markAsUnsaved();
+            if (filesList.children.length > 0) {
+                filesPreview.style.display = 'block';
+            }
+        }
+
+        function removeFileFromPreview(button) {
+            const fileItem = button.closest('.file-preview-item');
+            fileItem.remove();
+            
+            // Si plus de fichiers, cacher la prévisualisation
+            const filesList = document.getElementById('filesList');
+            if (filesList.children.length === 0) {
+                document.getElementById('filesPreview').style.display = 'none';
+                document.getElementById('fileInput').value = '';
+            }
         }
 
         function formatFileSize(bytes) {
@@ -1657,71 +1707,39 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        function initializeSearchableSelects() {
-            $('.searchable-select').select2({
-                placeholder: function() {
-                    return $(this).data('placeholder') || '';
-                },
-                allowClear: true,
-                width: '100%'
-            });
-        }
-
-        // CORRECTION MAJEURE: Soumission du formulaire avec fichiers
+        // Soumission du formulaire
         function handleFormSubmit(e) {
-            e.preventDefault();
-            
-            // Validation de base
             if (!validateForm()) {
+                e.preventDefault();
                 return false;
             }
             
-            // Créer FormData pour gérer les fichiers
-            const formData = new FormData();
+            // Ajouter la locale et les données de traduction dans des champs cachés
+            const localeInput = document.createElement('input');
+            localeInput.type = 'hidden';
+            localeInput.name = 'locale';
+            localeInput.value = currentLang;
+            e.target.appendChild(localeInput);
             
-            // Ajouter tous les champs du formulaire existant
-            const formElement = e.target;
-            const formFields = new FormData(formElement);
-            
-            for (let [key, value] of formFields.entries()) {
-                formData.append(key, value);
-            }
-            
-            // Ajouter la langue actuelle
-            formData.append('locale', currentLang);
-            
-            // Ajouter les données de traduction
             const nameField = document.querySelector('[name="project[translation][name]"]');
             const descField = document.querySelector('[name="project[translation][description]"]');
             
-            formData.append('translation[name]', nameField ? nameField.value : '');
-            formData.append('translation[description]', descField ? descField.value : '');
-
-            // CORRECTION: Ajouter les fichiers
-            uploadedFiles.forEach(file => {
-                formData.append('files[]', file);
-            });
+            const translationNameInput = document.createElement('input');
+            translationNameInput.type = 'hidden';
+            translationNameInput.name = 'translation[name]';
+            translationNameInput.value = nameField ? nameField.value : '';
+            e.target.appendChild(translationNameInput);
+            
+            const translationDescInput = document.createElement('input');
+            translationDescInput.type = 'hidden';
+            translationDescInput.name = 'translation[description]';
+            translationDescInput.value = descField ? descField.value : '';
+            e.target.appendChild(translationDescInput);
 
             markAsSaved();
             showNotification(`Enregistrement des modifications en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
             
-            // Soumettre avec FormData pour gérer les fichiers
-            fetch(formElement.action, {
-                method: 'POST',
-                body: formData
-            }).then(response => {
-                if (response.ok) {
-                    showNotification(`Modifications enregistrées avec succès en ${currentLang === 'fr' ? 'français' : 'anglais'}!`, 'success');
-                    setTimeout(() => {
-                        window.location.href = '{{ path("admin_project_show", {id: project.id}) }}?locale=' + currentLang;
-                    }, 1500);
-                } else {
-                    throw new Error('Erreur de sauvegarde');
-                }
-            }).catch(error => {
-                showNotification('Erreur lors de la sauvegarde', 'error');
-                markAsUnsaved();
-            });
+            return true;
         }
 
         function validateForm() {
@@ -1780,11 +1798,9 @@
             }, 3000);
         }
 
-        console.log('%c🚀 Formulaire Modification Projet MK BA avec pièces-jointes corrigées!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ Upload des fichiers corrigé avec FormData');
+        console.log('%c🚀 Formulaire Modification Projet MK BA avec upload corrigé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ Upload simplifié avec input file standard');
         console.log('✅ Gestion des fichiers existants et nouveaux');
-        console.log('✅ Validation des extensions et tailles');
-        console.log('✅ Copie entre langues disponible');
+        console.log('✅ Validation robuste côté client et serveur');
     </script>
-
 {% endblock %}
