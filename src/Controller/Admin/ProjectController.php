@@ -15,10 +15,22 @@ use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+
+// NOUVEAU: Imports pour les exports
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 #[Route('/admin/project')]
 #[IsGranted('ROLE_ADMIN')]
@@ -316,7 +328,207 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * NOUVEAU: Export DataTables - toutes données
+     * NOUVEAU: Export Excel avec personnalisation complète
+     */
+    #[Route('/export-excel', name: 'admin_project_export_excel', methods: ['POST'])]
+    public function exportExcel(Request $request): Response
+    {
+        try {
+            $locale = $request->getLocale() ?: 'fr';
+            $selectedIds = $request->request->all('ids') ?: [];
+            
+            // Récupérer les projets à exporter
+            if (!empty($selectedIds)) {
+                $projects = $this->projectRepository->findForExport($selectedIds, $locale);
+                $filename = 'projets_selection_' . date('Y-m-d_H-i-s') . '.xlsx';
+            } else {
+                $projects = $this->projectRepository->findAllWithTranslations($locale);
+                $filename = 'projets_complet_' . date('Y-m-d_H-i-s') . '.xlsx';
+            }
+
+            // Créer le classeur Excel
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle('Projets MK BA');
+
+            // Définir les en-têtes
+            $headers = [
+                'A1' => 'Code Projet',
+                'B1' => 'Nom du Projet',
+                'C1' => 'Catégorie', 
+                'D1' => 'Priorité',
+                'E1' => 'Statut',
+                'F1' => 'Responsable',
+                'G1' => 'Département',
+                'H1' => 'Date de début',
+                'I1' => 'Date de fin',
+                'J1' => 'Budget (€)',
+                'K1' => 'Créé le',
+                'L1' => 'Modifié le'
+            ];
+
+            // Appliquer les en-têtes
+            foreach ($headers as $cell => $value) {
+                $sheet->setCellValue($cell, $value);
+            }
+
+            // Style des en-têtes
+            $headerStyle = [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                    'size' => 12
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '0071BC']
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ],
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => '000000']
+                    ]
+                ]
+            ];
+
+            $sheet->getStyle('A1:L1')->applyFromArray($headerStyle);
+
+            // Remplir les données
+            $row = 2;
+            foreach ($projects as $project) {
+                $sheet->setCellValue('A' . $row, $project->getCode());
+                $sheet->setCellValue('B' . $row, $project->getName($locale) ?: 'N/A');
+                $sheet->setCellValue('C' . $row, $project->getCategoryLabel());
+                $sheet->setCellValue('D' . $row, $project->getPriorityLabel());
+                $sheet->setCellValue('E' . $row, $project->getStatusLabel());
+                $sheet->setCellValue('F' . $row, $project->getResponsible() ?: 'N/A');
+                $sheet->setCellValue('G' . $row, $project->getDepartment() ?: 'N/A');
+                $sheet->setCellValue('H' . $row, $project->getStartDate() ? $project->getStartDate()->format('d/m/Y') : 'N/A');
+                $sheet->setCellValue('I' . $row, $project->getEndDate() ? $project->getEndDate()->format('d/m/Y') : 'N/A');
+                $sheet->setCellValue('J' . $row, $project->getBudget() ? number_format($project->getBudget(), 2, ',', ' ') : 'N/A');
+                $sheet->setCellValue('K' . $row, $project->getCreatedAt()->format('d/m/Y H:i'));
+                $sheet->setCellValue('L' . $row, $project->getUpdatedAt() ? $project->getUpdatedAt()->format('d/m/Y H:i') : '');
+                $row++;
+            }
+
+            // Style des données
+            $dataStyle = [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'CCCCCC']
+                    ]
+                ],
+                'alignment' => [
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ]
+            ];
+
+            $sheet->getStyle('A2:L' . ($row - 1))->applyFromArray($dataStyle);
+
+            // Ajuster la largeur des colonnes
+            foreach (range('A', 'L') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            // Ajouter des informations supplémentaires
+            $infoRow = $row + 2;
+            $sheet->setCellValue('A' . $infoRow, 'Généré le : ' . date('d/m/Y H:i:s'));
+            $sheet->setCellValue('A' . ($infoRow + 1), 'Total : ' . count($projects) . ' projet(s)');
+            $sheet->setCellValue('A' . ($infoRow + 2), 'Langue : ' . strtoupper($locale));
+
+            // Style des informations
+            $infoStyle = [
+                'font' => [
+                    'italic' => true,
+                    'size' => 10,
+                    'color' => ['rgb' => '666666']
+                ]
+            ];
+            $sheet->getStyle('A' . $infoRow . ':A' . ($infoRow + 2))->applyFromArray($infoStyle);
+
+            // Créer la réponse
+            $writer = new Xlsx($spreadsheet);
+            
+            $response = new StreamedResponse(function() use ($writer) {
+                $writer->save('php://output');
+            });
+
+            $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            $response->headers->set('Cache-Control', 'max-age=0');
+
+            return $response;
+
+        } catch (\Exception $e) {
+            $this->logError('Erreur export Excel', $e);
+            $this->addFlash(self::FLASH_ERROR, 'Erreur lors de l\'export Excel. Veuillez réessayer.');
+            return $this->redirectToRoute('admin_project_index');
+        }
+    }
+
+    /**
+     * NOUVEAU: Export PDF avec template personnalisé
+     */
+    #[Route('/export-pdf', name: 'admin_project_export_pdf', methods: ['POST'])]
+    public function exportPdf(Request $request): Response
+    {
+        try {
+            $locale = $request->getLocale() ?: 'fr';
+            $selectedIds = $request->request->all('ids') ?: [];
+            
+            // Récupérer les projets à exporter
+            if (!empty($selectedIds)) {
+                $projects = $this->projectRepository->findForExport($selectedIds, $locale);
+                $filename = 'projets_selection_' . date('Y-m-d_H-i-s') . '.pdf';
+                $title = 'Projets MK BA - Sélection';
+            } else {
+                $projects = $this->projectRepository->findAllWithTranslations($locale);
+                $filename = 'projets_complet_' . date('Y-m-d_H-i-s') . '.pdf';
+                $title = 'Projets MK BA - Liste complète';
+            }
+
+            // Générer le HTML à partir du template personnalisé
+            $html = $this->renderView('admin/project/pdf_template.html.twig', [
+                'projects' => $projects,
+                'currentLocale' => $locale,
+                'title' => $title,
+                'exportDate' => new \DateTime(),
+                'totalProjects' => count($projects),
+                'isSelection' => !empty($selectedIds)
+            ]);
+
+            // Configuration DOMPDF
+            $options = new Options();
+            $options->set('defaultFont', 'Arial');
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true);
+
+            $dompdf = new Dompdf($options);
+            $dompdf->loadHtml($html);
+            $dompdf->setPaper('A4', 'landscape');
+            $dompdf->render();
+
+            // Créer la réponse
+            $response = new Response($dompdf->output());
+            $response->headers->set('Content-Type', 'application/pdf');
+            $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+            return $response;
+
+        } catch (\Exception $e) {
+            $this->logError('Erreur export PDF', $e);
+            $this->addFlash(self::FLASH_ERROR, 'Erreur lors de l\'export PDF. Veuillez réessayer.');
+            return $this->redirectToRoute('admin_project_index');
+        }
+    }
+
+    /**
+     * Export DataTables - toutes données (conservé pour compatibilité)
      */
     #[Route('/export-datatable', name: 'admin_project_export_datatable', methods: ['POST'])]
     public function exportDataTable(Request $request): JsonResponse
@@ -357,7 +569,7 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * NOUVEAU: Export DataTables - sélection
+     * Export DataTables - sélection (conservé pour compatibilité)
      */
     #[Route('/export-datatable-selection', name: 'admin_project_export_datatable_selection', methods: ['POST'])]
     public function exportDataTableSelection(Request $request): JsonResponse
