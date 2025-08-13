@@ -478,10 +478,17 @@ class ProjectController extends AbstractController
     public function exportPdf(Request $request): Response
     {
         try {
+            // ÉTAPE 1: Validation des paramètres d'entrée
             $locale = $request->getLocale() ?: 'fr';
             $selectedIds = $request->request->all('ids') ?: [];
             
-            // Récupérer les projets à exporter
+            $this->logDebug('Export PDF initié', [
+                'locale' => $locale,
+                'selectedIds' => $selectedIds,
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+
+            // ÉTAPE 2: Récupération et validation des données
             if (!empty($selectedIds)) {
                 $projects = $this->projectRepository->findForExport($selectedIds, $locale);
                 $filename = 'projets_selection_' . date('Y-m-d_H-i-s') . '.pdf';
@@ -492,38 +499,143 @@ class ProjectController extends AbstractController
                 $title = 'Projets MK BA - Liste complète';
             }
 
-            // Générer le HTML à partir du template personnalisé
-            $html = $this->renderView('admin/project/pdf_template.html.twig', [
-                'projects' => $projects,
-                'currentLocale' => $locale,
-                'title' => $title,
-                'exportDate' => new \DateTime(),
-                'totalProjects' => count($projects),
-                'isSelection' => !empty($selectedIds)
+            if (empty($projects)) {
+                $this->addFlash('warning', 'Aucun projet trouvé pour l\'export PDF.');
+                return $this->redirectToRoute('admin_project_index');
+            }
+
+            $this->logDebug('Données récupérées', [
+                'projectCount' => count($projects),
+                'locale' => $locale
             ]);
 
-            // Configuration DOMPDF
+            // ÉTAPE 3: Vérification de l'existence du template
+            $templatePath = 'admin/project/pdf_template.html.twig';
+            if (!$this->get('twig')->getLoader()->exists($templatePath)) {
+                throw new \Exception("Template PDF non trouvé : {$templatePath}");
+            }
+
+            // ÉTAPE 4: Génération du contenu HTML avec gestion d'erreurs Twig
+            try {
+                $html = $this->renderView($templatePath, [
+                    'projects' => $projects,
+                    'currentLocale' => $locale,
+                    'title' => $title,
+                    'exportDate' => new \DateTime(),
+                    'totalProjects' => count($projects),
+                    'isSelection' => !empty($selectedIds)
+                ]);
+
+                $this->logDebug('Template rendu avec succès', [
+                    'htmlLength' => strlen($html),
+                    'templatePath' => $templatePath
+                ]);
+
+            } catch (\Twig\Error\Error $e) {
+                throw new \Exception("Erreur dans le template Twig: " . $e->getMessage(), 0, $e);
+            }
+
+            // ÉTAPE 5: Configuration DomPDF avec validation
+            if (!class_exists('\Dompdf\Dompdf')) {
+                throw new \Exception("DomPDF n'est pas installé. Exécutez: composer require dompdf/dompdf");
+            }
+
             $options = new Options();
             $options->set('defaultFont', 'Arial');
-            $options->set('isRemoteEnabled', true);
+            $options->set('isRemoteEnabled', false); // Sécurité renforcée
             $options->set('isHtml5ParserEnabled', true);
+            $options->set('debugPng', false);
+            $options->set('debugKeepTemp', false);
+            $options->set('debugCss', false);
+            
+            // Configuration mémoire pour éviter les erreurs
+            $options->set('enable_php', false);
+            $options->set('chroot', realpath($this->getParameter('kernel.project_dir')));
 
-            $dompdf = new Dompdf($options);
-            $dompdf->loadHtml($html);
-            $dompdf->setPaper('A4', 'landscape');
-            $dompdf->render();
+            $this->logDebug('Options DomPDF configurées');
 
-            // Créer la réponse
-            $response = new Response($dompdf->output());
+            // ÉTAPE 6: Génération PDF avec gestion mémoire
+            $originalMemoryLimit = ini_get('memory_limit');
+            ini_set('memory_limit', '512M'); // Augmentation temporaire
+
+            try {
+                $dompdf = new Dompdf($options);
+                $dompdf->loadHtml($html);
+                $dompdf->setPaper('A4', 'landscape');
+                
+                $this->logDebug('HTML chargé dans DomPDF, début du rendu...');
+                
+                $dompdf->render();
+                
+                $this->logDebug('PDF généré avec succès', [
+                    'filename' => $filename,
+                    'memoryUsage' => memory_get_peak_usage(true) / 1024 / 1024 . ' MB'
+                ]);
+
+            } catch (\Exception $e) {
+                throw new \Exception("Erreur lors de la génération PDF: " . $e->getMessage(), 0, $e);
+            } finally {
+                // Restaurer la limite mémoire
+                ini_set('memory_limit', $originalMemoryLimit);
+            }
+
+            // ÉTAPE 7: Création de la réponse HTTP
+            $pdfOutput = $dompdf->output();
+            
+            if (empty($pdfOutput)) {
+                throw new \Exception("Le PDF généré est vide");
+            }
+
+            $response = new Response($pdfOutput);
             $response->headers->set('Content-Type', 'application/pdf');
             $response->headers->set('Content-Disposition', 'attachment; filename="' . $filename . '"');
+            $response->headers->set('Cache-Control', 'max-age=0');
+
+            $this->logDebug('Export PDF terminé avec succès', [
+                'filename' => $filename,
+                'size' => strlen($pdfOutput) . ' bytes'
+            ]);
 
             return $response;
 
         } catch (\Exception $e) {
-            $this->logError('Erreur export PDF', $e);
-            $this->addFlash(self::FLASH_ERROR, 'Erreur lors de l\'export PDF. Veuillez réessayer.');
+            // Logging détaillé de l'erreur
+            $this->logError('Erreur export PDF détaillée', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'locale' => $locale ?? 'unknown',
+                'selectedIds' => $selectedIds ?? [],
+                'memoryUsage' => memory_get_peak_usage(true) / 1024 / 1024 . ' MB',
+                'phpVersion' => PHP_VERSION,
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+
+            // Message d'erreur spécifique selon le type d'erreur
+            if (strpos($e->getMessage(), 'Template') !== false) {
+                $errorMessage = 'Erreur dans le template PDF. Veuillez contacter l\'administrateur.';
+            } elseif (strpos($e->getMessage(), 'DomPDF') !== false) {
+                $errorMessage = 'Erreur de configuration PDF. Veuillez contacter l\'administrateur.';
+            } elseif (strpos($e->getMessage(), 'memory') !== false) {
+                $errorMessage = 'Erreur de mémoire lors de la génération PDF. Essayez avec moins de projets.';
+            } else {
+                $errorMessage = 'Erreur lors de l\'export PDF: ' . $e->getMessage();
+            }
+
+            $this->addFlash('error', $errorMessage);
             return $this->redirectToRoute('admin_project_index');
+        }
+    }
+
+    
+     /**
+     * Logging amélioré pour le debugging
+     */
+    private function logDebug(string $message, array $context = []): void
+    {
+        if ($this->getParameter('kernel.environment') === 'dev') {
+            error_log('[PDF_DEBUG] ' . $message . ' - ' . json_encode($context));
         }
     }
 
