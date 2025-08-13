@@ -19,15 +19,16 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use Dompdf\Dompdf;
-use Dompdf\Options;
 
 #[Route('/admin/project')]
 #[IsGranted('ROLE_ADMIN')]
 class ProjectController extends AbstractController
 {
+    private const FLASH_SUCCESS = 'success';
+    private const FLASH_ERROR = 'error';
+    private const FLASH_WARNING = 'warning';
+    private const FLASH_INFO = 'info';
+
     public function __construct(
         private EntityManagerInterface $entityManager,
         private ProjectRepository $projectRepository,
@@ -83,7 +84,7 @@ class ProjectController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Vérifier l'unicité du code
             if (!$this->projectRepository->isCodeUnique($project->getCode())) {
-                $this->addFlash('error', 'Ce code projet existe déjà.');
+                $this->addFlash(self::FLASH_ERROR, 'Ce code projet existe déjà. Veuillez choisir un autre code.');
                 return $this->render('admin/project/new.html.twig', [
                     'project' => $project,
                     'form' => $form->createView(),
@@ -100,15 +101,16 @@ class ProjectController extends AbstractController
             // Traitement des relations
             $this->processProjectRelations($project, $request);
 
-            // CORRECTION PRINCIPALE : Traitement des fichiers uploadés
+            // Traitement des fichiers uploadés
             $this->processFileUploads($project, $request);
 
             try {
                 $this->entityManager->persist($project);
                 $this->entityManager->flush();
 
-                $this->addFlash('success', sprintf(
-                    'Projet créé avec succès en %s.', 
+                $this->addFlash(self::FLASH_SUCCESS, sprintf(
+                    'Projet "%s" créé avec succès en %s.',
+                    $project->getCode(),
                     $currentLocale === 'fr' ? 'français' : 'anglais'
                 ));
                 
@@ -118,7 +120,8 @@ class ProjectController extends AbstractController
                 ]);
                 
             } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la création du projet : ' . $e->getMessage());
+                $this->addFlash(self::FLASH_ERROR, 'Erreur lors de la création du projet. Veuillez réessayer.');
+                $this->logError('Erreur création projet', $e);
             }
         }
 
@@ -160,7 +163,7 @@ class ProjectController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Vérifier l'unicité du code (exclure le projet actuel)
             if (!$this->projectRepository->isCodeUnique($project->getCode(), $project->getId())) {
-                $this->addFlash('error', 'Ce code projet existe déjà.');
+                $this->addFlash(self::FLASH_ERROR, 'Ce code projet existe déjà. Veuillez choisir un autre code.');
                 return $this->render('admin/project/edit.html.twig', [
                     'project' => $project,
                     'form' => $form->createView(),
@@ -177,15 +180,16 @@ class ProjectController extends AbstractController
             // Traitement des relations
             $this->processProjectRelations($project, $request);
 
-            // CORRECTION PRINCIPALE : Traitement des fichiers uploadés
+            // Traitement des fichiers uploadés
             $this->processFileUploads($project, $request);
             $this->processRemovedAttachments($project, $request);
 
             try {
                 $this->entityManager->flush();
                 
-                $this->addFlash('success', sprintf(
-                    'Projet modifié avec succès en %s.', 
+                $this->addFlash(self::FLASH_SUCCESS, sprintf(
+                    'Projet "%s" modifié avec succès en %s.',
+                    $project->getCode(),
                     $currentLocale === 'fr' ? 'français' : 'anglais'
                 ));
 
@@ -195,7 +199,8 @@ class ProjectController extends AbstractController
                 ]);
                 
             } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors de la modification du projet : ' . $e->getMessage());
+                $this->addFlash(self::FLASH_ERROR, 'Erreur lors de la modification du projet. Veuillez réessayer.');
+                $this->logError('Erreur modification projet', $e);
             }
         }
 
@@ -211,14 +216,20 @@ class ProjectController extends AbstractController
     public function delete(Request $request, Project $project): Response
     {
         if ($this->isCsrfTokenValid('delete'.$project->getId(), $request->request->get('_token'))) {
-            $project->setIsActive(false);
-            $project->setUpdatedAt(new \DateTime());
-            
-            $this->entityManager->flush();
+            try {
+                $projectCode = $project->getCode();
+                $project->setIsActive(false);
+                $project->setUpdatedAt(new \DateTime());
+                
+                $this->entityManager->flush();
 
-            $this->addFlash('success', 'Projet supprimé avec succès (désactivé).');
+                $this->addFlash(self::FLASH_SUCCESS, sprintf('Projet "%s" supprimé avec succès.', $projectCode));
+            } catch (\Exception $e) {
+                $this->addFlash(self::FLASH_ERROR, 'Erreur lors de la suppression du projet. Veuillez réessayer.');
+                $this->logError('Erreur suppression projet', $e);
+            }
         } else {
-            $this->addFlash('error', 'Token CSRF invalide - Opération non autorisée.');
+            $this->addFlash(self::FLASH_ERROR, 'Token de sécurité invalide. Opération non autorisée.');
         }
 
         return $this->redirectToRoute('admin_project_index');
@@ -231,31 +242,48 @@ class ProjectController extends AbstractController
         $locale = $request->query->get('locale');
 
         if (!$projectId || !$locale) {
-            return new JsonResponse(['error' => 'Paramètres manquants'], 400);
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Paramètres manquants'
+            ], 400);
         }
 
-        $project = $this->projectRepository->findOneWithAllRelations($projectId);
-        if (!$project) {
-            return new JsonResponse(['error' => 'Projet non trouvé'], 404);
+        try {
+            $project = $this->projectRepository->findOneWithAllRelations($projectId);
+            if (!$project) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Projet non trouvé'
+                ], 404);
+            }
+
+            $translation = $project->getTranslation($locale);
+
+            return new JsonResponse([
+                'success' => true,
+                'data' => [
+                    'name' => $translation ? $translation->getName() : '',
+                    'description' => $translation ? $translation->getDescription() : '',
+                    'exists' => $translation !== null && !empty($translation->getName()),
+                    'members' => $project->getMembers()->map(fn($m) => [
+                        'name' => $m->getName(),
+                        'email' => $m->getEmail(),
+                        'role' => $m->getRole()
+                    ])->toArray(),
+                    'links' => $project->getLinks()->map(fn($l) => [
+                        'title' => $l->getTitle(),
+                        'url' => $l->getUrl(),
+                        'type' => $l->getType()
+                    ])->toArray()
+                ]
+            ]);
+        } catch (\Exception $e) {
+            $this->logError('Erreur récupération traduction', $e);
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Erreur lors de la récupération de la traduction'
+            ], 500);
         }
-
-        $translation = $project->getTranslation($locale);
-
-        return new JsonResponse([
-            'name' => $translation ? $translation->getName() : '',
-            'description' => $translation ? $translation->getDescription() : '',
-            'exists' => $translation !== null && !empty($translation->getName()),
-            'members' => $project->getMembers()->map(fn($m) => [
-                'name' => $m->getName(),
-                'email' => $m->getEmail(),
-                'role' => $m->getRole()
-            ])->toArray(),
-            'links' => $project->getLinks()->map(fn($l) => [
-                'title' => $l->getTitle(),
-                'url' => $l->getUrl(),
-                'type' => $l->getType()
-            ])->toArray()
-        ]);
     }
 
     #[Route('/bulk-delete', name: 'admin_project_bulk_delete', methods: ['POST'])]
@@ -264,7 +292,10 @@ class ProjectController extends AbstractController
         $ids = $request->request->get('ids', []);
         
         if (empty($ids)) {
-            return new JsonResponse(['success' => false, 'message' => 'Aucun projet sélectionné']);
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Aucun projet sélectionné'
+            ]);
         }
 
         try {
@@ -272,109 +303,135 @@ class ProjectController extends AbstractController
             $this->entityManager->flush();
 
             return new JsonResponse([
-                'success' => true, 
+                'success' => true,
                 'message' => sprintf('%d projet(s) supprimé(s) avec succès', $count)
             ]);
         } catch (\Exception $e) {
+            $this->logError('Erreur suppression groupée', $e);
             return new JsonResponse([
-                'success' => false, 
-                'message' => 'Erreur lors de la suppression : ' . $e->getMessage()
+                'success' => false,
+                'message' => 'Erreur lors de la suppression groupée'
             ]);
         }
     }
 
-    #[Route('/export/excel', name: 'admin_project_export_excel', methods: ['POST'])]
-    public function exportExcel(Request $request): Response
+    /**
+     * NOUVEAU: Export DataTables - toutes données
+     */
+    #[Route('/export-datatable', name: 'admin_project_export_datatable', methods: ['POST'])]
+    public function exportDataTable(Request $request): JsonResponse
     {
-        $ids = $request->request->get('ids', []);
-        $locale = $request->getLocale() ?: 'fr';
-        
-        $projects = $this->projectRepository->findForExport($ids, $locale);
+        try {
+            $locale = $request->getLocale() ?: 'fr';
+            $projects = $this->projectRepository->findAllWithTranslations($locale);
+            
+            $data = [];
+            foreach ($projects as $project) {
+                $data[] = [
+                    'code' => $project->getCode(),
+                    'name' => $project->getName($locale) ?: 'N/A',
+                    'category' => $project->getCategoryLabel(),
+                    'priority' => $project->getPriorityLabel(),
+                    'status' => $project->getStatusLabel(),
+                    'responsible' => $project->getResponsible() ?: 'N/A',
+                    'department' => $project->getDepartment() ?: 'N/A',
+                    'start_date' => $project->getStartDate() ? $project->getStartDate()->format('d/m/Y') : 'N/A',
+                    'end_date' => $project->getEndDate() ? $project->getEndDate()->format('d/m/Y') : 'N/A',
+                    'budget' => $project->getBudget() ? $project->getBudget() . '€' : 'N/A',
+                    'created_at' => $project->getCreatedAt()->format('d/m/Y H:i')
+                ];
+            }
 
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Headers
-        $headers = ['Code', 'Nom', 'Catégorie', 'Priorité', 'Statut', 'Responsable', 'Département', 'Date début', 'Date fin', 'Budget', 'Créé le'];
-        $sheet->fromArray($headers, null, 'A1');
-
-        // Data
-        $row = 2;
-        foreach ($projects as $project) {
-            $data = [
-                $project->getCode(),
-                $project->getName($locale) ?: 'N/A',
-                $project->getCategoryLabel(),
-                $project->getPriorityLabel(),
-                $project->getStatusLabel(),
-                $project->getResponsible() ?: 'N/A',
-                $project->getDepartment() ?: 'N/A',
-                $project->getStartDate() ? $project->getStartDate()->format('d/m/Y') : 'N/A',
-                $project->getEndDate() ? $project->getEndDate()->format('d/m/Y') : 'N/A',
-                $project->getBudget() ? $project->getBudget() . '€' : 'N/A',
-                $project->getCreatedAt()->format('d/m/Y H:i')
-            ];
-            $sheet->fromArray($data, null, 'A' . $row);
-            $row++;
+            return new JsonResponse([
+                'success' => true,
+                'data' => $data,
+                'filename' => 'projets_' . date('Y-m-d_H-i-s')
+            ]);
+        } catch (\Exception $e) {
+            $this->logError('Erreur export DataTables', $e);
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Erreur lors de l\'export'
+            ]);
         }
-
-        // Style headers
-        $sheet->getStyle('A1:K1')->getFont()->setBold(true);
-        $sheet->getStyle('A1:K1')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID);
-        $sheet->getStyle('A1:K1')->getFill()->getStartColor()->setARGB('FFE0E0E0');
-
-        // Auto-size columns
-        foreach (range('A', 'K') as $column) {
-            $sheet->getColumnDimension($column)->setAutoSize(true);
-        }
-
-        $writer = new Xlsx($spreadsheet);
-        $filename = 'projets_' . date('Y-m-d_H-i-s') . '.xlsx';
-
-        $response = new Response();
-        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        $response->headers->set('Content-Disposition', 'attachment;filename="' . $filename . '"');
-
-        ob_start();
-        $writer->save('php://output');
-        $response->setContent(ob_get_clean());
-
-        return $response;
     }
 
-    #[Route('/export/pdf', name: 'admin_project_export_pdf', methods: ['POST'])]
-    public function exportPdf(Request $request): Response
+    /**
+     * NOUVEAU: Export DataTables - sélection
+     */
+    #[Route('/export-datatable-selection', name: 'admin_project_export_datatable_selection', methods: ['POST'])]
+    public function exportDataTableSelection(Request $request): JsonResponse
     {
-        $ids = $request->request->get('ids', []);
-        $locale = $request->getLocale() ?: 'fr';
+        try {
+            $ids = json_decode($request->request->get('ids', '[]'), true);
+            $locale = $request->getLocale() ?: 'fr';
+            
+            if (empty($ids)) {
+                return new JsonResponse([
+                    'success' => false,
+                    'message' => 'Aucun projet sélectionné'
+                ]);
+            }
+
+            $projects = $this->projectRepository->findForExport($ids, $locale);
+            
+            $data = [];
+            foreach ($projects as $project) {
+                $data[] = [
+                    'code' => $project->getCode(),
+                    'name' => $project->getName($locale) ?: 'N/A',
+                    'category' => $project->getCategoryLabel(),
+                    'priority' => $project->getPriorityLabel(),
+                    'status' => $project->getStatusLabel(),
+                    'responsible' => $project->getResponsible() ?: 'N/A',
+                    'department' => $project->getDepartment() ?: 'N/A',
+                    'start_date' => $project->getStartDate() ? $project->getStartDate()->format('d/m/Y') : 'N/A',
+                    'end_date' => $project->getEndDate() ? $project->getEndDate()->format('d/m/Y') : 'N/A',
+                    'budget' => $project->getBudget() ? $project->getBudget() . '€' : 'N/A',
+                    'created_at' => $project->getCreatedAt()->format('d/m/Y H:i')
+                ];
+            }
+
+            return new JsonResponse([
+                'success' => true,
+                'data' => $data,
+                'filename' => 'projets_selection_' . date('Y-m-d_H-i-s')
+            ]);
+        } catch (\Exception $e) {
+            $this->logError('Erreur export sélection DataTables', $e);
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Erreur lors de l\'export de la sélection'
+            ]);
+        }
+    }
+
+    /**
+     * Validation des fichiers uploadés
+     */
+    private function validateFile($file): array
+    {
+        $errors = [];
         
-        $projects = $this->projectRepository->findForExport($ids, $locale);
+        if (!$file || !$file->isValid()) {
+            $errors[] = 'Fichier invalide';
+            return $errors;
+        }
 
-        $html = $this->renderView('admin/project/export_pdf.html.twig', [
-            'projects' => $projects,
-            'currentLocale' => $locale,
-            'exportDate' => new \DateTime()
-        ]);
+        // Vérification de la taille (max 10MB)
+        if ($file->getSize() > 10 * 1024 * 1024) {
+            $errors[] = 'Le fichier dépasse la taille maximale de 10MB';
+        }
 
-        $options = new Options();
-        $options->set('defaultFont', 'DejaVu Sans');
-        $options->set('isRemoteEnabled', true);
+        // Vérification de l'extension
+        $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
+        $extension = strtolower($file->getClientOriginalExtension());
+        
+        if (!in_array($extension, $allowedExtensions)) {
+            $errors[] = 'Format de fichier non autorisé';
+        }
 
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-        $dompdf->setPaper('A4', 'portrait');
-        $dompdf->render();
-
-        $filename = 'projets_' . date('Y-m-d_H-i-s') . '.pdf';
-
-        return new Response(
-            $dompdf->output(),
-            200,
-            [
-                'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"'
-            ]
-        );
+        return $errors;
     }
 
     /**
@@ -464,25 +521,70 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * CORRECTION PRINCIPALE : Traitement robuste des fichiers uploadés
+     * Traitement robuste des fichiers uploadés
      */
     private function processFileUploads(Project $project, Request $request): void
     {
-        // Récupérer les fichiers depuis la requête
         $uploadedFiles = $request->files->get('files', []);
         
-        // Si c'est un seul fichier, le convertir en tableau
         if (!is_array($uploadedFiles)) {
             $uploadedFiles = [$uploadedFiles];
         }
 
-        // Filtrer les fichiers valides
         $validFiles = array_filter($uploadedFiles, function($file) {
             return $file !== null && $file->isValid();
         });
 
         if (!empty($validFiles)) {
-            $this->handleFileUploads($project, $validFiles);
+            foreach ($validFiles as $file) {
+                $errors = $this->validateFile($file);
+                if (!empty($errors)) {
+                    $this->addFlash(self::FLASH_WARNING, sprintf(
+                        'Fichier "%s" ignoré : %s',
+                        $file->getClientOriginalName(),
+                        implode(', ', $errors)
+                    ));
+                    continue;
+                }
+
+                $this->handleSingleFileUpload($project, $file);
+            }
+        }
+    }
+
+    /**
+     * Gestion d'un seul fichier
+     */
+    private function handleSingleFileUpload(Project $project, $file): void
+    {
+        try {
+            $uploadDir = $this->getParameter('projects_directory');
+            
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+
+            $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $safeFilename = $this->slugger->slug($originalFilename);
+            $extension = $file->getClientOriginalExtension();
+            $newFilename = $safeFilename . '-' . uniqid() . '.' . $extension;
+
+            $file->move($uploadDir, $newFilename);
+
+            $attachment = new ProjectAttachment();
+            $attachment->setProject($project)
+                     ->setFileName($newFilename)
+                     ->setOriginalName($file->getClientOriginalName())
+                     ->setMimeType($file->getClientMimeType() ?: $this->getMimeTypeFromExtension($extension))
+                     ->setFileSize($file->getSize());
+
+            $project->addAttachment($attachment);
+
+            $this->addFlash(self::FLASH_INFO, sprintf('Fichier "%s" ajouté avec succès.', $file->getClientOriginalName()));
+
+        } catch (FileException $e) {
+            $this->addFlash(self::FLASH_ERROR, sprintf('Erreur lors de l\'upload du fichier "%s".', $file->getClientOriginalName()));
+            $this->logError('Erreur upload fichier', $e);
         }
     }
 
@@ -514,85 +616,7 @@ class ProjectController extends AbstractController
     }
 
     /**
-     * CORRECTION PRINCIPALE : Gestion robuste de l'upload des fichiers
-     */
-    private function handleFileUploads(Project $project, array $files): void
-    {
-        $uploadDir = $this->getParameter('projects_directory');
-        
-        // Créer le dossier s'il n'existe pas
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0755, true);
-        }
-
-        foreach ($files as $file) {
-            try {
-                // Vérifications de base
-                if (!$file || !$file->isValid()) {
-                    continue;
-                }
-
-                // CORRECTION : Obtenir la taille du fichier avant traitement
-                $fileSize = $file->getSize();
-                
-                // Validation de la taille (max 10MB)
-                if ($fileSize > 10 * 1024 * 1024) {
-                    $this->addFlash('warning', 'Le fichier ' . $file->getClientOriginalName() . ' dépasse 10MB et a été ignoré.');
-                    continue;
-                }
-
-                // Validation de l'extension
-                $originalExtension = $file->getClientOriginalExtension();
-                if (!$originalExtension) {
-                    // Essayer de déterminer l'extension depuis le nom
-                    $originalExtension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
-                }
-                
-                $allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'zip', 'jpg', 'jpeg', 'png'];
-                $extension = strtolower($originalExtension);
-                
-                if (!in_array($extension, $allowedExtensions)) {
-                    $this->addFlash('warning', 'Le fichier ' . $file->getClientOriginalName() . ' n\'est pas dans un format autorisé.');
-                    continue;
-                }
-
-                // Générer un nom de fichier sécurisé
-                $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $safeFilename = $this->slugger->slug($originalFilename);
-                $newFilename = $safeFilename . '-' . uniqid() . '.' . $extension;
-
-                // CORRECTION : Déplacer le fichier en premier
-                $file->move($uploadDir, $newFilename);
-
-                // CORRECTION : Obtenir le type MIME de manière robuste
-                $mimeType = $file->getClientMimeType();
-                if (!$mimeType) {
-                    // Fallback pour déterminer le type MIME
-                    $mimeType = $this->getMimeTypeFromExtension($extension);
-                }
-
-                // Créer l'entité attachment
-                $attachment = new ProjectAttachment();
-                $attachment->setProject($project)
-                         ->setFileName($newFilename)
-                         ->setOriginalName($file->getClientOriginalName())
-                         ->setMimeType($mimeType)
-                         ->setFileSize($fileSize);
-
-                $project->addAttachment($attachment);
-
-                $this->addFlash('success', 'Fichier ' . $file->getClientOriginalName() . ' ajouté avec succès.');
-
-            } catch (FileException $e) {
-                $this->addFlash('error', 'Erreur lors de l\'upload du fichier : ' . $file->getClientOriginalName() . ' - ' . $e->getMessage());
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur lors du traitement du fichier : ' . $file->getClientOriginalName() . ' - ' . $e->getMessage());
-            }
-        }
-    }
-
-    /**
-     * CORRECTION : Méthode pour déterminer le type MIME depuis l'extension
+     * Déterminer le type MIME depuis l'extension
      */
     private function getMimeTypeFromExtension(string $extension): string
     {
@@ -631,5 +655,19 @@ class ProjectController extends AbstractController
         }
 
         return $availableTranslations;
+    }
+
+    /**
+     * Logger centralisé pour les erreurs
+     */
+    private function logError(string $context, \Exception $e): void
+    {
+        error_log(sprintf('[%s] %s: %s in %s:%d', 
+            $context, 
+            $e->getMessage(), 
+            $e->getFile(), 
+            $e->getLine(),
+            date('Y-m-d H:i:s')
+        ));
     }
 }

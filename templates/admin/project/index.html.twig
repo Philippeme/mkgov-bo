@@ -4,6 +4,11 @@
 
 {% block stylesheets %}
     {{ parent() }}
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
+    
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -79,97 +84,111 @@
             transform: translateY(-2px);
         }
 
-        .mkba-controls {
+        /* DataTables personnalisé */
+        .dataTables_wrapper {
             padding: 20px 25px;
-            background: #fafbfc;
-            border-bottom: 1px solid var(--border-color);
-            position: relative;
-            z-index: 40;
         }
 
-        .mkba-search-box {
-            position: relative;
+        .dataTables_length {
+            margin-bottom: 20px;
         }
 
-        .mkba-search-box input {
-            border-radius: 25px;
-            padding: 10px 20px 10px 45px;
+        .dataTables_filter {
+            margin-bottom: 20px;
+        }
+
+        .dataTables_filter input {
             border: 2px solid #e9ecef;
+            border-radius: 25px;
+            padding: 8px 16px;
+            margin-left: 8px;
             transition: all 0.3s ease;
         }
 
-        .mkba-search-box input:focus {
+        .dataTables_filter input:focus {
             border-color: var(--secondary-color);
             box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+            outline: none;
         }
 
-        .mkba-search-box .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #6c757d;
+        .dt-buttons {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        .mkba-btn {
-            border-radius: 6px;
-            padding: 8px 16px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-        }
-
-        .mkba-btn-primary {
+        .dt-button {
             background: var(--secondary-color);
             color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
 
-        .mkba-btn-primary:hover {
+        .dt-button:hover {
             background: #2980b9;
             transform: translateY(-1px);
+            color: white;
         }
 
-        .mkba-btn-success {
+        .dt-button.buttons-excel {
             background: var(--success-color);
-            color: white;
         }
 
-        .btn-success {
-            background: white !important;
-            color: var(--success-color) !important;
-            border: 1px solid var(--success-color) !important;
+        .dt-button.buttons-excel:hover {
+            background: #219a52;
         }
 
-        .btn-success:hover {
-            background: var(--success-color) !important;
-            color: white !important;
-            border: 1px solid var(--success-color) !important;
-        }
-
-        .mkba-btn-warning {
-            background: var(--warning-color);
-            color: white;
-        }
-
-        .mkba-btn-danger {
+        .dt-button.buttons-pdf {
             background: var(--accent-color);
-            color: white;
         }
 
-        .mkba-table-container {
-            overflow-x: auto;
-            position: relative;
-            z-index: 1;
+        .dt-button.buttons-pdf:hover {
+            background: #c0392b;
         }
 
-        .mkba-table {
-            margin: 0;
+        .dt-button.buttons-print {
+            background: var(--warning-color);
+        }
+
+        .dt-button.buttons-print:hover {
+            background: #e67e22;
+        }
+
+        .dt-button.buttons-select-all,
+        .dt-button.buttons-select-none {
+            background: #6c757d;
+        }
+
+        .dt-button.buttons-select-all:hover,
+        .dt-button.buttons-select-none:hover {
+            background: #5a6268;
+        }
+
+        .dt-button.bulk-delete {
+            background: var(--accent-color);
+            display: none;
+        }
+
+        .dt-button.bulk-delete:hover {
+            background: #c0392b;
+        }
+
+        .dt-button.bulk-delete.show {
+            display: inline-block;
+        }
+
+        /* Table DataTables */
+        .dataTable {
             border: none;
-            position: relative;
+            margin-top: 0 !important;
         }
 
-        .mkba-table thead th {
+        .dataTable thead th {
             background: #0071BC;
             color: white;
             border: none;
@@ -177,58 +196,35 @@
             padding: 15px 12px;
             position: sticky;
             top: 0;
-            cursor: pointer;
-            user-select: none;
             z-index: 10;
         }
 
-        .mkba-table thead th:hover {
+        .dataTable thead th:hover {
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
         }
 
-        .mkba-table thead th.sortable::after {
-            content: '\f0dc';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            position: absolute;
-            right: 8px;
-            opacity: 0.5;
-        }
-
-        .mkba-table thead th.sort-asc::after {
-            content: '\f0de';
-            opacity: 1;
-            color: #ffc107;
-        }
-
-        .mkba-table thead th.sort-desc::after {
-            content: '\f0dd';
-            opacity: 1;
-            color: #ffc107;
-        }
-
-        .mkba-table tbody tr {
+        .dataTable tbody tr {
             transition: all 0.2s ease;
             position: relative;
         }
 
-        .mkba-table tbody tr:hover {
+        .dataTable tbody tr:hover {
             background-color: #f8f9fa;
             transform: translateX(2px);
         }
 
-        .mkba-table tbody tr.selected {
-            background-color: rgba(52, 152, 219, 0.1);
+        .dataTable tbody tr.selected {
+            background-color: rgba(52, 152, 219, 0.1) !important;
             border-left: 4px solid var(--secondary-color);
         }
 
-        .mkba-table tbody td {
+        .dataTable tbody td {
             padding: 12px;
             vertical-align: middle;
             border-top: 1px solid #f1f3f4;
-            position: relative;
         }
 
+        /* Badges */
         .mkba-badge {
             padding: 4px 8px;
             border-radius: 12px;
@@ -273,6 +269,7 @@
         .priority-high { background: #f8d7da; color: #721c24; }
         .priority-critical { background: #f5c6cb; color: #721c24; }
 
+        /* Actions */
         .mkba-actions-group {
             display: flex;
             align-items: center;
@@ -298,59 +295,7 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
 
-        .mkba-actions-group .btn-outline-info:hover {
-            background-color: #17a2b8;
-            border-color: #17a2b8;
-            color: white;
-        }
-
-        .mkba-actions-group .btn-outline-warning:hover {
-            background-color: #ffc107;
-            border-color: #ffc107;
-            color: #212529;
-        }
-
-        .mkba-actions-group .btn-outline-danger:hover {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-
-        /* ========== MODAL FILTRES AVANCÉS ========== */
-        .modal.fade .modal-dialog {
-            transform: translateX(100%);
-            transition: transform 0.8s ease-in-out;
-            margin-left: auto;
-            margin-right: 0;
-            max-width: 600px;
-        }
-
-        .modal.show .modal-dialog {
-            transform: translateX(0);
-        }
-
-        .modal.fade.hide .modal-dialog {
-            transform: translateX(100%);
-            transition: transform 0.8s ease-in-out;
-        }
-
-        #advancedFiltersModal .modal-dialog {
-            position: fixed;
-            right: 0;
-            top: 0;
-            height: 100vh;
-            margin: 0;
-            max-width: 600px;
-            width: 600px;
-        }
-
-        #advancedFiltersModal .modal-content {
-            height: 100vh;
-            border-radius: 0;
-            border: none;
-        }
-
-        /* ========== MODAL PERSONNALISÉ DE SUPPRESSION ========== */
+        /* Modal personnalisé de suppression */
         .delete-modal-overlay {
             position: fixed;
             top: 0;
@@ -494,144 +439,25 @@
             transform: translateY(-1px);
         }
 
-        .mkba-pagination {
-            padding: 20px 25px;
-            background: #fafbfc;
-            border-top: 1px solid var(--border-color);
-            position: relative;
-            z-index: 1;
-        }
-
-        .mkba-pagination-info {
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-
-        .mkba-pagination-controls .btn {
-            margin: 0 2px;
-            border-radius: 6px;
-        }
-
-        .mkba-pagination-controls .btn.active {
-            background: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
-        .mkba-export-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .mkba-dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: white;
-            min-width: 180px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1000;
-            border-radius: 6px;
-            border: 1px solid var(--border-color);
-            top: 100%;
-            right: 0;
-        }
-
-        .mkba-dropdown-content a {
-            color: var(--primary-color);
-            padding: 12px 16px;
-            text-decoration: none;
-            display: block;
-            transition: background-color 0.2s;
-        }
-
-        .mkba-dropdown-content a:hover {
-            background-color: #f1f1f1;
-        }
-
-        .mkba-export-dropdown:hover .mkba-dropdown-content {
-            display: block;
-        }
-
-        .mkba-bulk-actions-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .mkba-bulk-actions-dropdown .mkba-dropdown-content {
-            left: 0;
-            right: auto;
-        }
-
-        .mkba-bulk-actions-dropdown:hover .mkba-dropdown-content {
-            display: block;
-        }
-
-        .mkba-loading {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 1000;
-        }
-
-        .mkba-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--secondary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .mkba-select-all {
-            transform: scale(1.2);
-        }
-
-        .mkba-row-select {
-            transform: scale(1.1);
-        }
-
         @media (max-width: 768px) {
             .mkba-header-content {
                 flex-direction: column;
                 gap: 15px;
             }
             
-            .mkba-controls {
-                padding: 15px;
+            .dt-buttons {
+                flex-direction: column;
+                align-items: stretch;
             }
             
-            .mkba-controls .row > div {
-                margin-bottom: 10px;
+            .dt-button {
+                margin-bottom: 5px;
+                text-align: center;
             }
             
-            .mkba-table {
-                font-size: 0.9rem;
-            }
-            
-            .mkba-table thead th,
-            .mkba-table tbody td {
-                padding: 8px;
-            }
-
             .mkba-actions-group {
                 flex-direction: column;
                 gap: 4px;
-            }
-
-            .dropdown-menu-actions {
-                min-width: 130px;
-                font-size: 0.85rem;
-            }
-
-            .dropdown-menu-actions a,
-            .dropdown-menu-actions button {
-                padding: 9px 12px !important;
             }
 
             .delete-modal {
@@ -688,92 +514,6 @@
         </div>
     </div>
 
-    <!-- Modale Filtres Avancés -->
-    <div class="modal fade" id="advancedFiltersModal" tabindex="-1" aria-labelledby="advancedFiltersModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="advancedFiltersModalLabel">
-                        <i class="fas fa-filter me-2"></i>Filtres Avancés - Projets
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Code Projet</label>
-                                <input type="text" class="form-control" id="filterCode" placeholder="Ex: PROJ-2024">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Nom du Projet</label>
-                                <input type="text" class="form-control" id="filterName" placeholder="Filtrer par nom">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Responsable</label>
-                                <input type="text" class="form-control" id="filterResponsible" placeholder="Nom du responsable">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Catégorie</label>
-                                <select class="form-select" id="filterCategoryAdvanced">
-                                    <option value="">Toutes les catégories</option>
-                                    <option value="development">Développement</option>
-                                    <option value="research">Recherche</option>
-                                    <option value="infrastructure">Infrastructure</option>
-                                    <option value="marketing">Marketing</option>
-                                    <option value="other">Autre</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Priorité</label>
-                                <select class="form-select" id="filterPriorityAdvanced">
-                                    <option value="">Toutes les priorités</option>
-                                    <option value="low">Faible</option>
-                                    <option value="medium">Moyenne</option>
-                                    <option value="high">Élevée</option>
-                                    <option value="critical">Critique</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Département</label>
-                                <select class="form-select" id="filterDepartment">
-                                    <option value="">Tous les départements</option>
-                                    <option value="it">Informatique</option>
-                                    <option value="hr">Ressources Humaines</option>
-                                    <option value="finance">Finance</option>
-                                    <option value="operations">Opérations</option>
-                                    <option value="marketing">Marketing</option>
-                                    <option value="rd">Recherche & Développement</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Budget Min (€)</label>
-                                <input type="number" class="form-control" id="filterBudgetMin" placeholder="0" min="0" step="100">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Budget Max (€)</label>
-                                <input type="number" class="form-control" id="filterBudgetMax" placeholder="1000000" min="0" step="100">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="clearAdvancedFilters()">
-                        <i class="fas fa-trash me-2"></i>Effacer
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeAdvancedFiltersModal()">
-                        <i class="fas fa-times me-2"></i>Fermer
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="applyAdvancedFilters()">
-                        <i class="fas fa-check me-2"></i>Appliquer
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="mkba-container">
         <!-- En-tête -->
         <div class="mkba-header">
@@ -808,100 +548,39 @@
             </div>
         </div>
 
-        <!-- Contrôles -->
-        <div class="mkba-controls">
-            <div class="row align-items-center">
-                <div class="col-md-3">
-                    <div class="mkba-search-box">
-                        <i class="fas fa-search search-icon"></i>
-                        <input type="text" id="searchInput" class="form-control" placeholder="Rechercher dans tous les champs...">
-                    </div>
-                </div>
-                <div class="col-md-2">
-                    <select id="statusFilter" class="form-select">
-                        <option value="">Tous les statuts</option>
-                        <option value="planning">Planification</option>
-                        <option value="in_progress">En cours</option>
-                        <option value="on_hold">En pause</option>
-                        <option value="completed">Terminé</option>
-                        <option value="cancelled">Annulé</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <input type="date" id="dateStart" class="form-control" placeholder="Date début" title="Date de début">
-                </div>
-                <div class="col-md-2">
-                    <div class="d-flex align-items-center gap-2">
-                        <input type="date" id="dateEnd" class="form-control" placeholder="Date fin" title="Date de fin">
-                        <button class="btn btn-outline-secondary" id="advancedFiltersBtn" title="Filtres avancés" style="min-width: 40px; padding: 8px;">
-                            <i class="fas fa-filter"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="d-flex justify-content-end gap-2">
-                        <!-- Actions groupées -->
-                        <div class="mkba-bulk-actions-dropdown" id="bulkActionsDropdown" style="display: none;">
-                            <button class="mkba-btn mkba-btn-warning">
-                                <i class="fas fa-list-check me-1"></i>Actions <i class="fas fa-chevron-down ms-1"></i>
-                            </button>
-                            <div class="mkba-dropdown-content">
-                                <a href="#" onclick="bulkAction('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Exporter Excel</a>
-                                <a href="#" onclick="bulkAction('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>Exporter PDF</a>
-                                <a href="#" onclick="bulkAction('delete')" class="text-danger"><i class="fas fa-trash me-2"></i>Supprimer sélection</a>
-                            </div>
-                        </div>
-                        <!-- Export -->
-                        <div class="mkba-export-dropdown">
-                            <button class="mkba-btn mkba-btn-primary">
-                                <i class="fas fa-download me-1"></i>Exporter <i class="fas fa-chevron-down ms-1"></i>
-                            </button>
-                            <div class="mkba-dropdown-content">
-                                <a href="#" onclick="exportData('excel')"><i class="fas fa-file-excel me-2 text-success"></i>Excel</a>
-                                <a href="#" onclick="exportData('pdf')"><i class="fas fa-file-pdf me-2 text-danger"></i>PDF</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Table -->
-        <div class="mkba-table-container position-relative">
-            <div class="mkba-loading" id="loadingSpinner">
-                <div class="mkba-spinner"></div>
-            </div>
-            <table class="table mkba-table">
+        <!-- Table DataTables -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover" id="projectsTable">
                 <thead>
                     <tr>
                         <th width="50">
-                            <input type="checkbox" class="form-check-input mkba-select-all" id="selectAll">
+                            <input type="checkbox" class="form-check-input" id="selectAll">
                         </th>
-                        <th class="sortable" data-column="code">Code</th>
-                        <th class="sortable" data-column="name">Nom</th>
-                        <th class="sortable" data-column="category">Catégorie</th>
-                        <th class="sortable" data-column="priority">Priorité</th>
-                        <th class="sortable" data-column="status">Statut</th>
-                        <th class="sortable" data-column="responsible">Responsable</th>
-                        <th class="sortable" data-column="start_date">Date début</th>
-                        <th class="sortable" data-column="created_at">Créé le</th>
-                        <th width="100">Actions</th>
+                        <th>Code</th>
+                        <th>Nom</th>
+                        <th>Catégorie</th>
+                        <th>Priorité</th>
+                        <th>Statut</th>
+                        <th>Responsable</th>
+                        <th>Date début</th>
+                        <th>Créé le</th>
+                        <th width="100" data-orderable="false">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="tableBody">
+                <tbody>
                     {% for project in projects %}
                     <tr data-project-id="{{ project.id }}">
                         <td>
-                            <input type="checkbox" class="form-check-input mkba-row-select" value="{{ project.id }}">
+                            <input type="checkbox" class="form-check-input row-select" value="{{ project.id }}">
                         </td>
-                        <td data-sort="{{ project.code }}"><strong>{{ project.code }}</strong></td>
-                        <td data-sort="{{ project.getName(currentLocale) ?: project.code }}">{{ project.getName(currentLocale) ?: 'N/A' }}</td>
-                        <td data-sort="{{ project.category }}">{{ project.categoryLabel }}</td>
-                        <td data-sort="{{ project.priority }}"><span class="priority-badge priority-{{ project.priority }}">{{ project.priorityLabel }}</span></td>
-                        <td data-sort="{{ project.status }}"><span class="mkba-badge {{ project.status }}">{{ project.statusLabel }}</span></td>
-                        <td data-sort="{{ project.responsible ?: '' }}">{{ project.responsible ?: 'N/A' }}</td>
-                        <td data-sort="{{ project.startDate ? project.startDate|date('Y-m-d') : '' }}">{{ project.startDate ? project.startDate|date('d/m/Y') : 'N/A' }}</td>
-                        <td data-sort="{{ project.createdAt|date('Y-m-d H:i:s') }}">{{ project.createdAt|date('d/m/Y H:i') }}</td>
+                        <td><strong>{{ project.code }}</strong></td>
+                        <td>{{ project.getName(currentLocale) ?: 'N/A' }}</td>
+                        <td>{{ project.categoryLabel }}</td>
+                        <td><span class="priority-badge priority-{{ project.priority }}">{{ project.priorityLabel }}</span></td>
+                        <td><span class="mkba-badge {{ project.status }}">{{ project.statusLabel }}</span></td>
+                        <td>{{ project.responsible ?: 'N/A' }}</td>
+                        <td>{{ project.startDate ? project.startDate|date('d/m/Y') : 'N/A' }}</td>
+                        <td>{{ project.createdAt|date('d/m/Y H:i') }}</td>
                         <td>
                             <div class="mkba-actions-group">
                                 <a href="{{ path('admin_project_show', {id: project.id}) }}" 
@@ -934,36 +613,6 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- Pagination adaptée du module Document -->
-        <div class="mkba-pagination">
-            <div class="row align-items-center">
-                <div class="col-md-3">
-                    <select id="entriesSelect" class="form-select" style="max-width: 135px;">
-                        <option value="10">10 par page</option>
-                        <option value="25" selected>25 par page</option>
-                        <option value="50">50 par page</option>
-                        <option value="100">100 par page</option>
-                    </select>
-                </div>
-                <div class="col-md-6 text-center">
-                    <div class="mkba-pagination-info">
-                        Affichage de <span id="showingFrom">1</span> à <span id="showingTo">{{ projects|length }}</span> 
-                        sur <span id="totalEntries">{{ projects|length }}</span> entrées
-                        <span id="filteredInfo" style="display:none">
-                            (filtrées à partir de <span id="totalUnfiltered">0</span> entrées au total)
-                        </span>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <nav aria-label="Navigation des pages">
-                        <div class="mkba-pagination-controls d-flex justify-content-end" id="paginationControls">
-                            <!-- Les contrôles de pagination seront générés par JS -->
-                        </div>
-                    </nav>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Formulaires cachés pour les actions -->
@@ -972,132 +621,396 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <!-- DataTables JS avec extensions -->
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    
     <script>
         // Variables globales
-        let originalData = [];
-        let filteredData = [];
-        let currentPage = 1;
-        let itemsPerPage = 25;
-        let sortColumn = null;
-        let sortDirection = 'asc';
-        let selectedRows = new Set();
-        let projectToDelete = null; // Pour stocker les infos du projet à supprimer
-
-        // CORRECTION 1: Vrais tokens CSRF reçus du contrôleur
+        let projectsTable;
+        let projectToDelete = null;
+        
+        // NOUVEAU: Tokens CSRF du contrôleur
         const csrfTokens = {{ csrfTokens|json_encode|raw }};
 
         // URLs pour les actions
         const projectUrls = {
             deleteBase: '{{ path('admin_project_index') }}'.replace('/index', '/'),
-            exportExcel: '{{ path('admin_project_export_excel') }}',
-            exportPdf: '{{ path('admin_project_export_pdf') }}',
-            bulkDelete: '{{ path('admin_project_bulk_delete') }}'
+            bulkDelete: '{{ path('admin_project_bulk_delete') }}',
+            exportDataTable: '{{ path('admin_project_export_datatable') }}',
+            exportSelection: '{{ path('admin_project_export_datatable_selection') }}'
         };
 
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('📋 Initialisation du module Project avec tokens CSRF corrects...');
-            initializeProjectModule();
+            console.log('📋 Initialisation du module Project avec DataTables...');
+            initializeDataTable();
         });
 
-        function initializeProjectModule() {
-            // Récupérer les données initiales depuis le DOM
-            extractDataFromTable();
-            initializeEventListeners();
-            setupSortingEventListeners();
-            updatePagination();
-            updateStats();
-            console.log('✅ Module Project initialisé avec tokens CSRF valides!');
+        function initializeDataTable() {
+            // Configuration DataTables avec exports natifs
+            projectsTable = $('#projectsTable').DataTable({
+                responsive: true,
+                language: {
+                    url: 'https://cdn.datatables.net/plug-ins/1.13.7/i18n/fr-FR.json'
+                },
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        text: '<i class="fas fa-check-square me-2"></i>Tout sélectionner',
+                        className: 'dt-button buttons-select-all',
+                        action: function () {
+                            projectsTable.rows({search: 'applied'}).select();
+                            updateSelectionInfo();
+                        }
+                    },
+                    {
+                        text: '<i class="fas fa-square me-2"></i>Tout désélectionner',
+                        className: 'dt-button buttons-select-none',
+                        action: function () {
+                            projectsTable.rows().deselect();
+                            updateSelectionInfo();
+                        }
+                    },
+                    {
+                        extend: 'excel',
+                        text: '<i class="fas fa-file-excel me-2"></i>Excel - Tout',
+                        className: 'dt-button buttons-excel',
+                        title: 'Projets MK BA',
+                        filename: function() {
+                            return 'projets_complet_' + new Date().toISOString().slice(0,10);
+                        },
+                        exportOptions: {
+                            columns: [1, 2, 3, 4, 5, 6, 7, 8], // Exclure checkbox et actions
+                            modifier: {
+                                search: 'applied',
+                                order: 'applied'
+                            }
+                        }
+                    },
+                    {
+                        extend: 'pdf',
+                        text: '<i class="fas fa-file-pdf me-2"></i>PDF - Tout',
+                        className: 'dt-button buttons-pdf',
+                        title: 'Projets MK BA',
+                        filename: function() {
+                            return 'projets_complet_' + new Date().toISOString().slice(0,10);
+                        },
+                        orientation: 'landscape',
+                        pageSize: 'A4',
+                        exportOptions: {
+                            columns: [1, 2, 3, 4, 5, 6, 7, 8],
+                            modifier: {
+                                search: 'applied',
+                                order: 'applied'
+                            }
+                        },
+                        customize: function(doc) {
+                            doc.defaultStyle.fontSize = 8;
+                            doc.styles.tableHeader.fontSize = 9;
+                            doc.styles.tableHeader.fillColor = '#0071BC';
+                        }
+                    },
+                    {
+                        text: '<i class="fas fa-file-excel me-2"></i>Excel - Sélection',
+                        className: 'dt-button buttons-excel bulk-export-excel',
+                        action: function () {
+                            exportSelection('excel');
+                        }
+                    },
+                    {
+                        text: '<i class="fas fa-file-pdf me-2"></i>PDF - Sélection',
+                        className: 'dt-button buttons-pdf bulk-export-pdf',
+                        action: function () {
+                            exportSelection('pdf');
+                        }
+                    },
+                    {
+                        text: '<i class="fas fa-trash me-2"></i>Supprimer sélection',
+                        className: 'dt-button bulk-delete',
+                        action: function () {
+                            bulkDelete();
+                        }
+                    }
+                ],
+                select: {
+                    style: 'multi',
+                    selector: 'td:not(:last-child)', // Éviter la sélection sur la colonne actions
+                    className: 'selected'
+                },
+                columnDefs: [
+                    {
+                        targets: 0,
+                        orderable: false,
+                        render: function(data, type, row) {
+                            return '<input type="checkbox" class="form-check-input row-select" value="' + $(row).data('project-id') + '">';
+                        }
+                    },
+                    {
+                        targets: -1, // Dernière colonne (actions)
+                        orderable: false
+                    }
+                ],
+                order: [[8, 'desc']], // Trier par date de création
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Tout"]],
+                drawCallback: function() {
+                    // Réattacher les événements après redraw
+                    attachRowEvents();
+                    updateBulkActionButtons();
+                }
+            });
+
+            // Événements de sélection
+            projectsTable.on('select deselect', function() {
+                updateSelectionInfo();
+                updateBulkActionButtons();
+            });
+
+            // Checkbox "Tout sélectionner" dans l'en-tête
+            $('#selectAll').on('change', function() {
+                if (this.checked) {
+                    projectsTable.rows({search: 'applied'}).select();
+                } else {
+                    projectsTable.rows().deselect();
+                }
+            });
+
+            attachRowEvents();
+            updateBulkActionButtons();
+            
+            console.log('✅ DataTables initialisé avec exports natifs');
         }
 
-        function extractDataFromTable() {
-            const rows = document.querySelectorAll('#tableBody tr[data-project-id]');
-            originalData = [];
-            
-            rows.forEach(row => {
-                const id = parseInt(row.dataset.projectId);
-                const cells = row.children;
-                
-                const projectData = {
-                    id: id,
-                    code: cells[1].getAttribute('data-sort'),
-                    name: cells[2].getAttribute('data-sort'),
-                    category: cells[3].getAttribute('data-sort'),
-                    priority: cells[4].getAttribute('data-sort'),
-                    status: cells[5].getAttribute('data-sort'),
-                    responsible: cells[6].getAttribute('data-sort') || '',
-                    start_date: cells[7].getAttribute('data-sort') || '',
-                    created_at: cells[8].getAttribute('data-sort'),
-                    element: row.cloneNode(true)
-                };
-                
-                originalData.push(projectData);
+        function attachRowEvents() {
+            // Gestion des checkboxes individuelles
+            $('.row-select').off('change').on('change', function() {
+                const row = projectsTable.row($(this).closest('tr'));
+                if (this.checked) {
+                    row.select();
+                } else {
+                    row.deselect();
+                }
             });
-            
-            filteredData = [...originalData];
-            console.log(`📊 ${originalData.length} projets chargés`);
         }
 
-        function initializeEventListeners() {
-            console.log('🔧 Initialisation des event listeners...');
+        function updateSelectionInfo() {
+            const selectedCount = projectsTable.rows({selected: true}).count();
+            $('#selectedCount').text(selectedCount);
             
-            // Gestion des checkboxes
-            const rowCheckboxes = document.querySelectorAll('.mkba-row-select');
-            rowCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    handleRowCheckboxChange(this);
-                });
+            // Mettre à jour le checkbox "Tout sélectionner"
+            const totalVisible = projectsTable.rows({search: 'applied'}).count();
+            const selectAllCheckbox = $('#selectAll')[0];
+            
+            if (selectedCount === 0) {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = false;
+            } else if (selectedCount === totalVisible) {
+                selectAllCheckbox.checked = true;
+                selectAllCheckbox.indeterminate = false;
+            } else {
+                selectAllCheckbox.checked = false;
+                selectAllCheckbox.indeterminate = true;
+            }
+        }
+
+        function updateBulkActionButtons() {
+            const selectedCount = projectsTable.rows({selected: true}).count();
+            const bulkButtons = $('.bulk-delete, .bulk-export-excel, .bulk-export-pdf');
+            
+            if (selectedCount > 0) {
+                bulkButtons.show().addClass('show');
+            } else {
+                bulkButtons.hide().removeClass('show');
+            }
+        }
+
+        // Export de la sélection
+        function exportSelection(format) {
+            const selectedRows = projectsTable.rows({selected: true});
+            if (selectedRows.count() === 0) {
+                if (window.showFlashMessage) {
+                    window.showFlashMessage('Veuillez sélectionner au moins un projet', 'warning');
+                }
+                return;
+            }
+
+            const selectedIds = [];
+            selectedRows.every(function() {
+                const rowNode = this.node();
+                const projectId = $(rowNode).data('project-id');
+                if (projectId) {
+                    selectedIds.push(projectId);
+                }
             });
+
+            if (format === 'excel') {
+                exportSelectionExcel(selectedIds);
+            } else if (format === 'pdf') {
+                exportSelectionPdf(selectedIds);
+            }
+        }
+
+        function exportSelectionExcel(selectedIds) {
+            // Préparer les données pour l'export Excel personnalisé
+            const data = [];
+            const headers = ['Code', 'Nom', 'Catégorie', 'Priorité', 'Statut', 'Responsable', 'Département', 'Date début', 'Date fin', 'Budget', 'Créé le'];
             
-            // Sélection globale
-            const selectAllCheckbox = document.getElementById('selectAll');
-            if (selectAllCheckbox) {
-                selectAllCheckbox.addEventListener('change', function(e) {
-                    toggleSelectAll(e.target.checked);
+            projectsTable.rows({selected: true}).every(function() {
+                const rowData = this.data();
+                const cleanData = [
+                    $(rowData[1]).text(), // Code
+                    $(rowData[2]).text(), // Nom  
+                    $(rowData[3]).text(), // Catégorie
+                    $(rowData[4]).text(), // Priorité
+                    $(rowData[5]).text(), // Statut
+                    $(rowData[6]).text(), // Responsable
+                    '', // Département (à ajouter si disponible)
+                    $(rowData[7]).text(), // Date début
+                    '', // Date fin (à ajouter si disponible)
+                    '', // Budget (à ajouter si disponible)
+                    $(rowData[8]).text()  // Créé le
+                ];
+                data.push(cleanData);
+            });
+
+            // Créer et télécharger le fichier Excel
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+            XLSX.utils.book_append_sheet(wb, ws, 'Projets sélectionnés');
+            
+            const filename = 'projets_selection_' + new Date().toISOString().slice(0,10) + '.xlsx';
+            XLSX.writeFile(wb, filename);
+
+            if (window.showFlashMessage) {
+                window.showFlashMessage(`Export Excel réussi: ${selectedIds.length} projet(s)`, 'success');
+            }
+        }
+
+        function exportSelectionPdf(selectedIds) {
+            const selectedData = [];
+            
+            projectsTable.rows({selected: true}).every(function() {
+                const rowData = this.data();
+                selectedData.push([
+                    $(rowData[1]).text(), // Code
+                    $(rowData[2]).text(), // Nom
+                    $(rowData[3]).text(), // Catégorie
+                    $(rowData[4]).text(), // Priorité
+                    $(rowData[5]).text(), // Statut
+                    $(rowData[6]).text(), // Responsable
+                    $(rowData[7]).text(), // Date début
+                    $(rowData[8]).text()  // Créé le
+                ]);
+            });
+
+            const docDefinition = {
+                pageOrientation: 'landscape',
+                pageSize: 'A4',
+                content: [
+                    {
+                        text: 'Projets MK BA - Sélection',
+                        style: 'header',
+                        alignment: 'center',
+                        margin: [0, 0, 0, 20]
+                    },
+                    {
+                        table: {
+                            headerRows: 1,
+                            widths: ['auto', '*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+                            body: [
+                                ['Code', 'Nom', 'Catégorie', 'Priorité', 'Statut', 'Responsable', 'Date début', 'Créé le'],
+                                ...selectedData
+                            ]
+                        },
+                        layout: {
+                            fillColor: function (rowIndex, node, columnIndex) {
+                                return (rowIndex === 0) ? '#0071BC' : null;
+                            }
+                        }
+                    }
+                ],
+                styles: {
+                    header: {
+                        fontSize: 16,
+                        bold: true,
+                        color: '#0071BC'
+                    }
+                },
+                defaultStyle: {
+                    fontSize: 8
+                }
+            };
+
+            const filename = 'projets_selection_' + new Date().toISOString().slice(0,10) + '.pdf';
+            pdfMake.createPdf(docDefinition).download(filename);
+
+            if (window.showFlashMessage) {
+                window.showFlashMessage(`Export PDF réussi: ${selectedIds.length} projet(s)`, 'success');
+            }
+        }
+
+        // Suppression groupée
+        function bulkDelete() {
+            const selectedRows = projectsTable.rows({selected: true});
+            if (selectedRows.count() === 0) {
+                if (window.showFlashMessage) {
+                    window.showFlashMessage('Veuillez sélectionner au moins un projet', 'warning');
+                }
+                return;
+            }
+
+            const selectedIds = [];
+            selectedRows.every(function() {
+                const rowNode = this.node();
+                const projectId = $(rowNode).data('project-id');
+                if (projectId) {
+                    selectedIds.push(projectId);
+                }
+            });
+
+            if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedIds.length} projet(s) sélectionné(s) ?`)) {
+                fetch(projectUrls.bulkDelete, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'ids=' + encodeURIComponent(JSON.stringify(selectedIds))
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        if (window.showFlashMessage) {
+                            window.showFlashMessage(data.message, 'success');
+                        }
+                        // Recharger la page après un court délai
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        if (window.showFlashMessage) {
+                            window.showFlashMessage('Erreur: ' + data.message, 'error');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    if (window.showFlashMessage) {
+                        window.showFlashMessage('Une erreur est survenue lors de la suppression', 'error');
+                    }
                 });
             }
-            
-            // Filtres de base et recherche
-            document.getElementById('statusFilter').addEventListener('change', applyBasicFilters);
-            document.getElementById('dateStart').addEventListener('change', applyBasicFilters);
-            document.getElementById('dateEnd').addEventListener('change', applyBasicFilters);
-            document.getElementById('searchInput').addEventListener('input', function(e) {
-                searchInTable(e.target.value);
-            });
-
-            // Nombre d'entrées par page
-            document.getElementById('entriesSelect').addEventListener('change', function(e) {
-                itemsPerPage = parseInt(e.target.value);
-                currentPage = 1;
-                updateTable();
-                updatePagination();
-                updateStats();
-            });
-            
-            // Bouton filtres avancés
-            document.getElementById('advancedFiltersBtn').addEventListener('click', function() {
-                const modal = document.getElementById('advancedFiltersModal');
-                const bootstrapModal = new bootstrap.Modal(modal);
-                
-                modal.addEventListener('show.bs.modal', function() {
-                    const dialog = modal.querySelector('.modal-dialog');
-                    dialog.style.transform = 'translateX(100%)';
-                    dialog.style.transition = 'transform 0.8s ease-in-out';
-                });
-                
-                modal.addEventListener('shown.bs.modal', function() {
-                    setTimeout(() => {
-                        modal.querySelector('.modal-dialog').style.transform = 'translateX(0)';
-                    }, 50);
-                });
-                
-                bootstrapModal.show();
-            });
-            
-            console.log('✅ Event listeners attachés avec succès');
         }
 
-        // ========== MODAL PERSONNALISÉ DE SUPPRESSION AVEC CSRF CORRIGÉ ========== 
+        // Modal de suppression individuelle
         function showDeleteModal(projectId, projectCode, projectName) {
             projectToDelete = {
                 id: projectId,
@@ -1105,7 +1018,6 @@
                 name: projectName || 'N/A'
             };
 
-            // Mettre à jour les informations du projet dans le modal
             const projectInfo = document.getElementById('projectInfo');
             projectInfo.innerHTML = `
                 <div style="margin-top: 8px;">
@@ -1114,7 +1026,6 @@
                 </div>
             `;
 
-            // Afficher le modal
             const modal = document.getElementById('deleteModal');
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
@@ -1133,12 +1044,13 @@
                 return;
             }
 
-            // CORRECTION 1: Utilisation du vrai token CSRF du serveur
             const csrfToken = csrfTokens[projectToDelete.id];
             
             if (!csrfToken) {
                 console.error('Token CSRF non trouvé pour le projet:', projectToDelete.id);
-                alert('Erreur: Token de sécurité non trouvé. Rechargez la page.');
+                if (window.showFlashMessage) {
+                    window.showFlashMessage('Erreur: Token de sécurité non trouvé. Rechargez la page.', 'error');
+                }
                 return;
             }
             
@@ -1169,497 +1081,10 @@
             }
         });
 
-        // ========== TRI DES COLONNES ========== 
-        function setupSortingEventListeners() {
-            document.querySelectorAll('.sortable').forEach(header => {
-                header.addEventListener('click', function() {
-                    const column = this.dataset.column;
-                    sortTable(column);
-                });
-            });
-        }
-
-        function sortTable(column) {
-            // Déterminer la direction du tri
-            if (sortColumn === column) {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = column;
-                sortDirection = 'asc';
-            }
-
-            // Mettre à jour les icônes de tri
-            updateSortIcons(column);
-
-            // Trier les données
-            filteredData.sort((a, b) => {
-                let valueA = a[column] || '';
-                let valueB = b[column] || '';
-
-                // Conversion selon le type
-                if (column === 'start_date' || column === 'created_at') {
-                    valueA = new Date(valueA || '1900-01-01');
-                    valueB = new Date(valueB || '1900-01-01');
-                } else if (typeof valueA === 'string') {
-                    valueA = valueA.toLowerCase();
-                    valueB = valueB.toLowerCase();
-                }
-
-                if (valueA < valueB) {
-                    return sortDirection === 'asc' ? -1 : 1;
-                }
-                if (valueA > valueB) {
-                    return sortDirection === 'asc' ? 1 : -1;
-                }
-                return 0;
-            });
-
-            // Remettre à la première page et actualiser
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-            updateStats();
-        }
-
-        function updateSortIcons(activeColumn) {
-            // Supprimer toutes les classes de tri
-            document.querySelectorAll('.sortable').forEach(header => {
-                header.classList.remove('sort-asc', 'sort-desc');
-            });
-
-            // Ajouter la classe appropriée à la colonne active
-            const activeHeader = document.querySelector(`[data-column="${activeColumn}"]`);
-            if (activeHeader) {
-                activeHeader.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
-            }
-        }
-
-        // ========== PAGINATION ADAPTÉE DU MODULE DOCUMENT ========== 
-        function updateTable() {
-            showLoading(true);
-            
-            setTimeout(() => {
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                const pageData = filteredData.slice(startIndex, endIndex);
-
-                const tbody = document.getElementById('tableBody');
-                tbody.innerHTML = '';
-
-                if (pageData.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="10" class="text-center py-4">
-                                <i class="fas fa-folder-open text-muted mb-2" style="font-size: 2rem;"></i>
-                                <p class="text-muted mb-0">Aucun projet trouvé</p>
-                            </td>
-                        </tr>
-                    `;
-                } else {
-                    pageData.forEach(item => {
-                        const row = item.element.cloneNode(true);
-                        
-                        // Réattacher les événements
-                        const checkbox = row.querySelector('.mkba-row-select');
-                        if (checkbox) {
-                            checkbox.checked = selectedRows.has(item.id);
-                            checkbox.addEventListener('change', function() {
-                                handleRowCheckboxChange(this);
-                            });
-                        }
-
-                        // CORRECTION 1: Réattacher les boutons d'action avec modal et tokens corrects
-                        const deleteBtn = row.querySelector('[onclick*="showDeleteModal"]');
-                        if (deleteBtn) {
-                            deleteBtn.setAttribute('onclick', `showDeleteModal(${item.id}, '${item.code}', '${item.name}')`);
-                        }
-
-                        tbody.appendChild(row);
-                    });
-                }
-
-                showLoading(false);
-                updateBulkActions();
-                updateSelectAllCheckbox();
-            }, 200);
-        }
-
-        function updatePagination() {
-            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-            const paginationControls = document.getElementById('paginationControls');
-            
-            if (totalPages <= 1) {
-                paginationControls.innerHTML = '';
-                return;
-            }
-            
-            let paginationHTML = '';
-            
-            // Bouton Précédent
-            paginationHTML += `
-                <button class="btn btn-outline-secondary me-1 ${currentPage === 1 ? 'disabled' : ''}" 
-                        onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-left"></i>
-                </button>
-            `;
-
-            // Pages
-            const startPage = Math.max(1, currentPage - 2);
-            const endPage = Math.min(totalPages, currentPage + 2);
-
-            if (startPage > 1) {
-                paginationHTML += `<button class="btn btn-outline-secondary me-1" onclick="changePage(1)">1</button>`;
-                if (startPage > 2) {
-                    paginationHTML += `<span class="btn btn-outline-secondary me-1 disabled">...</span>`;
-                }
-            }
-
-            for (let i = startPage; i <= endPage; i++) {
-                paginationHTML += `
-                    <button class="btn me-1 ${i === currentPage ? 'btn-primary active' : 'btn-outline-secondary'}" 
-                            onclick="changePage(${i})">${i}</button>
-                `;
-            }
-
-            if (endPage < totalPages) {
-                if (endPage < totalPages - 1) {
-                    paginationHTML += `<span class="btn btn-outline-secondary me-1 disabled">...</span>`;
-                }
-                paginationHTML += `<button class="btn btn-outline-secondary me-1" onclick="changePage(${totalPages})">${totalPages}</button>`;
-            }
-
-            // Bouton Suivant
-            paginationHTML += `
-                <button class="btn btn-outline-secondary ${currentPage === totalPages ? 'disabled' : ''}" 
-                        onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    <i class="fas fa-chevron-right"></i>
-                </button>
-            `;
-
-            paginationControls.innerHTML = paginationHTML;
-        }
-
-        function changePage(page) {
-            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-            if (page >= 1 && page <= totalPages) {
-                currentPage = page;
-                updateTable();
-                updatePagination();
-                updateStats();
-            }
-        }
-
-        function updateStats() {
-            const startIndex = (currentPage - 1) * itemsPerPage + 1;
-            const endIndex = Math.min(currentPage * itemsPerPage, filteredData.length);
-            
-            document.getElementById('showingFrom').textContent = filteredData.length === 0 ? 0 : startIndex;
-            document.getElementById('showingTo').textContent = endIndex;
-            document.getElementById('totalEntries').textContent = filteredData.length;
-            document.getElementById('selectedCount').textContent = selectedRows.size;
-
-            // Affichage des informations de filtrage
-            const filteredInfo = document.getElementById('filteredInfo');
-            const totalUnfiltered = document.getElementById('totalUnfiltered');
-            
-            if (filteredData.length !== originalData.length) {
-                filteredInfo.style.display = 'inline';
-                totalUnfiltered.textContent = originalData.length;
-            } else {
-                filteredInfo.style.display = 'none';
-            }
-        }
-
-        function showLoading(show) {
-            document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
-        }
-
-        // ========== FILTRES ET RECHERCHE ========== 
-        function searchInTable(searchTerm) {
-            if (!searchTerm.trim()) {
-                filteredData = [...originalData];
-            } else {
-                const term = searchTerm.toLowerCase();
-                filteredData = originalData.filter(item => {
-                    return Object.values(item).some(value => {
-                        if (value && typeof value === 'string') {
-                            return value.toLowerCase().includes(term);
-                        }
-                        return false;
-                    });
-                });
-            }
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-            updateStats();
-        }
-
-        function applyBasicFilters() {
-            const statusFilter = document.getElementById('statusFilter').value;
-            const startDate = document.getElementById('dateStart').value;
-            const endDate = document.getElementById('dateEnd').value;
-            
-            filteredData = originalData.filter(item => {
-                let visible = true;
-                
-                // Filtre par statut
-                if (statusFilter && item.status !== statusFilter) {
-                    visible = false;
-                }
-                
-                // Filtre par date
-                if ((startDate || endDate) && item.start_date) {
-                    const itemDate = new Date(item.start_date);
-                    
-                    if (startDate && itemDate < new Date(startDate)) visible = false;
-                    if (endDate && itemDate > new Date(endDate)) visible = false;
-                }
-                
-                return visible;
-            });
-            
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-            updateStats();
-        }
-
-        function applyAdvancedFilters() {
-            const filters = {
-                code: document.getElementById('filterCode').value.toLowerCase(),
-                name: document.getElementById('filterName').value.toLowerCase(),
-                responsible: document.getElementById('filterResponsible').value.toLowerCase(),
-                category: document.getElementById('filterCategoryAdvanced').value,
-                priority: document.getElementById('filterPriorityAdvanced').value,
-                department: document.getElementById('filterDepartment').value,
-                budgetMin: parseFloat(document.getElementById('filterBudgetMin').value) || 0,
-                budgetMax: parseFloat(document.getElementById('filterBudgetMax').value) || Number.MAX_VALUE
-            };
-
-            filteredData = originalData.filter(item => {
-                let visible = true;
-                
-                if (filters.code && !item.code.toLowerCase().includes(filters.code)) visible = false;
-                if (filters.name && !item.name.toLowerCase().includes(filters.name)) visible = false;
-                if (filters.responsible && !item.responsible.toLowerCase().includes(filters.responsible)) visible = false;
-                if (filters.category && item.category !== filters.category) visible = false;
-                if (filters.priority && item.priority !== filters.priority) visible = false;
-                
-                // Implémentation des filtres Département et Budget
-                if (filters.department) {
-                    // Récupérer le département depuis l'élément DOM car pas dans les données extraites
-                    const departmentCell = item.element.querySelector('td[data-department]');
-                    const itemDepartment = departmentCell ? departmentCell.getAttribute('data-department') : '';
-                    if (itemDepartment !== filters.department) visible = false;
-                }
-                
-                // Filtre Budget Min/Max - récupérer depuis l'élément DOM
-                const budgetCell = item.element.querySelector('td[data-budget]');
-                if (budgetCell) {
-                    const itemBudget = parseFloat(budgetCell.getAttribute('data-budget')) || 0;
-                    if (itemBudget < filters.budgetMin || itemBudget > filters.budgetMax) visible = false;
-                }
-                
-                return visible;
-            });
-
-            currentPage = 1;
-            updateTable();
-            updatePagination();
-            updateStats();
-
-            // Fermer la modale
-            const modal = bootstrap.Modal.getInstance(document.getElementById('advancedFiltersModal'));
-            modal.hide();
-        }
-
-        function clearAdvancedFilters() {
-            document.getElementById('filterCode').value = '';
-            document.getElementById('filterName').value = '';
-            document.getElementById('filterResponsible').value = '';
-            document.getElementById('filterCategoryAdvanced').value = '';
-            document.getElementById('filterPriorityAdvanced').value = '';
-            document.getElementById('filterDepartment').value = '';
-            document.getElementById('filterBudgetMin').value = '';
-            document.getElementById('filterBudgetMax').value = '';
-        }
-
-        function closeAdvancedFiltersModal() {
-            const modal = document.getElementById('advancedFiltersModal');
-            const bootstrapModal = bootstrap.Modal.getInstance(modal);
-            const dialog = modal.querySelector('.modal-dialog');
-            
-            dialog.style.transition = 'transform 0.8s ease-in-out';
-            dialog.style.transform = 'translateX(100%)';
-            
-            setTimeout(() => {
-                if (bootstrapModal) {
-                    bootstrapModal.hide();
-                }
-            }, 800);
-        }
-
-        // ========== GESTION DES SÉLECTIONS ========== 
-        function handleRowCheckboxChange(checkbox) {
-            const projectId = parseInt(checkbox.value);
-            const row = checkbox.closest('tr');
-            
-            if (checkbox.checked) {
-                selectedRows.add(projectId);
-                row.classList.add('selected');
-            } else {
-                selectedRows.delete(projectId);
-                row.classList.remove('selected');
-            }
-            
-            updateBulkActions();
-            updateStats();
-            updateSelectAllCheckbox();
-        }
-
-        function toggleSelectAll(selectAll) {
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const pageData = filteredData.slice(startIndex, endIndex);
-
-            pageData.forEach(item => {
-                if (selectAll) {
-                    selectedRows.add(item.id);
-                } else {
-                    selectedRows.delete(item.id);
-                }
-            });
-
-            updateTable();
-            updateBulkActions();
-            updateStats();
-        }
-
-        function updateSelectAllCheckbox() {
-            const allCheckboxes = document.querySelectorAll('.mkba-row-select');
-            const checkedCheckboxes = document.querySelectorAll('.mkba-row-select:checked');
-            const selectAllCheckbox = document.getElementById('selectAll');
-            
-            if (!selectAllCheckbox || allCheckboxes.length === 0) return;
-            
-            if (checkedCheckboxes.length === allCheckboxes.length) {
-                selectAllCheckbox.checked = true;
-                selectAllCheckbox.indeterminate = false;
-            } else if (checkedCheckboxes.length > 0) {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = true;
-            } else {
-                selectAllCheckbox.checked = false;
-                selectAllCheckbox.indeterminate = false;
-            }
-        }
-
-        function updateBulkActions() {
-            const bulkDropdown = document.getElementById('bulkActionsDropdown');
-            if (bulkDropdown) {
-                bulkDropdown.style.display = selectedRows.size > 0 ? 'inline-block' : 'none';
-            }
-        }
-
-        // ========== ACTIONS SUR LES PROJETS ========== 
-        function bulkAction(action) {
-            if (selectedRows.size === 0) {
-                alert('Veuillez sélectionner au moins un projet');
-                return;
-            }
-
-            const selectedIds = Array.from(selectedRows);
-
-            switch (action) {
-                case 'excel':
-                    exportToExcel(selectedIds);
-                    break;
-                case 'pdf':
-                    exportToPdf(selectedIds);
-                    break;
-                case 'delete':
-                    if (confirm(`Êtes-vous sûr de vouloir supprimer ${selectedRows.size} projet(s) ?`)) {
-                        bulkDelete(selectedIds);
-                    }
-                    break;
-            }
-        }
-
-        function exportData(format) {
-            switch (format) {
-                case 'excel':
-                    exportToExcel([]);
-                    break;
-                case 'pdf':
-                    exportToPdf([]);
-                    break;
-            }
-        }
-
-        function exportToExcel(ids) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = projectUrls.exportExcel;
-            
-            ids.forEach(id => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'ids[]';
-                input.value = id;
-                form.appendChild(input);
-            });
-            
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-        }
-
-        function exportToPdf(ids) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = projectUrls.exportPdf;
-            
-            ids.forEach(id => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = 'ids[]';
-                input.value = id;
-                form.appendChild(input);
-            });
-            
-            document.body.appendChild(form);
-            form.submit();
-            document.body.removeChild(form);
-        }
-
-        function bulkDelete(ids) {
-            fetch(projectUrls.bulkDelete, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'ids=' + encodeURIComponent(JSON.stringify(ids))
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    window.location.reload();
-                } else {
-                    alert('Erreur: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                alert('Une erreur est survenue');
-            });
-        }
-
-        console.log('%c🚀 Module Project MK BA avec tokens CSRF corrects!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ CORRECTION 1: Tokens CSRF du serveur utilisés');
-        console.log('✅ Modal personnalisé pour confirmation de suppression');
-        console.log('✅ Pagination complète avec contrôles intuitifs');
-        console.log('✅ Actions groupées et exports fonctionnels');
+        console.log('%c🚀 Module Project MK BA avec DataTables et exports natifs!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ NOUVEAU: Exports Excel/PDF natifs DataTables');
+        console.log('✅ NOUVEAU: Actions groupées avec sélection multiple');
+        console.log('✅ NOUVEAU: Messages centralisés depuis le controller');
+        console.log('✅ Interface DataTables complète et moderne');
     </script>
 {% endblock %}

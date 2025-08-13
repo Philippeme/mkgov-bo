@@ -494,7 +494,7 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-        /* CORRECTION: Styles simplifiés pour l'upload de fichiers */
+        /* Styles pour l'upload de fichiers */
         .file-upload-area {
             border: 3px dashed #e5e7eb;
             border-radius: 12px;
@@ -700,36 +700,6 @@
             transform: translateY(-2px);
         }
 
-        .unsaved-changes {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--mk-warning);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            z-index: 9999;
-            display: none;
-            animation: slideInRight 0.3s ease;
-        }
-
-        .unsaved-changes.show {
-            display: block;
-        }
-
-        @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
         .is-invalid {
             border-color: var(--mk-danger);
             box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
@@ -797,11 +767,6 @@
 {% endblock %}
 
 {% block body %}
-<!-- Indicateur de changements non sauvegardés -->
-<div class="unsaved-changes" id="unsavedChanges">
-    <i class="fas fa-exclamation-triangle me-2"></i>
-    Modifications non sauvegardées
-</div>
 
 <!-- Header -->
 <div class="project-form-header">
@@ -888,7 +853,6 @@
 </div>
 
 <div class="container-fluid main-content-wrapper">
-    <!-- CORRECTION: Formulaire simplifié pour l'upload -->
     {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
         <div class="form-steps-container">
             
@@ -1201,7 +1165,7 @@
                 </div>
             </div>
 
-            <!-- ÉTAPE 4: PIÈCES JOINTES - CORRECTION PRINCIPALE -->
+            <!-- ÉTAPE 4: PIÈCES JOINTES -->
             <div class="form-step" data-step-content="4">
                 <h2 class="step-title">
                     <i class="bi-paperclip text-primary"></i>
@@ -1241,7 +1205,7 @@
                     </div>
                     {% endif %}
 
-                    <!-- CORRECTION: Zone d'upload simplifiée pour nouveaux fichiers -->
+                    <!-- Zone d'upload simplifiée pour nouveaux fichiers -->
                     <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
                         <i class="bi-cloud-upload file-upload-icon"></i>
                         <h4>Ajouter de nouveaux fichiers</h4>
@@ -1255,7 +1219,6 @@
                         </p>
                     </div>
 
-                    <!-- CORRECTION: Input file standard HTML -->
                     <input type="file" 
                            id="fileInput" 
                            name="files[]" 
@@ -1392,12 +1355,10 @@
 
         function markAsUnsaved() {
             hasUnsavedChanges = true;
-            document.getElementById('unsavedChanges').classList.add('show');
         }
 
         function markAsSaved() {
             hasUnsavedChanges = false;
-            document.getElementById('unsavedChanges').classList.remove('show');
         }
 
         // Gestion des étapes
@@ -1485,7 +1446,7 @@
             
             updateFieldStatus();
             markAsUnsaved();
-            showNotification('Contenu copié depuis la version française', 'success');
+            // SUPPRIMÉ: showNotification côté client - le message viendra du controller si nécessaire
         }
 
         function copyFromEnglish() {
@@ -1503,7 +1464,7 @@
             
             updateFieldStatus();
             markAsUnsaved();
-            showNotification('Contenu copié depuis la version anglaise', 'success');
+            // SUPPRIMÉ: showNotification côté client
         }
 
         // Gestion des collections
@@ -1605,7 +1566,7 @@
             }
         }
 
-        // CORRECTION: Gestion simplifiée des fichiers
+        // Gestion des fichiers
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1649,9 +1610,9 @@
             filesList.innerHTML = '';
             
             Array.from(files).forEach((file, index) => {
-                // Validation
+                // Validation côté client basique (la validation principale se fait côté serveur)
                 if (file.size > 10 * 1024 * 1024) {
-                    showNotification(`Le fichier ${file.name} dépasse 10MB`, 'warning');
+                    // SUPPRIMÉ: showNotification côté client
                     return;
                 }
 
@@ -1659,7 +1620,7 @@
                 const extension = file.name.split('.').pop().toLowerCase();
                 
                 if (!allowedExtensions.includes(extension)) {
-                    showNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`, 'warning');
+                    // SUPPRIMÉ: showNotification côté client
                     return;
                 }
 
@@ -1737,7 +1698,7 @@
             e.target.appendChild(translationDescInput);
 
             markAsSaved();
-            showNotification(`Enregistrement des modifications en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
+            // SUPPRIMÉ: showNotification côté client - le message viendra du controller
             
             return true;
         }
@@ -1759,7 +1720,7 @@
             });
 
             if (!isValid) {
-                showNotification('Veuillez remplir tous les champs obligatoires', 'error');
+                // SUPPRIMÉ: showNotification côté client
                 const firstInvalid = document.querySelector('.is-invalid');
                 if (firstInvalid) {
                     firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1777,30 +1738,10 @@
             return true;
         }
 
-        function showNotification(message, type = 'info') {
-            const alertClass = type === 'error' ? 'danger' : type;
-            const alertHtml = `
-                <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" 
-                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
-                    <i class="bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', alertHtml);
-            
-            setTimeout(() => {
-                const alert = document.querySelector('.alert:last-of-type');
-                if (alert) {
-                    alert.remove();
-                }
-            }, 3000);
-        }
-
-        console.log('%c🚀 Formulaire Modification Projet MK BA avec upload corrigé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ Upload simplifié avec input file standard');
-        console.log('✅ Gestion des fichiers existants et nouveaux');
-        console.log('✅ Validation robuste côté client et serveur');
+        console.log('%c🚀 Formulaire Modification Projet MK BA - Messages centralisés!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ NOUVEAU: Messages centralisés depuis le controller');
+        console.log('✅ SUPPRIMÉ: Toutes les notifications JavaScript locales');
+        console.log('✅ Upload corrigé avec validation côté serveur');
+        console.log('✅ Gestion robuste des traductions et fichiers');
     </script>
 {% endblock %}

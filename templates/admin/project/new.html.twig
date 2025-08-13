@@ -233,54 +233,7 @@
             font-size: 15px;
         }
 
-        .translation-notice {
-            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
-            border: 1px solid #2196f3;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            color: #1976d2;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .translation-notice::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: #2196f3;
-        }
-
-        .translation-notice .notice-icon {
-            font-size: 1.5rem;
-            margin-right: 15px;
-            color: #1976d2;
-        }
-
-        .translation-notice .notice-content {
-            display: flex;
-            align-items: center;
-        }
-
-        .translation-notice .notice-text {
-            flex: 1;
-        }
-
-        .translation-notice .notice-title {
-            font-weight: 700;
-            margin-bottom: 5px;
-            font-size: 1.1rem;
-        }
-
-        .translation-notice .notice-description {
-            margin-bottom: 0;
-            opacity: 0.9;
-        }
-
-        /* MODAL PERSONNALISÉ POUR CHANGEMENT DE LANGUE */
+        /* NOUVEAU: Modal personnalisé pour changement de langue - SIMPLIFIÉ */
         .language-modal-overlay {
             position: fixed;
             top: 0;
@@ -299,11 +252,6 @@
             justify-content: center;
         }
 
-        @keyframes fadeInOverlay {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         .language-modal {
             background: white;
             border-radius: 16px;
@@ -316,28 +264,11 @@
             animation: modalSlideIn 0.3s ease forwards;
         }
 
-        @keyframes modalSlideIn {
-            from {
-                transform: scale(0.9) translateY(-20px);
-                opacity: 0;
-            }
-            to {
-                transform: scale(1) translateY(0);
-                opacity: 1;
-            }
-        }
-
         .language-modal-header {
             background: var(--mk-gradient-primary);
             color: white;
             padding: 20px 25px;
             text-align: center;
-        }
-
-        .language-modal-icon {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            opacity: 0.9;
         }
 
         .language-modal-title {
@@ -349,27 +280,6 @@
         .language-modal-body {
             padding: 30px 25px;
             text-align: center;
-        }
-
-        .language-modal-message {
-            font-size: 1.1rem;
-            color: var(--mk-dark);
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        .language-modal-warning {
-            background: linear-gradient(45deg, #fff3cd, #ffeaa7);
-            border: 1px solid #ffc107;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 25px;
-            color: #856404;
-        }
-
-        .language-modal-warning i {
-            margin-right: 8px;
-            font-size: 1.2rem;
         }
 
         .language-modal-actions {
@@ -394,38 +304,13 @@
             color: white;
         }
 
-        .language-modal-btn-cancel:hover {
-            background: #5a6268;
-            transform: translateY(-1px);
-        }
-
         .language-modal-btn-confirm {
             background: var(--mk-warning);
             color: white;
         }
 
-        .language-modal-btn-confirm:hover {
-            background: #e0a800;
-            transform: translateY(-1px);
-        }
-
         .form-section {
             margin-bottom: 30px;
-        }
-
-        .section-header {
-            border-bottom: 2px solid rgba(109, 81, 146, 0.1);
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--mk-dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .form-label {
@@ -537,9 +422,7 @@
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
 
-        /* ========== STYLES PIÈCES JOINTES - CORRECTION PRINCIPALE ========== */
-
-        /* Zone d'upload simplifiée */
+        /* Styles pour l'upload de fichiers */
         .file-upload-area {
             border: 3px dashed #e5e7eb;
             border-radius: 12px;
@@ -568,7 +451,6 @@
             margin-bottom: 15px;
         }
 
-        /* Input file caché corrigé */
         .file-input-hidden {
             position: absolute;
             opacity: 0;
@@ -577,98 +459,6 @@
             height: 1px;
         }
 
-        /* Pièces jointes existantes */
-        .existing-attachments {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .existing-attachment {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px;
-            background: white;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .existing-attachment:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .attachment-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-
-        .attachment-icon {
-            font-size: 24px;
-            color: var(--mk-primary);
-        }
-
-        .attachment-details {
-            text-align: left;
-        }
-
-        .attachment-name {
-            font-weight: 600;
-            color: var(--mk-dark);
-            font-size: 14px;
-        }
-
-        .attachment-meta {
-            font-size: 12px;
-            color: var(--mk-gray);
-            margin-top: 2px;
-        }
-
-        .btn-remove-existing {
-            background: var(--mk-warning);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 12px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .btn-remove-existing:hover {
-            background: #e0a800;
-            transform: scale(1.05);
-        }
-
-        .btn-download-existing {
-            background: var(--mk-info);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 6px 12px;
-            font-size: 12px;
-            cursor: pointer;
-            text-decoration: none;
-            margin-right: 5px;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .btn-download-existing:hover {
-            background: #2563eb;
-            color: white;
-            transform: scale(1.05);
-        }
-
-        /* Prévisualisation des nouveaux fichiers */
         .files-preview {
             margin-top: 20px;
         }
@@ -738,89 +528,6 @@
             transform: scale(1.05);
         }
 
-        /* Compatibilité avec l'ancien système */
-        .files-list {
-            margin-top: 20px;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            transition: all 0.3s ease;
-            position: relative;
-            animation: fileSlideIn 0.3s ease;
-        }
-
-        .file-item:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        .file-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-        }
-
-        .file-icon {
-            font-size: 24px;
-            color: var(--mk-primary);
-        }
-
-        .file-details {
-            text-align: left;
-        }
-
-        .file-name {
-            font-weight: 600;
-            color: var(--mk-dark);
-            font-size: 14px;
-            word-break: break-word;
-        }
-
-        .file-size {
-            font-size: 12px;
-            color: var(--mk-gray);
-            margin-top: 2px;
-        }
-
-        .btn-remove-file {
-            background: var(--mk-danger);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            padding: 6px 10px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .btn-remove-file:hover {
-            background: #dc2626;
-            transform: scale(1.05);
-        }
-
-        /* États de validation pour les fichiers */
-        .file-item.invalid {
-            border-color: var(--mk-danger);
-            background: rgba(239, 68, 68, 0.05);
-        }
-
-        .file-item.valid {
-            border-color: var(--mk-success);
-            background: rgba(16, 185, 129, 0.05);
-        }
-
-        /* Animation d'apparition */
         @keyframes fileSlideIn {
             from {
                 opacity: 0;
@@ -831,8 +538,6 @@
                 transform: translateY(0);
             }
         }
-
-        /* ========== FIN STYLES PIÈCES JOINTES ========== */
 
         .save-button-container {
             display: flex;
@@ -953,7 +658,6 @@
                 width: 100%;
             }
 
-            /* Responsive pour fichiers */
             .file-upload-area {
                 padding: 30px 20px;
             }
@@ -962,31 +666,23 @@
                 font-size: 36px;
             }
             
-            .existing-attachments,
             .files-preview {
                 margin: 15px -10px;
                 padding: 15px;
             }
             
-            .existing-attachment,
-            .file-preview-item,
-            .file-item {
+            .file-preview-item {
                 padding: 12px;
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 10px;
             }
             
-            .attachment-info,
-            .file-preview-info,
-            .file-info {
+            .file-preview-info {
                 width: 100%;
             }
             
-            .btn-download-existing,
-            .btn-remove-existing,
-            .btn-remove-file-preview,
-            .btn-remove-file {
+            .btn-remove-file-preview {
                 align-self: flex-end;
                 margin-top: 10px;
             }
@@ -995,20 +691,16 @@
 {% endblock %}
 
 {% block body %}
-<!-- Modal personnalisé pour changement de langue -->
+<!-- Modal personnalisé pour changement de langue - SIMPLIFIÉ -->
 <div class="language-modal-overlay" id="languageModal">
     <div class="language-modal">
         <div class="language-modal-header">
-            <i class="fas fa-exclamation-triangle language-modal-icon"></i>
+            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
             <h3 class="language-modal-title">Changement de langue</h3>
         </div>
         <div class="language-modal-body">
-            <div class="language-modal-message">
-                Vous êtes sur le point de changer de langue de saisie.
-            </div>
-            <div class="language-modal-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                <strong>Attention !</strong> Changer de langue va réinitialiser tous les champs de saisie traduisibles. Les données saisies de ces champs seront perdues.
+            <div style="margin-bottom: 20px; color: #333; line-height: 1.6;">
+                Changer de langue va réinitialiser tous les champs traduisibles. Les données saisies seront perdues.
             </div>
             <div class="language-modal-actions">
                 <button class="language-modal-btn language-modal-btn-cancel" onclick="cancelLanguageChange()">
@@ -1102,7 +794,6 @@
 </div>
 
 <div class="container-fluid main-content-wrapper">
-    <!-- CORRECTION: Formulaire simplifié pour l'upload -->
     {{ form_start(form, {'attr': {'id': 'projectForm', 'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
         <div class="form-steps-container">  
             
@@ -1298,49 +989,20 @@
                 </div>
             </div>
 
-            <!-- ÉTAPE 4: PIÈCES JOINTES - CORRECTION PRINCIPALE -->
+            <!-- ÉTAPE 4: PIÈCES JOINTES -->
             <div class="form-step" data-step-content="4">
                 <h2 class="step-title">
                     <i class="bi-paperclip text-primary"></i>
                     Pièces jointes
                 </h2>
                 <p class="step-description">
-                    Gérez les documents et fichiers relatifs au projet
+                    Ajoutez des documents et fichiers relatifs au projet (optionnel)
                 </p>
 
                 <div class="form-section">
-                    <!-- Pièces jointes existantes -->
-                    {% if project.attachments|length > 0 %}
-                    <div class="existing-attachments">
-                        <h5><i class="fas fa-folder-open me-2"></i>Fichiers existants</h5>
-                        {% for attachment in project.attachments %}
-                        <div class="existing-attachment" data-attachment-id="{{ attachment.id }}">
-                            <div class="attachment-info">
-                                <i class="bi-file-earmark attachment-icon"></i>
-                                <div class="attachment-details">
-                                    <div class="attachment-name">{{ attachment.originalName }}</div>
-                                    <div class="attachment-meta">{{ attachment.formattedFileSize }} • {{ attachment.uploadedAt|date('d/m/Y') }}</div>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <a href="{{ asset('uploads/projects/' ~ attachment.fileName) }}" 
-                                   class="btn-download-existing" 
-                                   target="_blank"
-                                   download="{{ attachment.originalName }}">
-                                    <i class="fas fa-download"></i>
-                                </a>
-                                <button type="button" class="btn-remove-existing" onclick="removeExistingAttachment({{ attachment.id }}, this)">
-                                    <i class="bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
                     <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
                         <i class="bi-cloud-upload file-upload-icon"></i>
-                        <h4>Ajouter de nouveaux fichiers</h4>
+                        <h4>Ajouter des fichiers</h4>
                         <p class="text-muted">Cliquez ici pour parcourir vos fichiers ou glissez-déposez</p>
                         <button type="button" class="btn btn-outline-primary">
                             <i class="bi-folder-open me-2"></i>
@@ -1351,7 +1013,6 @@
                         </p>
                     </div>
 
-                 
                     <input type="file" 
                            id="fileInput" 
                            name="files[]" 
@@ -1361,7 +1022,7 @@
 
                     <!-- Prévisualisation des nouveaux fichiers -->
                     <div class="files-preview" id="filesPreview" style="display: none;">
-                        <h5><i class="fas fa-paperclip me-2"></i>Nouveaux fichiers sélectionnés</h5>
+                        <h5><i class="fas fa-paperclip me-2"></i>Fichiers sélectionnés</h5>
                         <div id="filesList"></div>
                     </div>
                 </div>
@@ -1404,8 +1065,6 @@
         let memberIndex = 0;
         let linkIndex = 0;
         let hasUnsavedChanges = false;
-        let formDataByLanguage = { fr: {}, en: {} };
-        let hasDataInLanguage = { fr: false, en: false };
         let pendingLanguageChange = null;
 
         // Initialisation
@@ -1414,8 +1073,6 @@
             setupEventListeners();
             setupFileUpload();
             trackFormChanges();
-            updateLanguageIndicators();
-            updateCurrentLanguageData();
         });
 
         function initializeForm() {
@@ -1424,35 +1081,9 @@
         }
 
         function updateLanguageDisplay() {
-            const currentLangDisplays = document.querySelectorAll('.current-language-display');
-            currentLangDisplays.forEach(display => {
-                display.textContent = currentLang === 'fr' ? 'français' : 'anglais';
-            });
-        }
-
-        function updateCurrentLanguageData() {
-            const translatableFields = document.querySelectorAll('[data-translatable="true"]');
-            let hasData = false;
-            
-            translatableFields.forEach(field => {
-                if (field.value && field.value.trim() !== '') {
-                    hasData = true;
-                }
-            });
-            
-            hasDataInLanguage[currentLang] = hasData;
-            updateLanguageIndicators();
-        }
-
-        function updateLanguageIndicators() {
-            const frIndicator = document.getElementById('frIndicator');
-            const enIndicator = document.getElementById('enIndicator');
-            
-            if (frIndicator) {
-                frIndicator.classList.toggle('show', hasDataInLanguage.fr || currentLang === 'fr');
-            }
-            if (enIndicator) {
-                enIndicator.classList.toggle('show', hasDataInLanguage.en || currentLang === 'en');
+            const saveBtn = document.getElementById('btnSaveProject');
+            if (saveBtn) {
+                saveBtn.innerHTML = `<i class="bi-save"></i> Enregistrer le projet en ${currentLang.toUpperCase()}`;
             }
         }
 
@@ -1463,13 +1094,11 @@
             inputs.forEach(input => {
                 input.addEventListener('change', () => {
                     markAsUnsaved();
-                    updateCurrentLanguageData();
                 });
                 
                 if (input.type === 'text' || input.type === 'email' || input.type === 'url' || input.tagName === 'TEXTAREA') {
                     input.addEventListener('input', () => {
                         markAsUnsaved();
-                        updateCurrentLanguageData();
                     });
                 }
             });
@@ -1507,7 +1136,7 @@
                 });
             });
 
-            // CORRECTION 3: Switch de langue avec vérification du contenu traduisible
+            // Switch de langue avec vérification du contenu traduisible
             document.querySelectorAll('.lang-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const lang = this.dataset.lang;
@@ -1540,7 +1169,6 @@
             });
         }
 
-        // CORRECTION 3: Fonction pour vérifier le contenu traduisible
         function checkTranslatableContent() {
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             
@@ -1573,9 +1201,6 @@
 
         function confirmLanguageChange() {
             if (pendingLanguageChange) {
-                // Sauvegarder les données actuelles avant de changer
-                saveCurrentFormData();
-                
                 // Réinitialiser tous les champs translatables
                 resetTranslatableFields();
                 
@@ -1596,25 +1221,11 @@
             }
         });
 
-        function saveCurrentFormData() {
-            const translatableFields = document.querySelectorAll('[data-translatable="true"]');
-            const data = {};
-            
-            translatableFields.forEach(field => {
-                const name = field.name.replace(/.*\[(\w+)\]$/, '$1');
-                data[name] = field.value;
-            });
-            
-            formDataByLanguage[currentLang] = data;
-        }
-
         function resetTranslatableFields() {
             const translatableFields = document.querySelectorAll('[data-translatable="true"]');
             translatableFields.forEach(field => {
                 field.value = '';
             });
-            
-            hasDataInLanguage[currentLang] = false;
         }
 
         function switchLanguage(lang) {
@@ -1622,12 +1233,6 @@
             
             setLanguage(lang);
             updateLanguageDisplay();
-            updateCurrentLanguageData();
-            
-            const saveBtn = document.getElementById('btnSaveProject');
-            if (saveBtn) {
-                saveBtn.innerHTML = `<i class="bi-save"></i> Enregistrer le projet en ${lang.toUpperCase()}`;
-            }
         }
 
         function setLanguage(lang) {
@@ -1727,7 +1332,7 @@
             markAsUnsaved();
         }
 
-        // CORRECTION: Gestion simplifiée des fichiers
+        // Gestion des fichiers
         function setupFileUpload() {
             const fileUploadArea = document.getElementById('fileUploadArea');
             const fileInput = document.getElementById('fileInput');
@@ -1750,7 +1355,7 @@
                 handleFileSelection(files);
             });
 
-            // Selection de fichiers
+            // Sélection de fichiers
             fileInput.addEventListener('change', (e) => {
                 handleFileSelection(e.target.files);
             });
@@ -1773,7 +1378,7 @@
             Array.from(files).forEach((file, index) => {
                 // Validation
                 if (file.size > 10 * 1024 * 1024) {
-                    showNotification(`Le fichier ${file.name} dépasse 10MB`, 'warning');
+                    // SUPPRIMÉ: showNotification côté client
                     return;
                 }
 
@@ -1781,7 +1386,7 @@
                 const extension = file.name.split('.').pop().toLowerCase();
                 
                 if (!allowedExtensions.includes(extension)) {
-                    showNotification(`Le fichier ${file.name} n'est pas dans un format autorisé`, 'warning');
+                    // SUPPRIMÉ: showNotification côté client
                     return;
                 }
 
@@ -1859,7 +1464,7 @@
             e.target.appendChild(translationDescInput);
 
             markAsSaved();
-            showNotification(`Enregistrement du projet en ${currentLang === 'fr' ? 'français' : 'anglais'}...`, 'info');
+            // SUPPRIMÉ: showNotification côté client - le message viendra du controller
             
             return true;
         }
@@ -1881,7 +1486,7 @@
             });
 
             if (!isValid) {
-                showNotification('Veuillez remplir tous les champs obligatoires', 'error');
+                // SUPPRIMÉ: showNotification côté client
                 const firstInvalid = document.querySelector('.is-invalid');
                 if (firstInvalid) {
                     firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1899,30 +1504,9 @@
             return true;
         }
 
-        function showNotification(message, type = 'info') {
-            const alertClass = type === 'error' ? 'danger' : type;
-            const alertHtml = `
-                <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" 
-                     style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;" role="alert">
-                    <i class="bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', alertHtml);
-            
-            setTimeout(() => {
-                const alert = document.querySelector('.alert:last-of-type');
-                if (alert) {
-                    alert.remove();
-                }
-            }, 3000);
-        }
-
-        console.log('%c🚀 Formulaire Projet MK BA avec upload corrigé!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
-        console.log('✅ Upload simplifié avec input file standard');
-        console.log('✅ Prévisualisation des fichiers sélectionnés');
-        console.log('✅ Validation côté client robuste');
+        console.log('%c🚀 Formulaire Nouveau Projet MK BA - Messages centralisés!', 'color: #6d5192; font-size: 16px; font-weight: bold;');
+        console.log('✅ NOUVEAU: Messages centralisés depuis le controller');
+        console.log('✅ SUPPRIMÉ: Toutes les notifications JavaScript locales');
+        console.log('✅ Upload simplifié avec validation côté serveur');
     </script>
 {% endblock %}
